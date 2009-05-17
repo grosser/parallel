@@ -24,6 +24,7 @@ For each environment, create the databases and fill it with structure
     rake db:reset RAILS_ENV=test2
 
 Run like hell :D
+    Make sure your spec/spec_helper.rb does not set ENV['RAILS_ENV'] to 'test'
 
     rake spec:parallel[1] --> 86 seconds
     rake spec:parallel[2] --> 47 seconds
