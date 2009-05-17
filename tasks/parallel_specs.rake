@@ -30,7 +30,7 @@ namespace :spec do
     num_processes.times do |i|
       puts "starting process #{i+1}"
       pids << Process.fork do
-        puts `RAILS_ENV=test#{i==0?'':i}; spec -O spec/spec.opts #{groups[i]*' '}`
+        puts `RAILS_ENV=test#{i==0?'':i+1}; spec -O spec/spec.opts #{groups[i]*' '}`
       end
     end
 
