@@ -19,7 +19,7 @@ Copy your test environment inside `config/database.yml` once for every cpu you g
       username: root
 
 For each environment, create the databases and fill it with structure
-
+    cp -f config/environments/test.rb config/environments/test2.rb
     mysql -u root -> create database xxx_test2;
     rake db:reset RAILS_ENV=test2
 
