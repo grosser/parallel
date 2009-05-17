@@ -6,7 +6,7 @@ Setup
 
     script/plugin install git://github.com/grosser/parallel_specs.git
 
-1. Copy your test environment inside `config/database.yml` once for every cpu you got ('test'+number).
+1.Copy your test environment inside `config/database.yml` once for every cpu you got ('test'+number).
 
     test:
       adapter: mysql
@@ -18,12 +18,12 @@ Setup
       database: xxx_test2
       username: root
 
-2. For each environment, create the databases and fill it with structure
+2.For each environment, create the databases and fill it with structure
 
     mysql -u root -> create database xxx_test2;
     rake db:reset RAILS_ENV=test2
 
-3. Run like hell :D
+3.Run like hell :D
 
     rake spec:parallel[1] --> 86 seconds
     rake spec:parallel[2] --> 47 seconds
