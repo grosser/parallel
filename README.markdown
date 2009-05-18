@@ -18,13 +18,14 @@ Copy your test environment inside `config/database.yml` once for every cpu you g
       database: xxx_test2
       username: root
 
-For each environment, create the databases and fill it with structure
-    cp -f config/environments/test.rb config/environments/test2.rb
+For each environment, create the databases
     mysql -u root -> create database xxx_test2;
-    rake db:reset RAILS_ENV=test2
 
-Run like hell :D
-    Make sure your spec/spec_helper.rb does not set ENV['RAILS_ENV'] to 'test'
+Run like hell :D  
+
+    (Make sure your `spec/spec_helper.rb` does not set `ENV['RAILS_ENV']` to 'test')
+
+    rake spec:parallel:prepare[2] #db:reset for each env
 
     rake spec:parallel[1] --> 86 seconds
     rake spec:parallel[2] --> 47 seconds
@@ -45,8 +46,8 @@ Example output
 TODO
 ====
  - sync the output, so that results do not appear all at once
- - find a less hack approach (without manual creating so many envs)
- - Rails 2.3: 1/1000 tests randomly fails because of `Mysql::Error: SAVEPOINT active_record_1 does not exist: ROLLBACK TO SAVEPOINT active_record_1`
+ - grab the 'xxx examples ..' line and display them at the bottom
+ - find a less hacky approach (without manual creation so many envs)
 
 
 Author
