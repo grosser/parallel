@@ -28,7 +28,7 @@ Run like hell :D
     rake spec:parallel:prepare[2] #db:reset for each env
 
     rake spec:parallel[1] --> 86 seconds
-    rake spec:parallel[2] --> 47 seconds
+    rake spec:parallel    --> 47 seconds (default = 2)
     rake spec:parallel[4] --> 26 seconds
     ...
 
@@ -45,6 +45,7 @@ Example output
 
 TODO
 ====
+ - find out how many CPUs the user has
  - sync the output, so that results do not appear all at once
  - grab the 'xxx examples ..' line and display them at the bottom
  - find a less hacky approach (without manual creation so many envs)

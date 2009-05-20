@@ -5,7 +5,7 @@ namespace :spec do
 
     require File.join(plugin_root, 'lib', 'parallel_specs')
 
-    num_processes = (num_processes||1).to_i
+    num_processes = (num_processes||2).to_i
     ParallelSpecs.with_copied_envs(rails_root, num_processes) do
       yield(num_processes)
     end
