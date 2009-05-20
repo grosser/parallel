@@ -1,12 +1,10 @@
 namespace :spec do
   def parallel_with_copied_envs(num_processes)
     plugin_root = File.join(File.dirname(__FILE__), '..')
-    rails_root =  File.join(plugin_root, '..', '..', '..')
-
     require File.join(plugin_root, 'lib', 'parallel_specs')
 
     num_processes = (num_processes||2).to_i
-    ParallelSpecs.with_copied_envs(rails_root, num_processes) do
+    ParallelSpecs.with_copied_envs(RAILS_ROOT, num_processes) do
       yield(num_processes)
     end
   end
@@ -29,18 +27,9 @@ namespace :spec do
     parallel_with_copied_envs(args[:count]) do |num_processes|
       puts "running specs in #{num_processes} processes"
       start = Time.now
-      #find all specs and partition them into groups
-      specs = (Dir["spec/**/*_spec.rb"]).sort
-      specs_per_group = specs.size/num_processes
-      puts "#{specs_per_group} specs per process"
 
-      groups = []
-      num_processes.times do |i|
-        specs_per_group.times do |j|
-          groups[i] ||=[]
-          groups[i] << specs[j+i]
-        end
-      end
+      groups = ParallelSpecs.specs_in_groups(RAILS_ROOT,2)
+      puts "#{groups.sum{|g|g.size}} specs in #{groups[0].size} specs per process"
 
       #run each of the groups
       pids = []
