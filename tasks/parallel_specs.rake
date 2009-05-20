@@ -36,7 +36,7 @@ namespace :spec do
       num_processes.times do |i|
         puts "starting process #{i+1}"
         pids << Process.fork do
-          puts `RAILS_ENV=test#{i==0?'':i+1}; spec -O spec/spec.opts #{groups[i]*' '}`
+          sh "RAILS_ENV=test#{i==0?'':i+1}; spec -O spec/spec.opts #{groups[i]*' '}"
         end
       end
 
@@ -50,7 +50,7 @@ namespace :spec do
 
       #wait for everybody to finish
       pids.each{ Process.wait }
-      
+
       #report total time taken
       puts "Took #{Time.now - start} seconds"
     end
