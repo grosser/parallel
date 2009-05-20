@@ -1,5 +1,4 @@
-This is a very simple approach to parallel testing inspired by [pivotal labs](http://pivotallabs.com/users/miked/blog/articles/849-parallelize-your-rspec-suite)
-not as capeable as [deep-test](http://github.com/qxjit/deep-test/tree/master) but hey: it is *easy to set up and works*!
+Rake tasks to run specs in parallel, to use multiple CPUs and speedup test runtime.
 
 Setup
 =====
@@ -53,6 +52,7 @@ TODO
 
 Author
 ======
+inspired by [pivotal labs](http://pivotallabs.com/users/miked/blog/articles/849-parallelize-your-rspec-suite)  
 [Michael Grosser](http://pragmatig.wordpress.com)  
 grosser.michael@gmail.com  
 Hereby placed under public domain, do what you want, just do not hold me accountable...
