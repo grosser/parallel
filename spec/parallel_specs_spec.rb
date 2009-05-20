@@ -39,7 +39,6 @@ describe ParallelSpecs do
       File.open(env2,'w'){|f|f.print 'XXX'}
 
       ParallelSpecs.with_copied_envs(FAKE_RAILS_ROOT, 3) do
-        pending
         File.readlines(env2)[0].should =~ /^#.*OVERWRITTEN/
       end
     end
