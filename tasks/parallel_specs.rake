@@ -28,7 +28,7 @@ namespace :spec do
       puts "running specs in #{num_processes} processes"
       start = Time.now
 
-      groups = ParallelSpecs.specs_in_groups(RAILS_ROOT,2)
+      groups = ParallelSpecs.specs_in_groups(RAILS_ROOT, num_processes)
       puts "#{groups.sum{|g|g.size}} specs in #{groups[0].size} specs per process"
 
       #run each of the groups
