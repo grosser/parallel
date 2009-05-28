@@ -16,7 +16,7 @@ namespace :spec do
         num_processes.times do |i|
           env = "test#{i==0?'':i+1}"
           puts "Preparing #{env}"
-          `RAILS_ENV=#{env} ; rake db:reset`
+          `export RAILS_ENV=#{env} ; rake db:reset`
         end
       end
     end
@@ -36,7 +36,7 @@ namespace :spec do
       num_processes.times do |i|
         puts "starting process #{i+1}"
         pids << Process.fork do
-          sh "RAILS_ENV=test#{i==0?'':i+1}; spec -O spec/spec.opts #{groups[i]*' '}"
+          sh "export RAILS_ENV=test#{i==0?'':i+1}; spec -O spec/spec.opts #{groups[i]*' '}"
         end
       end
 
