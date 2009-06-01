@@ -10,13 +10,12 @@ namespace :spec do
   end
 
   namespace :parallel do
-    desc "prepare parallel test running by calling db:reset for every env needed with spec:parallel:"
+    desc "prepare parallel test running by calling db:reset for every test database needed with spec:parallel:"
     task :prepare, :count do |t,args|
       parallel_with_copied_envs(args[:count]) do |num_processes|
         num_processes.times do |i|
-          env = "test#{i==0?'':i+1}"
-          puts "Preparing #{env}"
-          `export RAILS_ENV=#{env} ; rake db:reset`
+          puts "Preparing test database #{i+1}"
+          `export INSTANCE=#{i==0?'':i+1}; export RAILS_ENV=test; rake db:reset`
         end
       end
     end
@@ -36,7 +35,7 @@ namespace :spec do
       num_processes.times do |i|
         puts "starting process #{i+1}"
         pids << Process.fork do
-          sh "export RAILS_ENV=test#{i==0?'':i+1}; spec -O spec/spec.opts #{groups[i]*' '}"
+          sh "export INSTANCE=#{i==0?'':i+1}; script/spec -O spec/spec.opts #{groups[i]*' '}"
         end
       end
 

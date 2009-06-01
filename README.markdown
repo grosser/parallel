@@ -3,18 +3,14 @@ Rake tasks to run specs in parallel, to use multiple CPUs and speedup test runti
 Setup
 =====
 
-    script/plugin install git://github.com/grosser/parallel_specs.git
+    script/plugin install git://github.com/joakimk/parallel_specs.git (this version)
+    script/plugin install git://github.com/grosser/parallel_specs.git (the original)
 
-Copy your test environment inside `config/database.yml` once for every cpu you got ('test'+number).
+Add <%= ENV['INSTANCE'] %> to the database name for the test environment in `config/database.yml`:
 
     test:
       adapter: mysql
-      database: xxx_test
-      username: root
-
-    test2:
-      adapter: mysql
-      database: xxx_test2
+      database: xxx_test<%= ENV['INSTANCE'] %>
       username: root
 
 For each environment, create the databases
@@ -22,9 +18,7 @@ For each environment, create the databases
 
 Run like hell :D  
 
-    (Make sure your `spec/spec_helper.rb` does not set `ENV['RAILS_ENV']` to 'test')
-
-    rake spec:parallel:prepare[2] #db:reset for each env
+    rake spec:parallel:prepare[2] #db:reset for each test database
 
     rake spec:parallel[1] --> 86 seconds
     rake spec:parallel    --> 47 seconds (default = 2)
@@ -47,12 +41,14 @@ TODO
  - find out how many CPUs the user has
  - sync the output, so that results do not appear all at once
  - grab the 'xxx examples ..' line and display them at the bottom
- - find a less hacky approach (without manual creation so many envs)
 
-
-Author
+Authors
 ======
 inspired by [pivotal labs](http://pivotallabs.com/users/miked/blog/articles/849-parallelize-your-rspec-suite)  
 [Michael Grosser](http://pragmatig.wordpress.com)  
 grosser.michael@gmail.com  
 Hereby placed under public domain, do what you want, just do not hold me accountable...
+
+Additional code by:
+[Joakim Kolsjö](http://www.rubyblocks.se)
+joakim.kolsjo<$at$>gmail.com
