@@ -28,10 +28,8 @@ Run like hell :D
 Example output
 --------------
 
-    running specs in 2 processes
+    Running specs in 2 processes
     93 specs per process
-    starting process 1
-    starting process 2
     ... test output ...
     Took 47.319378 seconds
 
