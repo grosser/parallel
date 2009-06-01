@@ -17,7 +17,7 @@ namespace :spec do
   task :parallel, :count do |t,args|
     num_processes = args[:count] ? args[:count] : 2
     
-    puts "running specs in #{num_processes} processes"
+    puts "Running specs in #{num_processes} processes"
     start = Time.now
 
     groups = ParallelSpecs.specs_in_groups(RAILS_ROOT, num_processes)
@@ -26,9 +26,8 @@ namespace :spec do
     #run each of the groups
     pids = []
     num_processes.times do |i|
-      puts "starting process #{i+1}"
       pids << Process.fork do
-        sh "export INSTANCE=#{i==0?'':i+1}; script/spec -O spec/spec.opts #{groups[i]*' '}"
+        system "export INSTANCE=#{i==0?'':i+1}; script/spec -O spec/spec.opts #{groups[i]*' '}"
       end
     end
 
