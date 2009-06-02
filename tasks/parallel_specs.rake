@@ -22,11 +22,12 @@ namespace :spec do
     puts "#{num_processes} processes: #{groups.sum{|g|g.size}} specs in  (#{groups[0].size} specs per process)"
 
     #run each of the groups
+    puts "Be patient, output comes when tests have finished..."
     pids = []
     num_processes.times do |i|
       puts "Starting process #{i+1}"
       pids << Process.fork do
-        puts `export TEST_ENV_NUMBER=#{i==0?'':i+1}; script/spec -O spec/spec.opts #{groups[i]*' '}`
+        puts `export RAILS_ENV=test ; export TEST_ENV_NUMBER=#{i==0?'':i+1} ; script/spec -O spec/spec.opts #{groups[i]*' '}`
       end
     end
 

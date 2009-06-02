@@ -35,10 +35,15 @@ Example output
     Took 47.319378 seconds
 
 
+TIPS
+====
+ - `./script/generate rspec` if you are running rspec from gems (this plugin uses script/spec which may fail if rspec files are outdated)
+
+
 TODO
 ====
+ - sync the output, so that results do not appear all at once (using sh and system did not work so far, since they could not be interrupted once started(Ctrl+C handler))
  - find out how many CPUs the user has [here](http://stackoverflow.com/questions/891537/ruby-detect-number-of-cpus-installed)
- - sync the output, so that results do not appear all at once
  - grab the 'xxx examples ..' line and display them at the bottom
 
 
