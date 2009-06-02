@@ -14,6 +14,9 @@ namespace :spec do
   task :parallel, :count do |t,args|
     start = Time.now
 
+    plugin_root = File.join(File.dirname(__FILE__), '..')
+    require File.join(plugin_root, 'lib', 'parallel_specs')
+
     num_processes = args[:count] || 2
     groups = ParallelSpecs.specs_in_groups(RAILS_ROOT, num_processes)
     puts "#{groups.sum{|g|g.size}} specs in #{num_processes} processes (#{groups[0].size} specs per process)"
@@ -23,7 +26,7 @@ namespace :spec do
     num_processes.times do |i|
       puts "starting process #{i+1}"
       pids << Process.fork do
-        sh "export TEST_ENV_NUMBER=#{i==0?'':i+1}; spec -O spec/spec.opts #{groups[i]*' '}"
+        puts `export TEST_ENV_NUMBER=#{i==0?'':i+1}; spec -O spec/spec.opts #{groups[i]*' '}`
       end
     end
 
