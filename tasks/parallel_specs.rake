@@ -5,7 +5,7 @@ namespace :spec do
   namespace :parallel do
     desc "prepare parallel test running by calling db:reset for every test database needed with spec:parallel:"
     task :prepare, :count do |t,args|
-      num_processes = args[:count] ? args[:count] : 2
+      num_processes = args[:count] ? args[:count].to_i : 2
       num_processes.times do |i|
         puts "Preparing test database #{i+1}"
         `export INSTANCE=#{i==0?'':i+1}; export RAILS_ENV=test; rake db:reset`
@@ -15,7 +15,7 @@ namespace :spec do
 
   desc "run specs in parallel with spec:parallel[count]"
   task :parallel, :count do |t,args|
-    num_processes = args[:count] ? args[:count] : 2
+    num_processes = args[:count] ? args[:count].to_i : 2
     
     puts "Running specs in #{num_processes} processes"
     start = Time.now
