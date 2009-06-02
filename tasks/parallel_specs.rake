@@ -5,7 +5,7 @@ namespace :spec do
       num_processes = (args[:count] || 2).to_i
       num_processes.times do |i|
         puts "Preparing database #{i+1}"
-        `export TEST_ENV_NUMBER=#{i==0?'':i+1} ; rake db:reset`
+        `export TEST_ENV_NUMBER=#{i==0?'':i+1} ; export RAILS_ENV=test ; rake db:reset`
       end
     end
   end
