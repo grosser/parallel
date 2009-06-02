@@ -1,33 +1,31 @@
-plugin_root = File.join(File.dirname(__FILE__), '..')
-require File.join(plugin_root, 'lib', 'parallel_specs')
-
 namespace :spec do
   namespace :parallel do
     desc "prepare parallel test running by calling db:reset for every test database needed with spec:parallel:"
     task :prepare, :count do |t,args|
-      num_processes = args[:count] ? args[:count].to_i : 2
+      num_processes = (args[:count] || 2).to_i
       num_processes.times do |i|
-        puts "Preparing test database #{i+1}"
-        `export INSTANCE=#{i==0?'':i+1}; export RAILS_ENV=test; rake db:reset`
+        puts "Preparing database #{i+1}"
+        system "export TEST_ENV_NUMBER=#{i==0?'':i+1} ; rake db:reset"
       end
     end
   end
 
   desc "run specs in parallel with spec:parallel[count]"
   task :parallel, :count do |t,args|
-    num_processes = args[:count] ? args[:count].to_i : 2
-    
-    puts "Running specs in #{num_processes} processes"
     start = Time.now
 
+    plugin_root = File.join(File.dirname(__FILE__), '..')
+    require File.join(plugin_root, 'lib', 'parallel_specs')
+
+    num_processes = (args[:count] || 2).to_i
     groups = ParallelSpecs.specs_in_groups(RAILS_ROOT, num_processes)
-    puts "#{groups.sum{|g|g.size}} specs in #{groups[0].size} specs per process"
+    puts "#{num_processes} processes: #{groups.sum{|g|g.size}} specs (#{groups[0].size} specs per process)"
 
     #run each of the groups
     pids = []
     num_processes.times do |i|
       pids << Process.fork do
-        system "export INSTANCE=#{i==0?'':i+1}; script/spec -O spec/spec.opts #{groups[i]*' '}"
+        system "export TEST_ENV_NUMBER=#{i==0?'':i+1}; script/spec -O spec/spec.opts #{groups[i]*' '}"
       end
     end
 
