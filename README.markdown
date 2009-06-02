@@ -18,8 +18,6 @@ For each environment, create the databases
 
 Run like hell :D  
 
-    (Make sure your `spec/spec_helper.rb` does not set `ENV['RAILS_ENV']` to 'test')
-
     rake spec:parallel:prepare[2] #db:reset for each database
 
     rake spec:parallel[1] --> 86 seconds
