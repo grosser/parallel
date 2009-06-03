@@ -38,6 +38,7 @@ TODO
  - find out how many CPUs the user has [here](http://stackoverflow.com/questions/891537/ruby-detect-number-of-cpus-installed)
  - sync the output, so that results do not appear all at once
  - grab the 'xxx examples ..' line and display them at the bottom
+ - somehow make the test load equal so that the process end at the same time. perhaps by using profiling data from previous runs somehow?
 
 Authors
 =======
