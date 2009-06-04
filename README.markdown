@@ -1,10 +1,11 @@
 Rake tasks to run specs in parallel, to use multiple CPUs and speedup test runtime.
 
+NOTE: This is a clone of http://github.com/grosser/parallel_specs
+
 Setup
 =====
 
-    script/plugin install git://github.com/joakimk/parallel_specs.git (this version)
-    script/plugin install git://github.com/grosser/parallel_specs.git (the original)
+    script/plugin install git://github.com/joakimk/parallel_specs.git
 
 Add <%= ENV['TEST_ENV_NUMBER'] %> to the database name for the test environment in `config/database.yml`,  
 it is '' for process 1, and '2' for process 2.
@@ -28,10 +29,14 @@ Run like hell :D
 
 Example output
 --------------
-
     2 processes: 209 specs (105 specs per process)
     ... test output ...
     Took 47.319378 seconds
+
+TIPS
+====
+ - `./script/generate rspec` if you are running rspec from gems (this plugin uses script/spec which may fail if rspec files are outdated)
+ - with zsh this would be `rake "spec:parallel:prepare[3]"`
 
 TODO
 ====
@@ -41,8 +46,8 @@ TODO
  - somehow make the test load equal so that the process end at the same time. perhaps by using profiling data from previous runs somehow?
 
 Authors
-=======
-inspired by [pivotal labs](http://pivotallabs.com/users/miked/blog/articles/849-parallelize-your-rspec-suite)
+====
+inspired by [pivotal labs](http://pivotallabs.com/users/miked/blog/articles/849-parallelize-your-rspec-suite)  
 
 ###Contributors
  - [Joakim Kolsjö](http://www.rubyblocks.se) -- joakim.kolsjo<$at$>gmail.com
