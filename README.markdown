@@ -38,6 +38,7 @@ Example output
 TIPS
 ====
  - `./script/generate rspec` if you are running rspec from gems (this plugin uses script/spec which may fail if rspec files are outdated)
+ - with zsh this would be `rake "spec:parallel:prepare[3]"`
 
 
 TODO
