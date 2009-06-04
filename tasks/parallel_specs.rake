@@ -19,10 +19,10 @@ namespace :spec do
 
     num_processes = (args[:count] || 2).to_i
     groups = ParallelSpecs.specs_in_groups(RAILS_ROOT, num_processes)
-    puts "#{num_processes} processes: #{groups.sum{|g|g.size}} specs (#{groups[0].size} specs per process)"
+    puts "#{num_processes} processes: #{groups.sum{|g|g.size}} specs"
 
     #run each of the groups
-    puts "Be patient, output comes when tests have finished..."
+    puts "Be patient, output comes when specs are finished..."
     pids = []
     num_processes.times do |i|
       pids << Process.fork do
