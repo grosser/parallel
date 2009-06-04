@@ -5,7 +5,7 @@ namespace :spec do
       num_processes = (args[:count] || 2).to_i
       num_processes.times do |i|
         puts "Preparing database #{i+1}"
-        system "export TEST_ENV_NUMBER=#{i==0?'':i+1} ; rake db:reset"
+        `export TEST_ENV_NUMBER=#{i==0?'':i+1} ; export RAILS_ENV=test ; rake db:reset`
       end
     end
   end
@@ -22,12 +22,12 @@ namespace :spec do
     puts "#{num_processes} processes: #{groups.sum{|g|g.size}} specs"
 
     #run each of the groups
-    puts "Be patient, output comes when specs are finished..."
+    puts "Be patient, output comes when spec are finished..."
 
     pids = []
     num_processes.times do |i|
       pids << Process.fork do
-        system "export TEST_ENV_NUMBER=#{i==0?'':i+1}; script/spec -O spec/spec.opts #{groups[i]*' '}"
+        puts `export RAILS_ENV=test ; export TEST_ENV_NUMBER=#{i==0?'':i+1} ; script/spec -O spec/spec.opts #{groups[i]*' '}`
       end
     end
 
