@@ -20,7 +20,7 @@ For each environment, create the databases
 
 Run like hell :D  
 
-    rake spec:parallel:prepare[2] #db:reset for each test database
+    rake spec:parallel:prepare[2] #db:reset for each database
 
     rake spec:parallel[1] --> 86 seconds
     rake spec:parallel    --> 47 seconds (default = 2)
@@ -40,13 +40,13 @@ TIPS
 
 TODO
 ====
- - sync the output, so that results do not appear all at once (using sh and system did not work so far, since they could not be interrupted once started(Ctrl+C handler))
  - find out how many CPUs the user has [here](http://stackoverflow.com/questions/891537/ruby-detect-number-of-cpus-installed)
+ - sync the output, so that results do not appear all at once
  - grab the 'xxx examples ..' line and display them at the bottom
- - somehow make the test load equal so that the process end at the same time. perhaps by using profiling data from previous runs somehow?
+ - make the test load equal so that the process end at the same time. (prototype works, just need to implement it propertly)
 
 Authors
-======
+====
 inspired by [pivotal labs](http://pivotallabs.com/users/miked/blog/articles/849-parallelize-your-rspec-suite)  
 
 ###Contributors
