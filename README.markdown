@@ -43,9 +43,8 @@ TIPS
 
 TODO
 ====
- - sync the output, so that results do not appear all at once (using sh and system did not work so far, since they could not be interrupted once started(Ctrl+C handler))
  - find out how many CPUs the user has [here](http://stackoverflow.com/questions/891537/ruby-detect-number-of-cpus-installed)
- - grab the 'xxx examples ..' line and display them at the bottom
+ - grab the 'xxx examples ..' line and display them after all tests have finished
 
 
 Authors
