@@ -19,7 +19,7 @@ namespace :spec do
 
     num_processes = (args[:count] || 2).to_i
     groups = ParallelSpecs.specs_in_groups(RAILS_ROOT, num_processes)
-    puts "#{num_processes} processes: #{groups.sum{|g|g.size}} specs in  (#{groups[0].size} specs per process)"
+    puts "#{num_processes} processes with #{groups.sum{|g|g.size}} specs = #{groups[0].size} specs per process"
 
     #run each of the groups
     puts "Be patient, output comes when tests have finished..."
@@ -27,7 +27,7 @@ namespace :spec do
     num_processes.times do |i|
       puts "Starting process #{i+1}"
       pids << Process.fork do
-        puts `export RAILS_ENV=test ; export TEST_ENV_NUMBER=#{i==0?'':i+1} ; script/spec -O spec/spec.opts #{groups[i]*' '}`
+        puts `export RAILS_ENV=test ; export TEST_ENV_NUMBER=#{i==0?'':i+1} ; export RSPEC_COLOR=1 ; script/spec -O spec/spec.opts #{groups[i]*' '}`
       end
     end
 
