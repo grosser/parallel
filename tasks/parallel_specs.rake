@@ -27,7 +27,11 @@ namespace :spec do
     num_processes.times do |i|
       puts "Starting process #{i+1}"
       pids << Process.fork do
-        puts `export RAILS_ENV=test ; export TEST_ENV_NUMBER=#{i==0?'':i+1} ; export RSPEC_COLOR=1 ; script/spec -O spec/spec.opts #{groups[i]*' '}`
+        cmd = "export RAILS_ENV=test ; export TEST_ENV_NUMBER=#{i==0?'':i+1} ; export RSPEC_COLOR=1 ; script/spec -O spec/spec.opts #{groups[i]*' '}"
+        f = open("|#{cmd}")
+        while out = f.gets(".")
+          print out
+        end
       end
     end
 
