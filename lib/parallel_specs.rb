@@ -29,6 +29,7 @@ module ParallelSpecs
     f = open("|#{cmd}")
     while out = f.gets(".")
       print out
+      STDOUT.flush
     end
   end
   
