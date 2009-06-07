@@ -29,9 +29,9 @@ Run like hell :D
 
 Example output
 --------------
-    2 processes: 209 specs
+    2 processes for 210 specs, ~ 105 specs per process
     ... test output ...
-    Took 47.319378 seconds
+    Took 29.925333 seconds
 
 TIPS
 ====
@@ -41,8 +41,7 @@ TIPS
 TODO
 ====
  - find out how many CPUs the user has [here](http://stackoverflow.com/questions/891537/ruby-detect-number-of-cpus-installed)
- - sync the output, so that results do not appear all at once
- - grab the 'xxx examples ..' line and display them at the bottom
+ - grab the 'xxx examples ..' line and display them after all tests have finished
 
 Authors
 ====
