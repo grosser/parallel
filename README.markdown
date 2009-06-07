@@ -29,7 +29,7 @@ Run like hell :D
 
 Example output
 --------------
-    2 processes: 209 specs (105 specs per process)
+    2 processes: 209 specs
     ... test output ...
     Took 47.319378 seconds
 
@@ -43,7 +43,6 @@ TODO
  - find out how many CPUs the user has [here](http://stackoverflow.com/questions/891537/ruby-detect-number-of-cpus-installed)
  - sync the output, so that results do not appear all at once
  - grab the 'xxx examples ..' line and display them at the bottom
- - make the test load equal so that the process end at the same time. (prototype works, just need to implement it propertly)
 
 Authors
 ====
