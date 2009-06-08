@@ -1,7 +1,5 @@
 Rake tasks to run specs in parallel, to use multiple CPUs and speedup test runtime.
 
-NOTE: This is a clone of http://github.com/grosser/parallel_specs
-
 Setup
 =====
 
