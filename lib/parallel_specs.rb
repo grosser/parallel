@@ -3,24 +3,20 @@ module ParallelSpecs
 
   # finds all specs and partitions them into groups
   def specs_in_groups(root, num)
-    specs = (Dir["#{root}/spec/**/*_spec.rb"]).sort
-    return [ specs ] if num == 1
-              
-    specs_with_sizes, total_size = find_sizes(specs)
-
+    specs_with_sizes = find_specs_with_sizes(root)
+    
     groups = []
-    num.times { |i| groups[i] = [] }
-    
-    group_size = (total_size / num.to_f)
-        
-    i = 0
-    current_size = 0
-    specs_with_sizes.each do |spec|
-      current_size += spec[0]
-      i += 1 if current_size > group_size * (i+1)     
-      groups[i] << spec[1]
+    current_group = current_size = 0
+    specs_with_sizes.each do |spec, size|
+      current_size += size
+      #insert into next group if current is full and we are not in the last group
+      if current_size > group_size(specs_with_sizes, num) and num > current_group+1
+        current_size = 0
+        current_group += 1
+      end
+      groups[current_group] ||= []
+      groups[current_group] << spec
     end
-    
     groups
   end
 
@@ -32,17 +28,16 @@ module ParallelSpecs
       STDOUT.flush
     end
   end
-  
+
   private
-  
-  def find_sizes(specs)
-    total_size = 0
-    specs_with_sizes = []
-    specs.each do |file|
-      size = File.stat(file).size
-      specs_with_sizes << [ size, file ]
-      total_size += size
-    end
-    return specs_with_sizes, total_size    
+
+  def self.group_size(specs_with_sizes, num_groups)
+    total_size = specs_with_sizes.inject(0) { |sum, spec| sum += spec[1] }
+    total_size / num_groups.to_f
+  end
+
+  def self.find_specs_with_sizes(root)
+    specs = Dir["#{root}/spec/**/*_spec.rb"].sort
+    specs.map{|spec| [spec, File.stat(spec).size]}
   end
 end

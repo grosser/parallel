@@ -18,8 +18,9 @@ describe ParallelSpecs do
     end
 
     it "finds all specs" do
-      ParallelSpecs.specs_in_groups(FAKE_RAILS_ROOT,1).should == 
-                                    [ Dir["#{FAKE_RAILS_ROOT}/spec/**/*_spec.rb"] ]
+      found = ParallelSpecs.specs_in_groups(FAKE_RAILS_ROOT,1)
+      all = [ Dir["#{FAKE_RAILS_ROOT}/spec/**/*_spec.rb"] ]
+      (found.flatten - all.flatten).should == []
     end
 
     it "partitions them into groups by equal size" do
