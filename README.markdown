@@ -3,7 +3,7 @@ Rake tasks to run specs in parallel, to use multiple CPUs and speedup test runti
 Setup
 =====
 
-    script/plugin install git://github.com/joakimk/parallel_specs.git
+    script/plugin install git://github.com/grosser/parallel_specs.git
 
 Add <%= ENV['TEST_ENV_NUMBER'] %> to the database name for the test environment in `config/database.yml`,  
 it is '' for process 1, and '2' for process 2.
