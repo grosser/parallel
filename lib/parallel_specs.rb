@@ -21,7 +21,7 @@ module ParallelSpecs
   end
 
   def run_tests(test_files, process_number)
-    cmd = "export RAILS_ENV=test ; export TEST_ENV_NUMBER=#{process_number == 0 ? '' :process_number + 1} ; export RSPEC_COLOR=1 ; script/spec -O spec/spec.opts #{test_files * ' '}"
+    cmd = "export RAILS_ENV=test ; export TEST_ENV_NUMBER=#{process_number == 0 ? '' : process_number + 1} ; export RSPEC_COLOR=1 ; script/spec -O spec/spec.opts #{test_files * ' '}"
     f = open("|#{cmd}")
     while out = f.gets(".")
       print out
