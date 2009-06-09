@@ -9,7 +9,7 @@ module ParallelSpecs
     current_group = current_size = 0
     specs_with_sizes.each do |spec, size|
       current_size += size
-      #insert into next group if current is full and we are not in the last group
+      # inserts into next group if current is full and we are not in the last group
       if current_size > group_size(specs_with_sizes, num) and num > current_group+1
         current_size = 0
         current_group += 1
@@ -21,7 +21,7 @@ module ParallelSpecs
   end
 
   def run_tests(test_files, process_number)
-    cmd = "export RAILS_ENV=test ; export TEST_ENV_NUMBER=#{process_number==0?'':process_number+1} ; export RSPEC_COLOR=1 ; script/spec -O spec/spec.opts #{test_files*' '}"
+    cmd = "export RAILS_ENV=test ; export TEST_ENV_NUMBER=#{process_number == 0 ? '' :process_number + 1} ; export RSPEC_COLOR=1 ; script/spec -O spec/spec.opts #{test_files * ' '}"
     f = open("|#{cmd}")
     while out = f.gets(".")
       print out
@@ -38,6 +38,6 @@ module ParallelSpecs
 
   def self.find_specs_with_sizes(root)
     specs = Dir["#{root}/spec/**/*_spec.rb"].sort
-    specs.map{|spec| [spec, File.stat(spec).size]}
+    specs.map { |spec| [ spec, File.stat(spec).size ] }
   end
 end
