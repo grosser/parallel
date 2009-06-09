@@ -4,8 +4,8 @@ namespace :spec do
     task :prepare, :count do |t,args|
       num_processes = (args[:count] || 2).to_i
       num_processes.times do |i|
-        puts "Preparing database #{i+1}"
-        `export TEST_ENV_NUMBER=#{i==0?'':i+1} ; export RAILS_ENV=test ; rake db:reset`
+        puts "Preparing database #{i + 1}"
+        `export TEST_ENV_NUMBER=#{i == 0 ? '' : i + 1} ; export RAILS_ENV=test ; rake db:reset`
       end
     end
   end
@@ -31,14 +31,14 @@ namespace :spec do
     end
 
     #handle user interrup (Ctrl+c)
-    Signal.trap'SIGINT' do
+    Signal.trap 'SIGINT' do
       STDERR.puts "Parallel specs interrupted, exiting ..."
-      pids.each {|pid| Process.kill "KILL", pid}
+      pids.each { |pid| Process.kill("KILL", pid) }
       exit 1
     end
 
     #wait for processes to finish
-    pids.each{ Process.wait }
+    pids.each { Process.wait }
 
     #report total time taken
     puts "Took #{Time.now - start} seconds"

@@ -10,7 +10,7 @@ module ParallelSpecs
     specs_with_sizes.each do |spec, size|
       current_size += size
       # inserts into next group if current is full and we are not in the last group
-      if current_size > group_size(specs_with_sizes, num) and num > current_group+1
+      if current_size > group_size(specs_with_sizes, num) and num > current_group + 1
         current_size = 0
         current_group += 1
       end

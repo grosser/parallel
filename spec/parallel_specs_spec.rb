@@ -1,4 +1,4 @@
-require File.dirname(__FILE__)+'/spec_helper'
+require File.dirname(__FILE__) + '/spec_helper'
 
 FAKE_RAILS_ROOT = '/tmp/pspecs/fixtures'
 
@@ -18,7 +18,7 @@ describe ParallelSpecs do
     end
 
     it "finds all specs" do
-      found = ParallelSpecs.specs_in_groups(FAKE_RAILS_ROOT,1)
+      found = ParallelSpecs.specs_in_groups(FAKE_RAILS_ROOT, 1)
       all = [ Dir["#{FAKE_RAILS_ROOT}/spec/**/*_spec.rb"] ]
       (found.flatten - all.flatten).should == []
     end
