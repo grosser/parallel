@@ -51,4 +51,28 @@ describe ParallelSpecs do
       group_size.should be_close(size_of(groups[2]), diff)
     end
   end
+
+  describe :run_tests do
+    it "uses TEST_ENV_NUMBER=blank when called for process 0" do
+      ParallelSpecs.should_receive(:open).with{|x|x=~/TEST_ENV_NUMBER= /}.and_return mock(:gets=>false)
+      ParallelSpecs.run_tests(['xxx'],0)
+    end
+
+    it "uses TEST_ENV_NUMBER=2 when called for process 1" do
+      ParallelSpecs.should_receive(:open).with{|x| x=~/TEST_ENV_NUMBER=2/}.and_return mock(:gets=>false)
+      ParallelSpecs.run_tests(['xxx'],1)
+    end
+
+    it "runs with color when called from cmdline" do
+      ParallelSpecs.should_receive(:open).with{|x| x=~/RSPEC_COLOR=1/}.and_return mock(:gets=>false)
+      $stdout.should_receive(:tty?).and_return true
+      ParallelSpecs.run_tests(['xxx'],1)
+    end
+
+    it "runs without color when not called from cmdline" do
+      ParallelSpecs.should_receive(:open).with{|x| x !~ /RSPEC_COLOR/}.and_return mock(:gets=>false)
+      $stdout.should_receive(:tty?).and_return false
+      ParallelSpecs.run_tests(['xxx'],1)
+    end
+  end
 end
