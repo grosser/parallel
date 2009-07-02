@@ -29,6 +29,11 @@ Example output
 --------------
     2 processes for 210 specs, ~ 105 specs per process
     ... test output ...
+
+    Results:
+    877 examples, 0 failures, 11 pending
+    843 examples, 0 failures, 1 pending
+
     Took 29.925333 seconds
 
 TIPS

@@ -98,6 +98,21 @@ EOF
 
       ParallelSpecs.find_results(output).should == ['0 examples, 0 failures, 0 pending','1 examples, 1 failures, 1 pending']
     end
+
+    it "is robust against scrambeled output" do
+      output = <<EOF
+....F...
+..
+failute fsddsfsd
+...
+ff.**..
+0 exFampl*es, 0 failures, 0 pend.ing
+ff.**..
+1 exampF.les, 1 failures, 1 pend.ing
+EOF
+
+      ParallelSpecs.find_results(output).should == ['0 examples, 0 failures, 0 pending','1 examples, 1 failures, 1 pending']
+    end
   end
 
   describe :failed do

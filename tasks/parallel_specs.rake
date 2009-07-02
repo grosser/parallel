@@ -51,6 +51,7 @@ namespace :spec do
     results.each{|r| puts r}
 
     #report total time taken
+    puts ""
     puts "Took #{Time.now - start} seconds"
 
     #exit with correct status code

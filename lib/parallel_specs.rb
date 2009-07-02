@@ -38,7 +38,11 @@ module ParallelSpecs
   end
 
   def find_results(test_output)
-    test_output.split("\n").select{|line| line =~ /\d+ examples, \d+ failures, \d+ pending/}
+    test_output.split("\n").map {|line|
+      line = line.gsub(/\.|F|\*/,'')
+      next unless line =~ /\d+ examples, \d+ failures, \d+ pending/
+      line
+    }.compact
   end
 
   def failed?(results)
