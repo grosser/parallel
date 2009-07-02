@@ -23,11 +23,18 @@ module ParallelSpecs
   def run_tests(test_files, process_number)
     color = ($stdout.tty? ? 'export RSPEC_COLOR=1 ;' : '')#display color when we are in a terminal
     cmd = "export RAILS_ENV=test ; export TEST_ENV_NUMBER=#{process_number==0?'':process_number+1} ; #{color} script/spec -O spec/spec.opts #{test_files*' '}"
+    execute_command(cmd)
+  end
+
+  def execute_command(cmd)
     f = open("|#{cmd}")
-    while out = f.gets(".")
+    all = ''
+    while out = f.gets(".")#split by '.' because every test is a '.'
+      all+=out
       print out
       STDOUT.flush
     end
+    all
   end
 
   private

@@ -74,5 +74,12 @@ describe ParallelSpecs do
       $stdout.should_receive(:tty?).and_return false
       ParallelSpecs.run_tests(['xxx'],1)
     end
+
+    it "returns the output" do
+      io = open('spec/spec_helper.rb')
+      ParallelSpecs.stub!(:print)
+      ParallelSpecs.should_receive(:open).and_return io
+      ParallelSpecs.run_tests(['xxx'],1).should =~ /\$LOAD_PATH << File/
+    end
   end
 end
