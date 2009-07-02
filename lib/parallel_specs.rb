@@ -37,6 +37,14 @@ module ParallelSpecs
     all
   end
 
+  def find_results(test_output)
+    test_output.split("\n").select{|line| line =~ /\d+ examples, \d+ failures, \d+ pending/}
+  end
+
+  def failed?(results)
+    !! results.detect{|r| r=~ /[1-9] failures/}
+  end
+
   private
 
   def self.group_size(specs_with_sizes, num_groups)

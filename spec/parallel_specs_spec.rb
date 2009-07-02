@@ -82,4 +82,35 @@ describe ParallelSpecs do
       ParallelSpecs.run_tests(['xxx'],1).should =~ /\$LOAD_PATH << File/
     end
   end
+
+  describe :find_results do
+    it "finds multiple results in spec output" do
+      output = <<EOF
+....F...
+..
+failute fsddsfsd
+...
+ff.**..
+0 examples, 0 failures, 0 pending
+ff.**..
+1 examples, 1 failures, 1 pending
+EOF
+
+      ParallelSpecs.find_results(output).should == ['0 examples, 0 failures, 0 pending','1 examples, 1 failures, 1 pending']
+    end
+  end
+
+  describe :failed do
+    it "fails with single failed specs" do
+      ParallelSpecs.failed?(['0 examples, 0 failures, 0 pending','1 examples, 1 failures, 1 pending']).should == true
+    end
+
+    it "fails with multiple failed specs" do
+      ParallelSpecs.failed?(['0 examples, 1 failures, 0 pending','1 examples, 1 failures, 1 pending']).should == true
+    end
+
+    it "does not fail with successful specs" do
+      ParallelSpecs.failed?(['0 examples, 0 failures, 0 pending','1 examples, 0 failures, 1 pending']).should == false
+    end
+  end
 end

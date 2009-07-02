@@ -24,9 +24,10 @@ namespace :spec do
 
     #run each of the groups
     pids = []
+    read, write = IO.pipe
     groups.each_with_index do |files, process_number|
       pids << Process.fork do
-        ParallelSpecs.run_tests(files, process_number)
+        write.puts ParallelSpecs.run_tests(files, process_number)
       end
     end
 
@@ -40,7 +41,19 @@ namespace :spec do
     #wait for processes to finish
     pids.each { Process.wait }
 
+
+    #parse and print results
+    write.close
+    results = ParallelSpecs.find_results(read.read)
+    read.close
+    puts ""
+    puts "Results:"
+    results.each{|r| puts r}
+
     #report total time taken
     puts "Took #{Time.now - start} seconds"
+
+    #exit with correct status code
+    exit ParallelSpecs.failed?(results) ? 1 : 0
   end
 end
