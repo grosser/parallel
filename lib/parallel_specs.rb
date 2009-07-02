@@ -40,13 +40,13 @@ module ParallelSpecs
   def find_results(test_output)
     test_output.split("\n").map {|line|
       line = line.gsub(/\.|F|\*/,'')
-      next unless line =~ /\d+ examples, \d+ failures, \d+ pending/
+      next unless line =~ /\d+ example[s]?, \d+ failure[s]?, \d+ pending/
       line
     }.compact
   end
 
   def failed?(results)
-    !! results.detect{|r| r=~ /[1-9] failures/}
+    !! results.detect{|r| r=~ /[1-9] failure[s]?/}
   end
 
   private

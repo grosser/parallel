@@ -93,10 +93,10 @@ failute fsddsfsd
 ff.**..
 0 examples, 0 failures, 0 pending
 ff.**..
-1 examples, 1 failures, 1 pending
+1 example, 1 failure, 1 pending
 EOF
 
-      ParallelSpecs.find_results(output).should == ['0 examples, 0 failures, 0 pending','1 examples, 1 failures, 1 pending']
+      ParallelSpecs.find_results(output).should == ['0 examples, 0 failures, 0 pending','1 example, 1 failure, 1 pending']
     end
 
     it "is robust against scrambeled output" do
@@ -117,11 +117,11 @@ EOF
 
   describe :failed do
     it "fails with single failed specs" do
-      ParallelSpecs.failed?(['0 examples, 0 failures, 0 pending','1 examples, 1 failures, 1 pending']).should == true
+      ParallelSpecs.failed?(['0 examples, 0 failures, 0 pending','1 examples, 1 failure, 1 pending']).should == true
     end
 
     it "fails with multiple failed specs" do
-      ParallelSpecs.failed?(['0 examples, 1 failures, 0 pending','1 examples, 1 failures, 1 pending']).should == true
+      ParallelSpecs.failed?(['0 examples, 1 failure, 0 pending','1 examples, 111 failures, 1 pending']).should == true
     end
 
     it "does not fail with successful specs" do
