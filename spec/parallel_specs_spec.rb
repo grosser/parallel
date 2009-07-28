@@ -18,13 +18,13 @@ describe ParallelSpecs do
     end
 
     it "finds all specs" do
-      found = ParallelSpecs.specs_in_groups(FAKE_RAILS_ROOT, 1)
+      found = ParallelSpecs.tests_in_groups(FAKE_RAILS_ROOT, 1)
       all = [ Dir["#{FAKE_RAILS_ROOT}/spec/**/*_spec.rb"] ]
       (found.flatten - all.flatten).should == []
     end
 
     it "partitions them into groups by equal size" do
-      groups = ParallelSpecs.specs_in_groups(FAKE_RAILS_ROOT, 2)
+      groups = ParallelSpecs.tests_in_groups(FAKE_RAILS_ROOT, 2)
       groups.size.should == 2
       group0 = size_of(groups[0])
       group1 = size_of(groups[1])
@@ -33,7 +33,7 @@ describe ParallelSpecs do
     end
     
     it 'should partition correctly with a group size of 4' do
-      groups = ParallelSpecs.specs_in_groups(FAKE_RAILS_ROOT, 4)
+      groups = ParallelSpecs.tests_in_groups(FAKE_RAILS_ROOT, 4)
       groups.size.should == 4
       group_size = size_of(groups[0])
       diff = group_size * 0.1     
@@ -43,7 +43,7 @@ describe ParallelSpecs do
     end
 
     it 'should partition correctly with an uneven group size' do
-      groups = ParallelSpecs.specs_in_groups(FAKE_RAILS_ROOT, 3)
+      groups = ParallelSpecs.tests_in_groups(FAKE_RAILS_ROOT, 3)
       groups.size.should == 3
       group_size = size_of(groups[0])
       diff = group_size * 0.1

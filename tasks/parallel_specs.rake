@@ -17,7 +17,7 @@ namespace :spec do
     start = Time.now
 
     num_processes = (args[:count] || 2).to_i
-    groups = ParallelSpecs.specs_in_groups(RAILS_ROOT, num_processes)
+    groups = ParallelSpecs.tests_in_groups(RAILS_ROOT, num_processes)
 
     num_specs = groups.sum { |g| g.size }
     puts "#{num_processes} processes for #{num_specs} specs, ~ #{num_specs / num_processes} specs per process"
