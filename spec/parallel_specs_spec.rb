@@ -1,7 +1,5 @@
 require File.dirname(__FILE__) + '/spec_helper'
 
-FAKE_RAILS_ROOT = '/tmp/pspecs/fixtures'
-
 describe ParallelSpecs do
   def size_of(group)
     group.inject(0) { |sum, spec| sum += File.stat(spec).size }
