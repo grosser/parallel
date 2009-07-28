@@ -1,4 +1,5 @@
-Rake tasks to run specs in parallel, to use multiple CPUs and speedup test runtime.
+Rake tasks to run tests or specs in parallel, to use multiple CPUs and speedup test runtime.
+[more documentation and great illustrations](http://giantrobots.thoughtbot.com/2009/7/24/make-your-test-suite-uncomfortably-fast)
 
 Setup
 =====
@@ -18,11 +19,14 @@ For each environment, create the databases
 
 Run like hell :D  
 
-    rake spec:parallel:prepare[2] #db:reset for each database
+    rake parallel:prepare[2] #db:reset for each database
 
-    rake spec:parallel[1] --> 86 seconds
-    rake spec:parallel    --> 47 seconds (default = 2)
-    rake spec:parallel[4] --> 26 seconds
+    rake parallel:spec[1] --> 86 seconds
+    #OR for Test::Unit
+    rake parallel:test[1]
+
+    rake parallel:spec    --> 47 seconds (default = 2)
+    rake parallel:spec[4] --> 26 seconds
     ...
 
 Example output
@@ -38,13 +42,15 @@ Example output
 
 TIPS
 ====
+ - 'script/spec_server' or [spork](http://github.com/timcharper/spork/tree/master) do not work in parallel
  - `./script/generate rspec` if you are running rspec from gems (this plugin uses script/spec which may fail if rspec files are outdated)
- - with zsh this would be `rake "spec:parallel:prepare[3]"`
+ - with zsh this would be `rake "parallel:prepare[3]"`
 
 TODO
 ====
  - find out how many CPUs the user has [here](http://stackoverflow.com/questions/891537/ruby-detect-number-of-cpus-installed)
- - grab the 'xxx examples ..' line and display them after all tests have finished
+ - build parallel:bootstrap [idea/basics](http://github.com/garnierjm/parallel_specs/commit/dd8005a2639923dc5adc6400551c4dd4de82bf9a)
+ - make 'parallel:spec:models' work [idea/example](http://gist.github.com/157251)
 
 Authors
 ====
@@ -52,6 +58,7 @@ inspired by [pivotal labs](http://pivotallabs.com/users/miked/blog/articles/849-
 
 ###Contributors
  - [Joakim Kolsjö](http://www.rubyblocks.se) -- joakim.kolsjo<$at$>gmail.com
+ - [Jason Morrison](http://jayunit.net) -- jason.p.morrison<$at$>gmail.com
 
 [Michael Grosser](http://pragmatig.wordpress.com)  
 grosser.michael@gmail.com  

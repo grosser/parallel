@@ -38,13 +38,13 @@ class ParallelTests
   def self.find_results(test_output)
     test_output.split("\n").map {|line|
       line = line.gsub(/\.|F|\*/,'')
-      next unless line =~ /\d+ example[s]?, \d+ failure[s]?, \d+ pending/
+      next unless line =~ /\d+ failure/
       line
     }.compact
   end
 
   def self.failed?(results)
-    !! results.detect{|r| r=~ /[1-9] failure[s]?/}
+    !! results.detect{|r| r=~ /[1-9] failure/}
   end
 
   def self.test_env_number(process_number)

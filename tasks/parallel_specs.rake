@@ -1,10 +1,12 @@
 namespace :parallel do
   desc "prepare parallel test running by calling db:reset for every test database needed with parallel:prepare[num_cpus]"
   task :prepare, :count do |t,args|
+    require File.join(File.dirname(__FILE__), '..', 'lib', "parallel_tests")
+
     num_processes = (args[:count] || 2).to_i
     num_processes.times do |i|
       puts "Preparing database #{i + 1}"
-      `export TEST_ENV_NUMBER=#{i == 0 ? '' : i + 1} ; export RAILS_ENV=test ; rake db:reset`
+      `export TEST_ENV_NUMBER=#{ParallelTests.test_env_number(i)} ; export RAILS_ENV=test ; rake db:reset`
     end
   end
 
@@ -18,7 +20,6 @@ namespace :parallel do
 
       num_processes = (args[:count] || 2).to_i
       groups = klass.tests_in_groups(RAILS_ROOT, num_processes)
-      puts groups.inspect
       num_tests = groups.sum { |g| g.size }
       puts "#{num_processes} processes for #{num_tests} #{type}s, ~ #{num_tests / num_processes} #{type}s per process"
 
