@@ -72,46 +72,55 @@ describe ParallelTests do
   describe :find_results do
     it "finds multiple results in test output" do
       output = <<EOF
-....F...
-..
-failute fsddsfsd
-...
-ff.**..
-0 examples, 0 failures, 0 pending
-ff.**..
-1 example, 1 failure, 1 pending
+Loaded suite /opt/ruby-enterprise/lib/ruby/gems/1.8/gems/rake-0.8.4/lib/rake/rake_test_loader
+Started
+..............
+Finished in 0.145069 seconds.
+
+10 tests, 20 assertions, 0 failures, 0 errors
+Loaded suite /opt/ruby-enterprise/lib/ruby/gems/1.8/gems/rake-0.8.4/lib/rake/rake_test_loader
+Started
+..............
+Finished in 0.145069 seconds.
+
+14 tests, 20 assertions, 0 failures, 0 errors
+
 EOF
 
-      ParallelTests.find_results(output).should == ['0 examples, 0 failures, 0 pending','1 example, 1 failure, 1 pending']
+      ParallelTests.find_results(output).should == ['10 tests, 20 assertions, 0 failures, 0 errors','14 tests, 20 assertions, 0 failures, 0 errors']
     end
 
     it "is robust against scrambeled output" do
       output = <<EOF
-....F...
-..
-failute fsddsfsd
-...
-ff.**..
-0 exFampl*es, 0 failures, 0 pend.ing
-ff.**..
-1 exampF.les, 1 failures, 1 pend.ing
+Loaded suite /opt/ruby-enterprise/lib/ruby/gems/1.8/gems/rake-0.8.4/lib/rake/rake_test_loader
+Started
+..............
+Finished in 0.145069 seconds.
+
+10 tests, 20 assertions, 0 failures, 0 errors
+Loaded suite /opt/ruby-enterprise/lib/ruby/gems/1.8/gems/rake-0.8.4/lib/rake/rake_test_loader
+Started
+..............
+Finished in 0.145069 seconds.
+
+14 te.dsts, 20 assertions, 0 failures, 0 errors
 EOF
 
-      ParallelTests.find_results(output).should == ['0 examples, 0 failures, 0 pending','1 examples, 1 failures, 1 pending']
+      ParallelTests.find_results(output).should == ['10 tests, 20 assertions, 0 failures, 0 errors','14 tedsts, 20 assertions, 0 failures, 0 errors']
     end
   end
 
   describe :failed do
     it "fails with single failed tests" do
-      ParallelTests.failed?(['0 examples, 0 failures, 0 pending','1 examples, 1 failure, 1 pending']).should == true
+      ParallelTests.failed?(['10 tests, 20 assertions, 0 failures, 0 errors','10 tests, 20 assertions, 1 failure, 0 errors']).should == true
     end
 
     it "fails with multiple failed tests" do
-      ParallelTests.failed?(['0 examples, 1 failure, 0 pending','1 examples, 111 failures, 1 pending']).should == true
+      ParallelTests.failed?(['10 tests, 20 assertions, 2 failures, 0 errors','10 tests, 1 assertion, 1 failure, 1 errors']).should == true
     end
 
     it "does not fail with successful tests" do
-      ParallelTests.failed?(['0 examples, 0 failures, 0 pending','1 examples, 0 failures, 1 pending']).should == false
+      ParallelTests.failed?(['10 tests, 20 assertions, 0 failures, 0 errors','10 tests, 20 assertions, 0 failures, 0 errors']).should == false
     end
   end
 end
