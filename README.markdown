@@ -14,19 +14,21 @@ it is '' for process 1, and '2' for process 2.
       database: xxx_test<%= ENV['TEST_ENV_NUMBER'] %>
       username: root
 
-For each environment, create the databases
-    mysql -u root -> create database xxx_test2;
+Create the databases
+    mysql -u root
+    create database xxx_test; #should normally exist...
+    create database xxx_test2;
+    ...
 
-Run like hell :D  
+Run like hell :D
+    rake parallel:prepare[2] #db:reset for 2 databases
 
-    rake parallel:prepare[2] #db:reset for each database
-
-    rake parallel:spec[1] --> 86 seconds
+    rake parallel:spec[1] --> 1 cpu  --> 86 seconds
     #OR for Test::Unit
     rake parallel:test[1]
 
-    rake parallel:spec    --> 47 seconds (default = 2)
-    rake parallel:spec[4] --> 26 seconds
+    rake parallel:spec    --> 2 cpus --> 47 seconds
+    rake parallel:spec[4] --> 4 cpus --> 26 seconds
     ...
 
 Example output
