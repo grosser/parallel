@@ -44,7 +44,7 @@ class ParallelTests
   end
 
   def self.failed?(results)
-    !! results.detect{|r| r=~ /[1-9] failure/}
+    !! results.detect{|r| r=~ /[1-9] (failure|error)/}
   end
 
   def self.test_env_number(process_number)

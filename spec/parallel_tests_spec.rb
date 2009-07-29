@@ -111,12 +111,20 @@ EOF
   end
 
   describe :failed do
-    it "fails with single failed tests" do
+    it "fails with single failed" do
       ParallelTests.failed?(['10 tests, 20 assertions, 0 failures, 0 errors','10 tests, 20 assertions, 1 failure, 0 errors']).should == true
     end
 
+    it "fails with single error" do
+      ParallelTests.failed?(['10 tests, 20 assertions, 0 failures, 1 errors','10 tests, 20 assertions, 0 failures, 0 errors']).should == true
+    end
+
+    it "fails with failed and error" do
+      ParallelTests.failed?(['10 tests, 20 assertions, 0 failures, 1 errors','10 tests, 20 assertions, 1 failures, 1 errors']).should == true
+    end
+
     it "fails with multiple failed tests" do
-      ParallelTests.failed?(['10 tests, 20 assertions, 2 failures, 0 errors','10 tests, 1 assertion, 1 failure, 1 errors']).should == true
+      ParallelTests.failed?(['10 tests, 20 assertions, 2 failures, 0 errors','10 tests, 1 assertion, 1 failures, 0 errors']).should == true
     end
 
     it "does not fail with successful tests" do
