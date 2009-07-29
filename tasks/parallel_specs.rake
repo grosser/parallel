@@ -59,6 +59,9 @@ end
 
 
 #backwards compatability
+#spec:parallel:prepare
+#spec:parallel
+#test:parallel
 namespace :spec do
   namespace :parallel do
     task :prepare, :count do |t,args|
@@ -68,5 +71,10 @@ namespace :spec do
 
   task :parallel, :count do |t,args|
     Rake::Task['parallel:spec'].invoke(args[:count])
+  end
+end
+namespace :test do
+  task :parallel, :count do |t,args|
+    Rake::Task['parallel:test'].invoke(args[:count])
   end
 end
