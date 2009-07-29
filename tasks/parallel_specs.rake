@@ -3,11 +3,16 @@ namespace :parallel do
   task :prepare, :count do |t,args|
     require File.join(File.dirname(__FILE__), '..', 'lib', "parallel_tests")
 
+    pids = []
     num_processes = (args[:count] || 2).to_i
     num_processes.times do |i|
       puts "Preparing database #{i + 1}"
-      `export TEST_ENV_NUMBER=#{ParallelTests.test_env_number(i)} ; export RAILS_ENV=test ; rake db:reset`
+      pids << Process.fork do
+        `export TEST_ENV_NUMBER=#{ParallelTests.test_env_number(i)} ; export RAILS_ENV=test ; rake db:reset`
+      end
     end
+    
+    ParallelTests.wait_for_processes(pids)
   end
 
   %w[spec test].each do |type|
@@ -32,15 +37,7 @@ namespace :parallel do
         end
       end
 
-      #handle user interrup (Ctrl+c)
-      Signal.trap 'SIGINT' do
-        STDERR.puts "Parallel #{type}s interrupted, exiting ..."
-        pids.each { |pid| Process.kill("KILL", pid) }
-        exit 1
-      end
-
-      #wait for processes to finish
-      pids.each { Process.wait }
+      klass.wait_for_processes(pids)
 
       #parse and print results
       write.close

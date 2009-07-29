@@ -51,7 +51,22 @@ class ParallelTests
     process_number == 0 ? '' : process_number + 1
   end
 
+  #wait for processes to finish
+  def self.wait_for_processes(pids)
+    kill_on_ctrl_c(pids)
+    pids.each{Process.wait}
+  end
+
   protected
+
+  #handle user interrup (Ctrl+c)
+  def self.kill_on_ctrl_c(pids)
+    Signal.trap 'SIGINT' do
+      STDERR.puts "Parallel execution interrupted, exiting ..."
+      pids.each { |pid| Process.kill("KILL", pid) }
+      exit 1
+    end
+  end
 
   def self.group_size(tests_with_sizes, num_groups)
     total_size = tests_with_sizes.inject(0) { |sum, test| sum += test[1] }
