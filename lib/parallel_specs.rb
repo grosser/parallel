@@ -6,10 +6,10 @@ class ParallelSpecs < ParallelTests
     cmd = "export RAILS_ENV=test ; export TEST_ENV_NUMBER=#{test_env_number(process_number)} ; #{color} script/spec -O spec/spec.opts #{test_files*' '}"
     execute_command(cmd)
   end
-  
+
   protected
 
   def self.find_tests(root)
-    Dir["#{root}/spec/**/*_spec.rb"]
+    Dir["#{root}**/**/*_spec.rb"]
   end
 end

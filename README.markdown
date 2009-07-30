@@ -31,6 +31,13 @@ Run like hell :D
     rake parallel:spec[4] --> 4 cpus --> 26 seconds
     ...
 
+Just some subfolders please (e.g. set up one integration server to check each subfolder)
+    rake parallel:spec[2,models]
+    rake parallel:test[2,something/else]
+
+    partial paths are OK too...
+    rake parallel:test[2,functional] == rake parallel:test[2,fun]
+
 Example output
 --------------
     2 processes for 210 specs, ~ 105 specs per process
@@ -52,7 +59,6 @@ TODO
 ====
  - find out how many CPUs the user has [here](http://stackoverflow.com/questions/891537/ruby-detect-number-of-cpus-installed)
  - build parallel:bootstrap [idea/basics](http://github.com/garnierjm/parallel_specs/commit/dd8005a2639923dc5adc6400551c4dd4de82bf9a)
- - make 'parallel:spec:models' work [idea/example](http://gist.github.com/157251)
 
 Authors
 ====

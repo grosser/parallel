@@ -79,6 +79,6 @@ class ParallelTests
   end
 
   def self.find_tests(root)
-    Dir["#{root}/test/**/*_test.rb"]
+    Dir["#{root}**/**/*_test.rb"]
   end
 end

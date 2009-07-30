@@ -17,14 +17,14 @@ namespace :parallel do
 
   %w[spec test].each do |type|
     desc "run specs in parallel with parallel:spec[num_cpus]"
-    task type, :count do |t,args|
+    task type, :count, :path_prefix do |t,args|
       require File.join(File.dirname(__FILE__), '..', 'lib', "parallel_#{type}s")
       klass = eval("Parallel#{type.capitalize}s")
 
       start = Time.now
 
       num_processes = (args[:count] || 2).to_i
-      groups = klass.tests_in_groups(RAILS_ROOT, num_processes)
+      groups = klass.tests_in_groups(File.join(RAILS_ROOT,type,args[:path_prefix].to_s), num_processes)
       num_tests = groups.sum { |g| g.size }
       puts "#{num_processes} processes for #{num_tests} #{type}s, ~ #{num_tests / num_processes} #{type}s per process"
 
