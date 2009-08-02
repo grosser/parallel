@@ -64,6 +64,7 @@ class ParallelTests
       `hwprefs cpu_count`.to_i
     when /linux/
       `cat /proc/cpuinfo | grep processor | wc -l`.to_i
+    end
   end
   
   #handle user interrup (Ctrl+c)
