@@ -58,7 +58,7 @@ class ParallelTests
   end
 
   protected
-  def self.get_processor_number
+  def self.get_processors_number
     case RUBY_PLATFORM
     when /darwin/
       `hwprefs cpu_count`.to_i

@@ -23,7 +23,7 @@ namespace :parallel do
 
       start = Time.now
 
-      num_processes = (args[:count] || 2).to_i
+      num_processes = (args[:count] || ParallelTests.get_processors_number).to_i
       groups = klass.tests_in_groups(File.join(RAILS_ROOT,type,args[:path_prefix].to_s), num_processes)
       num_tests = groups.sum { |g| g.size }
       puts "#{num_processes} processes for #{num_tests} #{type}s, ~ #{num_tests / num_processes} #{type}s per process"
