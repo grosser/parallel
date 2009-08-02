@@ -58,7 +58,14 @@ class ParallelTests
   end
 
   protected
-
+  def self.get_processor_number
+    case RUBY_PLATFORM
+    when /darwin/
+      `hwprefs cpu_count`.to_i
+    when /linux/
+      `cat /proc/cpuinfo | grep processor | wc -l`.to_i
+  end
+  
   #handle user interrup (Ctrl+c)
   def self.kill_on_ctrl_c(pids)
     Signal.trap 'SIGINT' do
