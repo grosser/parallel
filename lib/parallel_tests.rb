@@ -57,8 +57,7 @@ class ParallelTests
     pids.each{Process.wait}
   end
 
-  protected
-  def self.get_processors_number
+  def self.processor_count
     case RUBY_PLATFORM
     when /darwin/
       `hwprefs cpu_count`.to_i
@@ -66,6 +65,8 @@ class ParallelTests
       `cat /proc/cpuinfo | grep processor | wc -l`.to_i
     end
   end
+  
+  protected
   
   #handle user interrup (Ctrl+c)
   def self.kill_on_ctrl_c(pids)

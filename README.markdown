@@ -57,8 +57,9 @@ TIPS
 
 TODO
 ====
- - find out how many CPUs the user has [here](http://stackoverflow.com/questions/891537/ruby-detect-number-of-cpus-installed)
  - build parallel:bootstrap [idea/basics](http://github.com/garnierjm/parallel_specs/commit/dd8005a2639923dc5adc6400551c4dd4de82bf9a)
+ - make jRuby compatible [basics](http://yehudakatz.com/2009/07/01/new-rails-isolation-testing/)
+ - make windows compatible (does anyone care ?)
 
 Authors
 ====
@@ -67,6 +68,7 @@ inspired by [pivotal labs](http://pivotallabs.com/users/miked/blog/articles/849-
 ###Contributors
  - [Joakim Kolsjö](http://www.rubyblocks.se) -- joakim.kolsjo<$at$>gmail.com
  - [Jason Morrison](http://jayunit.net) -- jason.p.morrison<$at$>gmail.com
+ - [Tchandy](http://thiagopradi.net/) -- tchandy<$at$>gmail.com
 
 [Michael Grosser](http://pragmatig.wordpress.com)  
 grosser.michael@gmail.com  
