@@ -69,12 +69,12 @@ namespace :spec do
     end
   end
 
-  task :parallel, :count do |t,args|
-    Rake::Task['parallel:spec'].invoke(args[:count])
+  task :parallel, :count, :path_prefix do |t,args|
+    Rake::Task['parallel:spec'].invoke(args[:count], args[:path_prefix])
   end
 end
 namespace :test do
-  task :parallel, :count do |t,args|
-    Rake::Task['parallel:test'].invoke(args[:count])
+  task :parallel, :count, :path_prefix do |t,args|
+    Rake::Task['parallel:test'].invoke(args[:count], args[:path_prefix])
   end
 end
