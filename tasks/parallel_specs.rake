@@ -65,16 +65,19 @@ end
 namespace :spec do
   namespace :parallel do
     task :prepare, :count do |t,args|
+      $stderr.puts "WARNING -- Deprecated!  use parallel:prepare"
       Rake::Task['parallel:prepare'].invoke(args[:count])
     end
   end
 
   task :parallel, :count, :path_prefix do |t,args|
+    $stderr.puts "WARNING -- Deprecated! use parallel:spec"
     Rake::Task['parallel:spec'].invoke(args[:count], args[:path_prefix])
   end
 end
 namespace :test do
   task :parallel, :count, :path_prefix do |t,args|
+    $stderr.puts "WARNING -- Deprecated! use parallel:test"
     Rake::Task['parallel:test'].invoke(args[:count], args[:path_prefix])
   end
 end
