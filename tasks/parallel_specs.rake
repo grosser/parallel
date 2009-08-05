@@ -33,7 +33,12 @@ namespace :parallel do
       read, write = IO.pipe
       groups.each_with_index do |files, process_number|
         pids << Process.fork do
-          write.puts klass.run_tests(files, process_number)
+          output = klass.run_tests(files, process_number)
+          require 'timeout'
+          begin
+            Timeout::timeout(5) { write.puts output }
+          rescue Timeout::Error
+          end
         end
       end
 
