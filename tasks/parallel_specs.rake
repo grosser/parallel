@@ -8,7 +8,7 @@ namespace :parallel do
     num_processes.times do |i|
       puts "Preparing database #{i + 1}"
       pids << Process.fork do
-        `export TEST_ENV_NUMBER=#{ParallelTests.test_env_number(i)} ; export RAILS_ENV=test ; rake db:reset`
+        `export TEST_ENV_NUMBER=#{ParallelTests.test_env_number(i)} ; rake db:test:prepare`
       end
     end
     
