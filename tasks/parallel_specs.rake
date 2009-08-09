@@ -15,18 +15,23 @@ namespace :parallel do
     ParallelTests.wait_for_processes(pids)
   end
 
-  %w[spec test].each do |type|
-    desc "run specs in parallel with parallel:spec[num_cpus]"
-    task type, :count, :path_prefix do |t,args|
-      require File.join(File.dirname(__FILE__), '..', 'lib', "parallel_#{type}s")
-      klass = eval("Parallel#{type.capitalize}s")
+  [
+    ["tests", "test", "test"],
+    ["specs", "spec", "spec"],
+    ["cucumber", "feature", "features"]
+  ].each do |lib, name, task|
+    desc "run #{name}s in parallel with parallel:#{task}[num_cpus]"
+    task task, :count, :path_prefix do |t,args|
+      require File.join(File.dirname(__FILE__), '..', 'lib', "parallel_#{lib}")
+      klass = eval("Parallel#{lib.capitalize}")
 
       start = Time.now
 
       num_processes = (args[:count] || klass.processor_count).to_i
-      groups = klass.tests_in_groups(File.join(RAILS_ROOT,type,args[:path_prefix].to_s), num_processes)
+      tests_folder = File.join(RAILS_ROOT, task, args[:path_prefix].to_s)
+      groups = klass.tests_in_groups(tests_folder, num_processes)
       num_tests = groups.sum { |g| g.size }
-      puts "#{num_processes} processes for #{num_tests} #{type}s, ~ #{num_tests / num_processes} #{type}s per process"
+      puts "#{num_processes} processes for #{num_tests} #{name}s, ~ #{num_tests / num_processes} #{name}s per process"
 
       #run each of the groups
       pids = []

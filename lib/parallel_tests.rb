@@ -27,7 +27,7 @@ class ParallelTests
   def self.execute_command(cmd)
     f = open("|#{cmd}")
     all = ''
-    while out = f.gets(".")#split by '.' because every test is a '.'
+    while out = f.gets(test_result_seperator)
       all+=out
       print out
       STDOUT.flush
@@ -38,13 +38,13 @@ class ParallelTests
   def self.find_results(test_output)
     test_output.split("\n").map {|line|
       line = line.gsub(/\.|F|\*/,'')
-      next unless line =~ /\d+ failure/
+      next unless line_is_result?(line)
       line
     }.compact
   end
 
   def self.failed?(results)
-    !! results.detect{|r| r=~ /[1-9] (failure|error)/}
+    !! results.detect{|line| line_is_failure?(line)}
   end
 
   def self.test_env_number(process_number)
@@ -67,6 +67,18 @@ class ParallelTests
   end
   
   protected
+
+  def self.test_result_seperator
+    "."
+  end
+
+  def self.line_is_result?(line)
+    line =~ /\d+ failure/
+  end
+  
+  def self.line_is_failure?(line)
+    line =~ /(\d{2,}|[1-9]) (failure|error)/
+  end
   
   #handle user interrup (Ctrl+c)
   def self.kill_on_ctrl_c(pids)
