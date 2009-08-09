@@ -1,4 +1,4 @@
-Rake tasks to run tests or specs in parallel, to use multiple CPUs and speedup test runtime.
+Rake tasks to run tests, cucmber features or specs in parallel, to use multiple CPUs and speedup test runtime.
 [more documentation and great illustrations](http://giantrobots.thoughtbot.com/2009/7/24/make-your-test-suite-uncomfortably-fast)
 
 Setup
@@ -26,6 +26,8 @@ Run like hell :D
     rake parallel:spec[1] --> 1 cpu  --> 86 seconds
     #OR for Test::Unit
     rake parallel:test[1]
+    #OR for Cucumber
+    rake parallel:features[1]
 
     rake parallel:spec    --> 2 cpus --> 47 seconds
     rake parallel:spec[4] --> 4 cpus --> 26 seconds
@@ -57,6 +59,7 @@ TIPS
 
 TODO
 ====
+ - add gem + cli interface `parallel_specs` + `parallel_tests` + `parallel_features` -> non-rails projects
  - build parallel:bootstrap [idea/basics](http://github.com/garnierjm/parallel_specs/commit/dd8005a2639923dc5adc6400551c4dd4de82bf9a)
  - make jRuby compatible [basics](http://yehudakatz.com/2009/07/01/new-rails-isolation-testing/)
  - make windows compatible (does anyone care ?)

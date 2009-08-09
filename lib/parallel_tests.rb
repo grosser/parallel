@@ -51,12 +51,6 @@ class ParallelTests
     process_number == 0 ? '' : process_number + 1
   end
 
-  #wait for processes to finish
-  def self.wait_for_processes(pids)
-    kill_on_ctrl_c(pids)
-    pids.each{Process.wait}
-  end
-
   def self.processor_count
     case RUBY_PLATFORM
     when /darwin/

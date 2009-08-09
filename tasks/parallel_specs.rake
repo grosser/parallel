@@ -31,28 +31,41 @@ namespace :parallel do
       tests_folder = File.join(RAILS_ROOT, task, args[:path_prefix].to_s)
       groups = klass.tests_in_groups(tests_folder, num_processes)
       num_tests = groups.sum { |g| g.size }
+      
       puts "#{num_processes} processes for #{num_tests} #{name}s, ~ #{num_tests / num_processes} #{name}s per process"
 
-      #run each of the groups
+      #run each of the groups in a seperate process
+      # - results are printed into a pipe
+      # - sub-processes are killed if this process is killed through Ctrl+c
       pids = []
       read, write = IO.pipe
       groups.each_with_index do |files, process_number|
         pids << Process.fork do
-          output = klass.run_tests(files, process_number)
-          require 'timeout'
-          begin
-            Timeout::timeout(5) { write.puts output }
-          rescue Timeout::Error
+          write.puts klass.run_tests(files, process_number)
+        end
+      end
+      klass.kill_on_ctrl_c(pids)
+
+      #collect results from pipe
+      # - wait for all results to show up from the pipe
+      # - we cannot use Pipe#read because pipe buffer is not big enought for large test results
+      require 'timeout'
+      output = ""
+      loop do
+        begin
+          Timeout.timeout(1){output += read.readline}
+        rescue Timeout::Error
+          all_processes_finished = (klass.find_results(output).size == num_processes)
+          if all_processes_finished
+            write.close
+            read.close
+            break
           end
         end
       end
 
-      klass.wait_for_processes(pids)
-
       #parse and print results
-      write.close
-      results = klass.find_results(read.read)
-      read.close
+      results = klass.find_results(output)
       puts ""
       puts "Results:"
       results.each{|r| puts r}
@@ -62,6 +75,7 @@ namespace :parallel do
       puts "Took #{Time.now - start} seconds"
 
       #exit with correct status code
+      # - rake parallel:test && echo 123 ==> 123 should not show up when test failed
       exit klass.failed?(results) ? 1 : 0
     end
   end
