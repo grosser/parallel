@@ -3,16 +3,11 @@ namespace :parallel do
   task :prepare, :count do |t,args|
     require File.join(File.dirname(__FILE__), '..', 'lib', "parallel_tests")
 
-    pids = []
     num_processes = (args[:count] || ParallelTests.processor_count).to_i
-    num_processes.times do |i|
+    ParallelTests.in_parallel(num_processes) do |i|
       puts "Preparing database #{i + 1}"
-      pids << Process.fork do
-        `export TEST_ENV_NUMBER=#{ParallelTests.test_env_number(i)} ; rake db:test:prepare`
-      end
+      `export TEST_ENV_NUMBER=#{ParallelTests.test_env_number(i)} ; rake db:test:prepare`
     end
-    
-    ParallelTests.wait_for_processes(pids)
   end
 
   [
