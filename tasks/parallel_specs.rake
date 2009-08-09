@@ -34,38 +34,12 @@ namespace :parallel do
       
       puts "#{num_processes} processes for #{num_tests} #{name}s, ~ #{num_tests / num_processes} #{name}s per process"
 
-      #run each of the groups in a seperate process
-      # - results are printed into a pipe
-      # - sub-processes are killed if this process is killed through Ctrl+c
-      pids = []
-      read, write = IO.pipe
-      groups.each_with_index do |files, process_number|
-        pids << Process.fork do
-          write.puts klass.run_tests(files, process_number)
-        end
-      end
-      klass.kill_on_ctrl_c(pids)
-
-      #collect results from pipe
-      # - wait for all results to show up from the pipe
-      # - we cannot use Pipe#read because pipe buffer is not big enought for large test results
-      require 'timeout'
-      output = ""
-      loop do
-        begin
-          Timeout.timeout(1){output += read.readline}
-        rescue Timeout::Error
-          all_processes_finished = (klass.find_results(output).size == num_processes)
-          if all_processes_finished
-            write.close
-            read.close
-            break
-          end
-        end
+      output = ParallelTests.in_parallel(num_processes) do |process_number|
+        klass.run_tests(groups[process_number], process_number)
       end
 
       #parse and print results
-      results = klass.find_results(output)
+      results = klass.find_results(output*"")
       puts ""
       puts "Results:"
       results.each{|r| puts r}
