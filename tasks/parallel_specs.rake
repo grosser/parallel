@@ -76,7 +76,8 @@ namespace :parallel do
 
       #exit with correct status code
       # - rake parallel:test && echo 123 ==> 123 should not show up when test failed
-      exit klass.failed?(results) ? 1 : 0
+      # - rake parallel:test db:reset ==> works when tests succeed
+      abort "#{name.capitalize}s Failed" if klass.failed?(results)
     end
   end
 end

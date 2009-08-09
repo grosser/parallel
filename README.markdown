@@ -68,9 +68,10 @@ Authors
 ====
 inspired by [pivotal labs](http://pivotallabs.com/users/miked/blog/articles/849-parallelize-your-rspec-suite)  
 
-###Contributors
- - [Joakim Kolsjö](http://www.rubyblocks.se) -- joakim.kolsjo<$at$>gmail.com
+###Contributors (alphabetical)
+ - [Charles Finkel](http://charlesfinkel.com/) -- charles.finkel<$at$>gmail.com
  - [Jason Morrison](http://jayunit.net) -- jason.p.morrison<$at$>gmail.com
+ - [Joakim Kolsjö](http://www.rubyblocks.se) -- joakim.kolsjo<$at$>gmail.com
  - [Tchandy](http://thiagopradi.net/) -- tchandy<$at$>gmail.com
 
 [Michael Grosser](http://pragmatig.wordpress.com)  
