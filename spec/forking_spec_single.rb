@@ -12,5 +12,13 @@ describe ParallelTests do
       end
       result.should == ["0:HELLO","1:HELLO","2:HELLO"]
     end
+
+    it "saves time" do
+      t = Time.now
+      ParallelTests.in_parallel(10) do |i|
+        sleep 2
+      end
+      Time.now.should be_close(t, 5)
+    end
   end
 end
