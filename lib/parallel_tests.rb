@@ -75,7 +75,7 @@ class ParallelTests
     pids = []
     count.times do |i|
       reads[i], writes[i] = IO.pipe
-      pids << Process.fork{ writes[i].print yield(i) }
+      pids << Process.fork{ Marshal.dump(yield(i), writes[i]) } #write serialized result
     end
 
     kill_on_ctrl_c(pids)
@@ -99,7 +99,7 @@ class ParallelTests
 
     collectors.each{|c|c.join}
 
-    out
+    out.map{|x| Marshal.load(x)} #deserialize
   end
 
   protected
