@@ -1,5 +1,19 @@
 class Parallel
-  def self.in_parallel(count=nil)
+  def self.in_threads(count=2)
+    out = []
+    threads = []
+
+    count.times do |i|
+      threads[i] = Thread.new do
+        out[i] = yield(i)
+      end
+    end
+
+    threads.each{|t| t.join }
+    out
+  end
+
+  def self.in_processes(count=nil)
     count ||= processor_count
 
     #start writing results into n pipes
