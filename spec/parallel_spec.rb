@@ -1,24 +1,39 @@
-#this file has to be run on its own or it messes up all the other tests...
-#spec spec/forking_spec_single.rb
-
 require File.dirname(__FILE__) + '/spec_helper'
 
 describe Parallel do
-  describe :in_parallel do
-    it "executes with parameters and returns the output" do
-      text = "HELLO"
-      result = Parallel.in_parallel(3) do |i|
-        "#{i}:#{text}"
-      end
-      result.should == ["0:HELLO","1:HELLO","2:HELLO"]
-    end
+  before do
+    @cpus = Parallel.processor_count
+  end
 
-    it "saves time" do
-      t = Time.now
-      Parallel.in_parallel(10) do |i|
-        sleep 2
+  it "executes with detected cpus" do
+    `ruby spec/cases/parallel_with_detected_cpus.rb`.should == "HELLO\n" * @cpus
+  end
+
+  it "set ammount of parallel processes" do
+    `ruby spec/cases/parallel_with_set_processes.rb`.should == "HELLO\n" * 5
+  end
+
+  it "does not influence outside data" do
+    `ruby spec/cases/parallel_influence_outside_data.rb`.should == "yes"
+  end
+
+  it "kills the processes when the main process gets killed through ctrl+c" do
+    t = Time.now
+    lambda{
+      Thread.new do
+        `ruby spec/cases/parallel_start_and_kill.rb`
       end
-      Time.now.should be_close(t, 5)
-    end
+      sleep 1
+      running_processes = `ps -f`.split("\n").map{|line| line.split(/\s+/)}
+      parent = running_processes.detect{|line| line.include?("00:00:00") and line.include?("ruby") }[1]
+      `kill -2 #{parent}` #simulates Ctrl+c
+    }.should_not change{`ps`.split("\n").size}
+    Time.now.should be_close(t, 3)
+  end
+
+  it "saves time" do
+    t = Time.now
+    `ruby spec/cases/parallel_sleeping_2.rb`
+    Time.now.should be_close(t, 3)
   end
 end
