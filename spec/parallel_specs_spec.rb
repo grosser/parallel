@@ -26,6 +26,17 @@ describe ParallelSpecs do
       ParallelSpecs.run_tests(['xxx'],1)
     end
 
+    it "runs script/spec when script/spec can be found" do
+      File.should_receive(:exist?).with('script/spec').and_return true
+      ParallelSpecs.should_receive(:open).with{|x| x =~ %r{script/spec}}.and_return mock(:gets=>false)
+      ParallelSpecs.run_tests(['xxx'],1)
+    end
+
+    it "runs spec when script/spec cannot be found" do
+      ParallelSpecs.should_receive(:open).with{|x| x !~ %r{script/spec}}.and_return mock(:gets=>false)
+      ParallelSpecs.run_tests(['xxx'],1)
+    end
+
     it "returns the output" do
       io = open('spec/spec_helper.rb')
       ParallelSpecs.stub!(:print)
