@@ -3,8 +3,7 @@ namespace :parallel do
   task :prepare, :count do |t,args|
     require File.join(File.dirname(__FILE__), '..', 'lib', "parallel_tests")
 
-    num_processes = (args[:count] || ParallelTests.processor_count).to_i
-    ParallelTests.in_parallel(num_processes) do |i|
+    ParallelTests::Parallel.in_processes(args[:count]) do |i|
       puts "Preparing database #{i + 1}"
       `export TEST_ENV_NUMBER=#{ParallelTests.test_env_number(i)} ; rake db:test:prepare`
     end
@@ -22,14 +21,14 @@ namespace :parallel do
 
       start = Time.now
 
-      num_processes = (args[:count] || klass.processor_count).to_i
+      num_processes = (args[:count] || ParallelTests::Parallel.processor_count).to_i
       tests_folder = File.join(RAILS_ROOT, task, args[:path_prefix].to_s)
       groups = klass.tests_in_groups(tests_folder, num_processes)
       num_tests = groups.sum { |g| g.size }
       
       puts "#{num_processes} processes for #{num_tests} #{name}s, ~ #{num_tests / num_processes} #{name}s per process"
 
-      output = ParallelTests.in_parallel(num_processes) do |process_number|
+      output = ParallelTests::Parallel.in_processes(num_processes) do |process_number|
         klass.run_tests(groups[process_number], process_number)
       end
 
