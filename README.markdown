@@ -12,7 +12,7 @@ Usage
  - Speedup through multiple cpus
  - Speedup for blocking operations
  - Protects global data
- - Extra emory used
+ - Extra memory used
 
 ### Threads
  - Speedup for blocking operations
@@ -20,15 +20,15 @@ Usage
  - No extra memory used
 
 Map-Reduce-Style
-    # 2 cpus -> finished after 2 runs (a,b + c)
+    # 2 Cpus -> finished after 2 runs (a,b + c)
     results = Parallel.map(['a','b','c']) do |one_letter|
       expensive_calculation(letter)
     end
 
-    # 3 processes -> finished after 1 run
+    # 3 Processes -> finished after 1 run
     results = Parallel.map(['a','b','c'], :in_processes=>3){|one_letter| ... }
 
-    # 3 threads -> finished after 1 run
+    # 3 Threads -> finished after 1 run
     results = Parallel.map(['a','b','c'], :in_threads=>3){|one_letter| ... }
 
 
