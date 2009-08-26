@@ -49,6 +49,24 @@ class Parallel
     out.map{|x| Marshal.load(x)} #deserialize
   end
 
+  def self.map(array, options={})
+    count = if options[:in_threads]
+      method = 'in_threads'
+      options[:in_threads]
+    else
+      method = 'in_processes'
+      options[:in_processes] || processor_count
+    end
+
+    results = []
+    in_groups_of(array, count).each do |group|
+      results += send(method, group.size) do |i|
+        yield group[i]
+      end
+    end
+    results
+  end
+
   def self.processor_count
     case RUBY_PLATFORM
     when /darwin/
@@ -59,6 +77,19 @@ class Parallel
   end
 
   private
+
+  def self.in_groups_of(array, count)
+    results = []
+    loop do
+      slice = array[(results.size * count)...((results.size+1) * count)]
+      if slice.nil? or slice.empty?
+        break
+      else
+        results << slice
+      end
+    end
+    results
+  end
 
   #handle user interrup (Ctrl+c)
   def self.kill_on_ctrl_c(pids)

@@ -54,4 +54,42 @@ describe Parallel do
       Parallel.in_threads(4){|i| "XXX#{i}"}.should == ["XXX0",'XXX1','XXX2','XXX3']
     end
   end
+
+  describe :map do
+    it "saves time" do
+      t = Time.now
+      `ruby spec/cases/parallel_map_sleeping.rb`
+      Time.now.should be_close(t, 3)
+    end
+
+    it "executes with given parameters" do
+      `ruby spec/cases/parallel_map.rb`.should == "-a- -b- -c- -d-"
+    end
+
+    it "does not flatten results" do
+      Parallel.map([1,2,3], :in_threads=>2){|x| [x,x]}.should == [[1,1],[2,2],[3,3]]
+    end
+
+    it "can run in threads" do
+      Parallel.map([1,2,3,4,5,6,7,8,9], :in_threads=>4){|x| x+2 }.should == [3,4,5,6,7,8,9,10,11]
+    end
+  end
+
+  describe :in_groups_of do
+    it "works for empty" do
+      Parallel.send(:in_groups_of, [], 3).should == []
+    end
+
+    it "works for smaller then count" do
+      Parallel.send(:in_groups_of, [1,2], 3).should == [[1,2]]
+    end
+
+    it "works for count" do
+      Parallel.send(:in_groups_of, [1,2,3], 3).should == [[1,2,3]]
+    end
+
+    it "works for larger than count" do
+      Parallel.send(:in_groups_of, [1,2,3,4], 3).should == [[1,2,3],[4]]
+    end
+  end
 end

@@ -8,21 +8,49 @@ Install
 
 Usage
 =====
+### Processes
+ - Speedup through multiple cpus
+ - Speedup for blocking operations
+ - Protects global data
+ - Extra emory used
 
-    #i -> 0..number_of_your_cpus
+### Threads
+ - Speedup for blocking operations
+ - Global data can be modified
+ - No extra memory used
+
+Map-Reduce-Style
+    # 2 cpus -> finished after 2 runs (a,b + c)
+    results = Parallel.map(['a','b','c']) do |one_letter|
+      expensive_calculation(letter)
+    end
+
+    # 3 processes -> finished after 1 run
+    results = Parallel.map(['a','b','c'], :in_processes=>3){|one_letter| ... }
+
+    # 3 threads -> finished after 1 run
+    results = Parallel.map(['a','b','c'], :in_threads=>3){|one_letter| ... }
+
+
+Normal
+    #i -> 0...number_of_your_cpus
     results = Parallel.in_processes do |i|
       expensive_computation(data[i])
     end
 
-    #i -> 0..4
+    #i -> 0...4
     results = Parallel.in_processes(4) do |i|
       expensive_computation(data[i])
     end
 
-    #same with threads (no speedup through multiple cpus, but speedup for blocking operations)
+    # Threads
     results = Parallel.in_threads(4) do |i|
       blocking_computation(data[i])
     end
+
+TODO
+====
+ - optimize Parallel.map by not waiting for a group to finish: start new when one process finishes
 
 Author
 ======
