@@ -1,6 +1,6 @@
 Run any kind of code in parallel Processes or Threads, to speedup computation by factor #{your_cpus} X.
 
- - child processes are killed when your main process is killed through Ctrl+c or kill -2
+ - Child processes are killed when your main process is killed through Ctrl+c or kill -2
 
 Install
 =======
@@ -9,7 +9,7 @@ Install
 Usage
 =====
 ### Processes
- - Speedup through multiple cpus
+ - Speedup through multiple CPUs
  - Speedup for blocking operations
  - Protects global data
  - Extra memory used
@@ -20,7 +20,7 @@ Usage
  - No extra memory used
 
 Map-Reduce-Style
-    # 2 Cpus -> finished after 2 runs (a,b + c)
+    # 2 CPUs -> finished after 2 runs (a,b + c)
     results = Parallel.map(['a','b','c']) do |one_letter|
       expensive_calculation(letter)
     end
