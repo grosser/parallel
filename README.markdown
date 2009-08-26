@@ -52,8 +52,12 @@ TODO
 ====
  - optimize Parallel.map by not waiting for a group to finish: start new when one process finishes
 
-Author
-======
+Authors
+=======
+
+###Contributors (alphabetical)
+ - [TJ Holowaychuk](http://vision-media.ca/) -- tj<$at$>vision-media.ca
+
 [Michael Grosser](http://pragmatig.wordpress.com)  
 grosser.michael@gmail.com  
 Hereby placed under public domain, do what you want, just do not hold me accountable...
