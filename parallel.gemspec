@@ -2,11 +2,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{parallel}
-  s.version = "0.2.0"
+  s.version = "0.3.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Michael Grosser"]
-  s.date = %q{2009-08-13}
+  s.date = %q{2009-08-26}
   s.email = %q{grosser.michael@gmail.com}
   s.extra_rdoc_files = [
     "README.markdown"
@@ -18,6 +18,8 @@ Gem::Specification.new do |s|
      "lib/parallel.rb",
      "parallel.gemspec",
      "spec/cases/parallel_influence_outside_data.rb",
+     "spec/cases/parallel_map.rb",
+     "spec/cases/parallel_map_sleeping.rb",
      "spec/cases/parallel_sleeping_2.rb",
      "spec/cases/parallel_start_and_kill.rb",
      "spec/cases/parallel_with_detected_cpus.rb",
@@ -37,7 +39,9 @@ Gem::Specification.new do |s|
      "spec/cases/parallel_start_and_kill.rb",
      "spec/cases/parallel_with_set_processes.rb",
      "spec/cases/parallel_influence_outside_data.rb",
-     "spec/cases/parallel_with_detected_cpus.rb"
+     "spec/cases/parallel_map_sleeping.rb",
+     "spec/cases/parallel_with_detected_cpus.rb",
+     "spec/cases/parallel_map.rb"
   ]
 
   if s.respond_to? :specification_version then
