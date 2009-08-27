@@ -94,7 +94,7 @@ class Parallel
   #handle user interrup (Ctrl+c)
   def self.kill_on_ctrl_c(pids)
     Signal.trap :SIGINT do
-      STDERR.puts 'Parallel execution interrupted, exiting ...'
+      $stderr.puts 'Parallel execution interrupted, exiting ...'
       pids.each { |pid| Process.kill(:KILL, pid) }
       exit 1 # Quit with 'failed' signal
     end
