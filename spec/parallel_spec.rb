@@ -37,6 +37,11 @@ describe Parallel do
       `ruby spec/cases/parallel_sleeping_2.rb`
       Time.now.should be_close(t, 3)
     end
+
+    it "raises when one of the processes raises" do
+      pending 'there is some kind of error, but not the original...'
+      `ruby spec/cases/parallel_raise.rb`.should == 'TEST'
+    end
   end
 
   describe :in_threads do
@@ -52,6 +57,10 @@ describe Parallel do
 
     it "returns results as array" do
       Parallel.in_threads(4){|i| "XXX#{i}"}.should == ["XXX0",'XXX1','XXX2','XXX3']
+    end
+
+    it "raises when a thread raises" do
+      lambda{ Parallel.in_threads(2){|i| raise "TEST"} }.should raise_error "TEST"
     end
   end
 
