@@ -3,7 +3,7 @@ namespace :parallel do
   task :prepare, :count do |t,args|
     require File.join(File.dirname(__FILE__), '..', 'lib', "parallel_tests")
 
-    ParallelTests::Parallel.in_processes(args[:count]) do |i|
+    ParallelTests::Parallel.in_processes(args[:count] ? args[:count].to_i : nil) do |i|
       puts "Preparing database #{i + 1}"
       `export TEST_ENV_NUMBER=#{ParallelTests.test_env_number(i)} ; rake db:test:prepare`
     end
