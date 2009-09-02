@@ -24,6 +24,11 @@ namespace :parallel do
       num_processes = (args[:count] || ParallelTests::Parallel.processor_count).to_i
       tests_folder = File.join(RAILS_ROOT, task, args[:path_prefix].to_s)
       groups = klass.tests_in_groups(tests_folder, num_processes)
+
+      #adjust processes to groups
+      num_processes = [groups.size, num_processes].min
+      abort "no #{name}s found!" if num_processes == 0
+
       num_tests = groups.sum { |g| g.size }
       
       puts "#{num_processes} processes for #{num_tests} #{name}s, ~ #{num_tests / num_processes} #{name}s per process"

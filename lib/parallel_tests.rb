@@ -15,7 +15,7 @@ class ParallelTests
       groups[current_group] ||= []
       groups[current_group] << test
     end
-    groups
+    groups.compact
   end
 
   def self.run_tests(test_files, process_number)
