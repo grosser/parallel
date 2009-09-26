@@ -60,7 +60,7 @@ describe Parallel do
     end
 
     it "raises when a thread raises" do
-      lambda{ Parallel.in_threads(2){|i| raise "TEST"} }.should raise_error "TEST"
+      lambda{ Parallel.in_threads(2){|i| raise "TEST"} }.should raise_error("TEST")
     end
   end
 
@@ -73,6 +73,12 @@ describe Parallel do
 
     it "executes with given parameters" do
       `ruby spec/cases/parallel_map.rb`.should == "-a- -b- -c- -d-"
+    end
+
+    it "starts new process imediatly when old exists" do
+      t = Time.now
+      `ruby spec/cases/parallel_map_uneven.rb`
+      Time.now.should be_close(t, 3)
     end
 
     it "does not flatten results" do

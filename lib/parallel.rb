@@ -50,12 +50,12 @@ class Parallel
   end
 
   def self.map(array, options = {})
-    size = if options[:in_threads]
-      method = 'in_threads'
-      options[:in_threads]
+    if options[:in_threads]
+      method = :in_threads
+      size = options[method]
     else
-      method = 'in_processes'
-      options[:in_processes] || processor_count
+      method = :in_processes
+      size = options[method] || processor_count
     end
 
     results = []
