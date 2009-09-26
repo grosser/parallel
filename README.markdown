@@ -50,7 +50,7 @@ Normal
 
 TODO
 ====
- - optimize Parallel.map by not waiting for a group to finish: start new when one process finishes
+ - JRuby / Windows support <-> possible ?
 
 Authors
 =======

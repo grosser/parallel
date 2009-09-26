@@ -50,6 +50,8 @@ class Parallel
   end
 
   def self.map(array, options = {})
+    require 'thread' # to get Thread.exclusive
+
     if options[:in_threads]
       method = :in_threads
       size = options[method]
@@ -58,12 +60,19 @@ class Parallel
       size = options[method] || processor_count
     end
 
+    # work in #{size} threads that use threads/processes
     results = []
-    in_groups_of(array, size).each do |group|
-      results += send(method, group.size) do |i|
-        yield group[i]
+    current = -1
+
+    in_threads(size) do
+      # as long as there are more items, work on one of them
+      loop do
+        index = Thread.exclusive{ current+=1 }
+        break if index >= array.size
+        results[index] = *send(method, 1){ yield array[index] }
       end
     end
+
     results
   end
 
