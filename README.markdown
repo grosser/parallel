@@ -4,7 +4,7 @@ Run any kind of code in parallel Processes or Threads, to speedup computation by
 
 Install
 =======
-    sudo gem install grosser-parallel -s http://gems.github.com/
+    sudo gem install parallel
 
 Usage
 =====
