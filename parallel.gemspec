@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Michael Grosser"]
-  s.date = %q{2009-10-04}
+  s.date = %q{2009-10-05}
   s.email = %q{grosser.michael@gmail.com}
   s.extra_rdoc_files = [
     "README.markdown"
@@ -20,6 +20,7 @@ Gem::Specification.new do |s|
      "VERSION",
      "lib/parallel.rb",
      "parallel.gemspec",
+     "rdoc/README.rdoc",
      "spec/cases/parallel_influence_outside_data.rb",
      "spec/cases/parallel_map.rb",
      "spec/cases/parallel_map_sleeping.rb",
