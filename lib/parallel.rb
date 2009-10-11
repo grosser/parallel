@@ -34,21 +34,13 @@ class Parallel
     # Collect results from pipes simultanously
     # otherwise pipes get stuck when to much is written (buffer full)
     out = []
-    collectors = []
-    count.times do |i|
-      collectors << Thread.new do
-        writes[i].close
-
-        out[i] = ''
-        while text = reads[i].gets
-          out[i] += text
-        end
-
-        reads[i].close
+    in_threads(count) do |i|
+      writes[i].close
+      while text = reads[i].gets
+        out[i] = out[i].to_s + text
       end
+      reads[i].close
     end
-
-    collectors.each{|c| c.join }
 
     out.map{|x| Marshal.load(x) } # Deserialize results
   end
