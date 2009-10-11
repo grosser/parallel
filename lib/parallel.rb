@@ -1,3 +1,5 @@
+require 'thread' # to get Thread.exclusive
+
 class Parallel
   VERSION = File.read( File.join(File.dirname(__FILE__),'..','VERSION') ).strip
 
@@ -51,9 +53,12 @@ class Parallel
     out.map{|x| Marshal.load(x) } # Deserialize results
   end
 
-  def self.map(array, options = {})
-    require 'thread' # to get Thread.exclusive
+  def self.each(array, options={}, &block)
+    map(array, options, &block)
+    array
+  end
 
+  def self.map(array, options = {})
     if options[:in_threads]
       method = :in_threads
       size = options[method]
@@ -89,6 +94,7 @@ class Parallel
 
   private
 
+  # split an array into groups of size items
   def self.in_groups_of(array, size)
     results = []
     loop do
@@ -102,7 +108,7 @@ class Parallel
     results
   end
 
-  #handle user interrup (Ctrl+c)
+  #handle user interrupt (Ctrl+c)
   def self.kill_on_ctrl_c(pids)
     Signal.trap :SIGINT do
       $stderr.puts 'Parallel execution interrupted, exiting ...'

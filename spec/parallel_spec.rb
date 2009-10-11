@@ -90,6 +90,12 @@ describe Parallel do
     end
   end
 
+  describe :each do
+    it "returns original array, works like map" do
+      `ruby spec/cases/parallel_each.rb`.should == '-b--c--d--a-a b c d'
+    end
+  end
+
   describe :in_groups_of do
     it "works for empty" do
       Parallel.send(:in_groups_of, [], 3).should == []
