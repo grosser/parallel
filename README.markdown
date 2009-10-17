@@ -1,7 +1,5 @@
-Run any kind of code in parallel Processes or Threads, to speedup computation by factor #{your_cpus} X.
-
- - Child processes are killed when your main process is killed through Ctrl+c or kill -2
- - Processes/threads are workers, they grab the next piece of work when they finish
+Run any code in parallel Processes(> use all CPUs) or Threads(> speedup blocking operations).  
+Best suited for map-reduce or e.g. parallel downloads/uploads.
 
 Install
 =======
@@ -9,18 +7,7 @@ Install
 
 Usage
 =====
-### Processes
- - Speedup through multiple CPUs
- - Speedup for blocking operations
- - Protects global data
- - Extra memory used
-
-### Threads
- - Speedup for blocking operations
- - Global data can be modified
- - No extra memory used
-
-    # 2 CPUs -> finished after 2 runs (a,b + c)
+    # 2 CPUs -> work in 2 processes (a,b + c)
     results = Parallel.map(['a','b','c']) do |one_letter|
       expensive_calculation(letter)
     end
@@ -33,6 +20,21 @@ Usage
 
 Same can be done with `each`
     Parallel.each(['a','b','c']){|one_letter| ... }
+
+### Processes
+ - Speedup through multiple CPUs
+ - Speedup for blocking operations
+ - Protects global data
+ - Extra memory used
+ - Child processes are killed when your main process is killed through Ctrl+c or kill -2
+
+### Threads
+ - Speedup for blocking operations
+ - Global data can be modified
+ - No extra memory used
+
+
+Processes/Threads are workers, they grab the next piece of work when they finish
 
 TODO
 ====
