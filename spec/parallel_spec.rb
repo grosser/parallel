@@ -42,6 +42,10 @@ describe Parallel do
       pending 'there is some kind of error, but not the original...'
       `ruby spec/cases/parallel_raise.rb`.should == 'TEST'
     end
+
+    it 'can handle to high fork rate' do
+      `ruby spec/cases/parallel_high_fork_rate.rb`.should == 'OK'
+    end
   end
 
   describe :in_threads do
@@ -87,6 +91,10 @@ describe Parallel do
 
     it "can run in threads" do
       Parallel.map([1,2,3,4,5,6,7,8,9], :in_threads=>4){|x| x+2 }.should == [3,4,5,6,7,8,9,10,11]
+    end
+
+    it 'supports ranges' do
+      `ruby spec/cases/parallel_map_range.rb`.should == '12345'
     end
   end
 

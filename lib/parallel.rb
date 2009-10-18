@@ -51,6 +51,8 @@ class Parallel
   end
 
   def self.map(array, options = {})
+    array = array.to_a if array.is_a?(Range)
+
     if options[:in_threads]
       method = :in_threads
       size = options[method]
