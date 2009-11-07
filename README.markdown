@@ -25,7 +25,7 @@ Same can be done with `each`
  - Speedup through multiple CPUs
  - Speedup for blocking operations
  - Protects global data
- - Extra memory used
+ - Extra memory used ( very low on [REE](http://www.rubyenterpriseedition.com/faq.html) through `copy_on_write_friendly` )
  - Child processes are killed when your main process is killed through Ctrl+c or kill -2
 
 ### Threads

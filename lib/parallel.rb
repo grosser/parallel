@@ -24,6 +24,8 @@ class Parallel
     pids = []
     count.times do |i|
       reads[i], writes[i] = IO.pipe
+      # activate copy on write friendly GC of REE
+      GC.copy_on_write_friendly = true if GC.respond_to?(:copy_on_write_friendly=)
       pids << Process.fork do
         Marshal.dump(yield(i), writes[i]) # Serialize result
       end
