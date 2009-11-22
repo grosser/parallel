@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Michael Grosser"]
-  s.date = %q{2009-11-07}
+  s.date = %q{2009-11-22}
   s.email = %q{grosser.michael@gmail.com}
   s.extra_rdoc_files = [
     "README.markdown"
@@ -20,7 +20,6 @@ Gem::Specification.new do |s|
      "VERSION",
      "lib/parallel.rb",
      "parallel.gemspec",
-     "rdoc/README.rdoc",
      "spec/cases/parallel_each.rb",
      "spec/cases/parallel_high_fork_rate.rb",
      "spec/cases/parallel_influence_outside_data.rb",
@@ -39,7 +38,6 @@ Gem::Specification.new do |s|
   s.homepage = %q{http://github.com/grosser/parallel}
   s.rdoc_options = ["--charset=UTF-8"]
   s.require_paths = ["lib"]
-  s.rubyforge_project = %q{parallel}
   s.rubygems_version = %q{1.3.5}
   s.summary = %q{Run any kind of code in parallel processes}
   s.test_files = [
