@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{parallel}
-  s.version = "0.3.6"
+  s.version = "0.3.7"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Michael Grosser"]
-  s.date = %q{2009-11-22}
+  s.date = %q{2009-12-19}
   s.email = %q{grosser.michael@gmail.com}
   s.extra_rdoc_files = [
     "README.markdown"
@@ -31,6 +31,7 @@ Gem::Specification.new do |s|
      "spec/cases/parallel_sleeping_2.rb",
      "spec/cases/parallel_start_and_kill.rb",
      "spec/cases/parallel_with_detected_cpus.rb",
+     "spec/cases/parallel_with_nil_uses_detected_cpus.rb",
      "spec/cases/parallel_with_set_processes.rb",
      "spec/parallel_spec.rb",
      "spec/spec_helper.rb"
@@ -42,6 +43,7 @@ Gem::Specification.new do |s|
   s.summary = %q{Run any kind of code in parallel processes}
   s.test_files = [
     "spec/spec_helper.rb",
+     "spec/cases/parallel_with_nil_uses_detected_cpus.rb",
      "spec/cases/parallel_map_uneven.rb",
      "spec/cases/parallel_map_range.rb",
      "spec/cases/parallel_with_set_processes.rb",
