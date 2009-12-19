@@ -17,7 +17,9 @@ class Parallel
     out
   end
 
-  def self.in_processes(count = processor_count)
+  def self.in_processes(count = nil)
+    count ||= processor_count
+
     # Start writing results into n pipes
     reads = []
     writes = []
