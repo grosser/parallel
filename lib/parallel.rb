@@ -3,7 +3,9 @@ require 'thread' # to get Thread.exclusive
 class Parallel
   VERSION = File.read( File.join(File.dirname(__FILE__),'..','VERSION') ).strip
 
-  def self.in_threads(count = 2)
+  def self.in_threads(options={:count => 2})
+    count, options = extract_count_from_options(options)
+
     out = []
     threads = []
 
@@ -17,8 +19,10 @@ class Parallel
     out
   end
 
-  def self.in_processes(count = nil)
+  def self.in_processes(options = {})
+    count, options = extract_count_from_options(options)
     count ||= processor_count
+    preserve_results = (options[:preserve_results] != false)
 
     # Start writing results into n pipes
     reads = []
@@ -29,7 +33,10 @@ class Parallel
       # activate copy on write friendly GC of REE
       GC.copy_on_write_friendly = true if GC.respond_to?(:copy_on_write_friendly=)
       pids << Process.fork do
-        Marshal.dump(yield(i), writes[i]) # Serialize result
+        result = yield(i)
+        if preserve_results
+          Marshal.dump(result, writes[i]) # Serialize result
+        end
       end
     end
 
@@ -46,11 +53,13 @@ class Parallel
       reads[i].close
     end
 
-    out.map{|x| Marshal.load(x) } # Deserialize results
+    if preserve_results
+      out.map{|x| Marshal.load(x) } # Deserialize results
+    end
   end
 
   def self.each(array, options={}, &block)
-    map(array, options, &block)
+    map(array, options.merge(:preserve_results => false), &block)
     array
   end
 
@@ -74,7 +83,7 @@ class Parallel
       loop do
         index = Thread.exclusive{ current+=1 }
         break if index >= array.size
-        results[index] = *send(method, 1){ yield array[index] }
+        results[index] = *send(method, options.merge(:count => 1)){ yield array[index] }
       end
     end
 
@@ -91,6 +100,16 @@ class Parallel
   end
 
   private
+
+  def self.extract_count_from_options(options)
+    if options.is_a?(Hash)
+      count = options[:count]
+    else
+      count = options
+      options = {}
+    end
+    [count, options]
+  end
 
   # split an array into groups of size items
   def self.in_groups_of(array, size)

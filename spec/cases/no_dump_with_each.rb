@@ -11,6 +11,6 @@ class NotDumpable
 end
 
 Parallel.each([NotDumpable.new]) do |x|
-  puts 'not dumpable'
+  print 'not dumpable'
   x
 end
