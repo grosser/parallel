@@ -75,8 +75,9 @@ class Parallel
   # Collect results from pipes simultanously
   # otherwise pipes get stuck when to much is written (buffer full)
   def self.read_from_pipes(reads)
-    out = Array.new(reads.size).fill('')
+    out = []
     in_threads(reads.size) do |i|
+      out[i] = ''
       while text = reads[i].gets
         out[i] += text
       end
@@ -115,6 +116,7 @@ class Parallel
     Marshal.load(something)
   end
 
+  # options is either a Interger or a Hash with :count
   def self.extract_count_from_options(options)
     if options.is_a?(Hash)
       count = options[:count]
@@ -126,6 +128,7 @@ class Parallel
   end
 
   # split an array into groups of size items
+  # (copied from ActiveSupport, to not require it)
   def self.in_groups_of(array, size)
     results = []
     loop do
@@ -139,7 +142,7 @@ class Parallel
     results
   end
 
-  #handle user interrupt (Ctrl+c)
+  # kill all these processes (children) if user presses Ctrl+c
   def self.kill_on_ctrl_c(pids)
     Signal.trap :SIGINT do
       $stderr.puts 'Parallel execution interrupted, exiting ...'
