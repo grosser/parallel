@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{parallel}
-  s.version = "0.3.7"
+  s.version = "0.4.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Michael Grosser"]
-  s.date = %q{2009-12-19}
+  s.date = %q{2010-01-17}
   s.email = %q{grosser.michael@gmail.com}
   s.extra_rdoc_files = [
     "README.markdown"
@@ -20,6 +20,7 @@ Gem::Specification.new do |s|
      "VERSION",
      "lib/parallel.rb",
      "parallel.gemspec",
+     "spec/cases/no_dump_with_each.rb",
      "spec/cases/parallel_each.rb",
      "spec/cases/parallel_high_fork_rate.rb",
      "spec/cases/parallel_influence_outside_data.rb",
@@ -47,6 +48,7 @@ Gem::Specification.new do |s|
      "spec/cases/parallel_map_uneven.rb",
      "spec/cases/parallel_map_range.rb",
      "spec/cases/parallel_with_set_processes.rb",
+     "spec/cases/no_dump_with_each.rb",
      "spec/cases/parallel_start_and_kill.rb",
      "spec/cases/parallel_raise.rb",
      "spec/cases/parallel_sleeping_2.rb",
