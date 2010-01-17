@@ -106,6 +106,10 @@ describe Parallel do
     it "returns original array, works like map" do
       `ruby spec/cases/parallel_each.rb`.should == '-b--c--d--a-a b c d'
     end
+
+    it "does not use marshal_dump" do
+      `ruby spec/cases/no_dump_with_each.rb 2>&1`.should == 'not dumpable'
+    end
   end
 
   describe :in_groups_of do
