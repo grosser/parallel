@@ -24,22 +24,9 @@ class Parallel
     count ||= processor_count
     preserve_results = (options[:preserve_results] != false)
 
-    # Start writing results into n pipes
-    reads = []
-    pids = []
-    count.times do |i|
-      reads[i], write = IO.pipe
-      pids << forked_do(i, :into => write, :preserve_results => preserve_results, &block)
-      write.close
-    end
-
-    kill_on_ctrl_c(pids)
-
-    out = read_from_pipes(reads)
-
-    if preserve_results
-      out.map{|x| deserialize(x) }
-    end
+    pipes = fork_and_start_writing(count, :preserve_results => preserve_results, &block)
+    out = read_from_pipes(pipes)
+    out.map{|x| deserialize(x) } if preserve_results
   end
 
   def self.each(array, options={}, &block)
@@ -98,17 +85,30 @@ class Parallel
     out
   end
 
-  def self.forked_do(work_item, options)
+  # fork and start writing results into n pipes
+  def self.fork_and_start_writing(count, options, &block)
+    reads = []
+    pids = []
+    count.times do |i|
+      reads[i], write = IO.pipe
+      pids << do_in_new_process(i, options.merge(:write_to => (options[:preserve_results] ? write : nil)), &block)
+      write.close
+    end
+    kill_on_ctrl_c(pids)
+    reads
+  end
+
+  def self.do_in_new_process(work_item, options)
     # activate copy on write friendly GC of REE
     GC.copy_on_write_friendly = true if GC.respond_to?(:copy_on_write_friendly=)
     Process.fork do
       result = yield(work_item)
-      serialize(result, :into => options[:into]) if options[:preserve_results]
+      serialize(result, options) if options[:write_to]
     end
   end
 
   def self.serialize(something, options)
-    Marshal.dump(something, options[:into])
+    Marshal.dump(something, options[:write_to])
   end
 
   def self.deserialize(something)
