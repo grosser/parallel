@@ -19,42 +19,26 @@ class Parallel
     out
   end
 
-  def self.in_processes(options = {})
+  def self.in_processes(options = {}, &block)
     count, options = extract_count_from_options(options)
     count ||= processor_count
     preserve_results = (options[:preserve_results] != false)
 
     # Start writing results into n pipes
     reads = []
-    writes = []
     pids = []
     count.times do |i|
-      reads[i], writes[i] = IO.pipe
-      # activate copy on write friendly GC of REE
-      GC.copy_on_write_friendly = true if GC.respond_to?(:copy_on_write_friendly=)
-      pids << Process.fork do
-        result = yield(i)
-        if preserve_results
-          Marshal.dump(result, writes[i]) # Serialize result
-        end
-      end
+      reads[i], write = IO.pipe
+      pids << forked_do(i, :into => write, :preserve_results => preserve_results, &block)
+      write.close
     end
 
     kill_on_ctrl_c(pids)
 
-    # Collect results from pipes simultanously
-    # otherwise pipes get stuck when to much is written (buffer full)
-    out = []
-    in_threads(count) do |i|
-      writes[i].close
-      while text = reads[i].gets
-        out[i] = out[i].to_s + text
-      end
-      reads[i].close
-    end
+    out = read_from_pipes(reads)
 
     if preserve_results
-      out.map{|x| Marshal.load(x) } # Deserialize results
+      out.map{|x| deserialize(x) }
     end
   end
 
@@ -100,6 +84,36 @@ class Parallel
   end
 
   private
+
+  # Collect results from pipes simultanously
+  # otherwise pipes get stuck when to much is written (buffer full)
+  def self.read_from_pipes(reads)
+    out = Array.new(reads.size).fill('')
+    in_threads(reads.size) do |i|
+      while text = reads[i].gets
+        out[i] += text
+      end
+      reads[i].close
+    end
+    out
+  end
+
+  def self.forked_do(work_item, options)
+    # activate copy on write friendly GC of REE
+    GC.copy_on_write_friendly = true if GC.respond_to?(:copy_on_write_friendly=)
+    Process.fork do
+      result = yield(work_item)
+      serialize(result, :into => options[:into]) if options[:preserve_results]
+    end
+  end
+
+  def self.serialize(something, options)
+    Marshal.dump(something, options[:into])
+  end
+
+  def self.deserialize(something)
+    Marshal.load(something)
+  end
 
   def self.extract_count_from_options(options)
     if options.is_a?(Hash)
