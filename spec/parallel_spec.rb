@@ -102,6 +102,16 @@ describe Parallel do
     end
   end
 
+  describe :map_with_index do
+    it "yields object and index" do
+      `ruby spec/cases/map_with_index.rb 2>&1`.should == 'a0b1'
+    end
+
+    it "does not crash with empty set" do
+      `ruby spec/cases/map_with_index_empty.rb 2>&1`.should == ''
+    end
+  end
+
   describe :each do
     it "returns original array, works like map" do
       `ruby spec/cases/parallel_each.rb`.should == '-b--c--d--a-a b c d'
@@ -109,6 +119,12 @@ describe Parallel do
 
     it "does not use marshal_dump" do
       `ruby spec/cases/no_dump_with_each.rb 2>&1`.should == 'not dumpable'
+    end
+  end
+
+  describe :each_with_index do
+    it "yields object and index" do
+      `ruby spec/cases/each_with_index.rb 2>&1`.should == 'a0b1'
     end
   end
 

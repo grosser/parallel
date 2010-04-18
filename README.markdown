@@ -20,6 +20,7 @@ Usage
 
 Same can be done with `each`
     Parallel.each(['a','b','c']){|one_letter| ... }
+or `each_with_index` or `map_with_index`
 
 ### Processes
  - Speedup through multiple CPUs

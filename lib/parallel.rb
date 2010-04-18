@@ -34,6 +34,10 @@ class Parallel
     array
   end
 
+  def self.each_with_index(array, options={}, &block)
+    each(array, options.merge(:with_index => true), &block)
+  end
+
   def self.map(array, options = {})
     array = array.to_a if array.is_a?(Range)
 
@@ -54,11 +58,19 @@ class Parallel
       loop do
         index = Thread.exclusive{ current+=1 }
         break if index >= array.size
-        results[index] = *send(method, options.merge(:count => 1)){ yield array[index] }
+        results[index] = *send(method, options.merge(:count => 1)) do
+          args = [array[index]]
+          args << index if options[:with_index]
+          yield *args
+        end
       end
     end
 
     results
+  end
+
+  def self.map_with_index(array, options={}, &block)
+    map(array, options.merge(:with_index => true), &block)
   end
 
   def self.processor_count
