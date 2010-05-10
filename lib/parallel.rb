@@ -24,8 +24,9 @@ class Parallel
     count ||= processor_count
     preserve_results = (options[:preserve_results] != false)
 
-    pipes = fork_and_start_writing(count, :preserve_results => preserve_results, &block)
+    pipes, pids = fork_and_start_writing(count, :preserve_results => preserve_results, &block)
     out = read_from_pipes(pipes)
+    pids.each { |pid| Process.wait(pid) }
     out.map{|x| deserialize(x) } if preserve_results
   end
 
@@ -108,7 +109,7 @@ class Parallel
       write.close
     end
     kill_on_ctrl_c(pids)
-    reads
+    [reads, pids]
   end
 
   def self.do_in_new_process(work_item, options)
