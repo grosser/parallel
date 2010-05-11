@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{parallel}
-  s.version = "0.4.1"
+  s.version = "0.4.2"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Michael Grosser"]
-  s.date = %q{2010-04-18}
+  s.date = %q{2010-05-11}
   s.email = %q{grosser.michael@gmail.com}
   s.extra_rdoc_files = [
     "README.markdown"
@@ -20,11 +20,12 @@ Gem::Specification.new do |s|
      "VERSION",
      "lib/parallel.rb",
      "parallel.gemspec",
+     "spec/cases/cloeses_processes_at_runtime.rb",
+     "spec/cases/each.rb",
      "spec/cases/each_with_index.rb",
      "spec/cases/map_with_index.rb",
      "spec/cases/map_with_index_empty.rb",
      "spec/cases/no_dump_with_each.rb",
-     "spec/cases/parallel_each.rb",
      "spec/cases/parallel_high_fork_rate.rb",
      "spec/cases/parallel_influence_outside_data.rb",
      "spec/cases/parallel_map.rb",
@@ -47,24 +48,25 @@ Gem::Specification.new do |s|
   s.summary = %q{Run any kind of code in parallel processes}
   s.test_files = [
     "spec/spec_helper.rb",
-     "spec/cases/parallel_with_nil_uses_detected_cpus.rb",
-     "spec/cases/map_with_index_empty.rb",
-     "spec/cases/parallel_map_uneven.rb",
-     "spec/cases/parallel_map_range.rb",
+     "spec/parallel_spec.rb",
+     "spec/cases/parallel_sleeping_2.rb",
+     "spec/cases/no_dump_with_each.rb",
+     "spec/cases/parallel_high_fork_rate.rb",
      "spec/cases/map_with_index.rb",
      "spec/cases/parallel_with_set_processes.rb",
-     "spec/cases/no_dump_with_each.rb",
-     "spec/cases/each_with_index.rb",
-     "spec/cases/parallel_start_and_kill.rb",
-     "spec/cases/parallel_raise.rb",
-     "spec/cases/parallel_sleeping_2.rb",
-     "spec/cases/parallel_each.rb",
-     "spec/cases/parallel_influence_outside_data.rb",
-     "spec/cases/parallel_high_fork_rate.rb",
      "spec/cases/parallel_map.rb",
-     "spec/cases/parallel_with_detected_cpus.rb",
+     "spec/cases/parallel_influence_outside_data.rb",
+     "spec/cases/parallel_start_and_kill.rb",
+     "spec/cases/parallel_map_uneven.rb",
      "spec/cases/parallel_map_sleeping.rb",
-     "spec/parallel_spec.rb"
+     "spec/cases/cloeses_processes_at_runtime.rb",
+     "spec/cases/parallel_with_detected_cpus.rb",
+     "spec/cases/each.rb",
+     "spec/cases/map_with_index_empty.rb",
+     "spec/cases/parallel_raise.rb",
+     "spec/cases/each_with_index.rb",
+     "spec/cases/parallel_with_nil_uses_detected_cpus.rb",
+     "spec/cases/parallel_map_range.rb"
   ]
 
   if s.respond_to? :specification_version then
