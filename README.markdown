@@ -45,7 +45,8 @@ Authors
 =======
 
 ###Contributors (alphabetical)
- - [TJ Holowaychuk](http://vision-media.ca/) -- tj<$at$>vision-media.ca
+ - [Przemyslaw Wroblewski](http://github.com/lowang)
+ - [TJ Holowaychuk](http://vision-media.ca/)
 
 [Michael Grosser](http://pragmatig.wordpress.com)  
 grosser.michael@gmail.com  
