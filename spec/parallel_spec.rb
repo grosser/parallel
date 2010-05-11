@@ -118,7 +118,7 @@ describe Parallel do
 
   describe :each do
     it "returns original array, works like map" do
-      `ruby spec/cases/parallel_each.rb`.should == '-b--c--d--a-a b c d'
+      `ruby spec/cases/each.rb`.should == 'a b c d'
     end
 
     it "does not use marshal_dump" do
