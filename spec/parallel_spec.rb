@@ -50,6 +50,10 @@ describe Parallel do
     it 'can handle to high fork rate' do
       `ruby spec/cases/parallel_high_fork_rate.rb`.should == 'OK'
     end
+
+    it 'it does not leave processes behind while running' do
+      `ruby spec/cases/cloeses_processes_at_runtime.rb`.should == 'OK'
+    end
   end
 
   describe :in_threads do
