@@ -80,6 +80,8 @@ class Parallel
       `hwprefs cpu_count`.to_i
     when /linux/
       `cat /proc/cpuinfo | grep processor | wc -l`.to_i
+    when /freebsd/
+      `sysctl -n hw.ncpu`.to_i
     end
   end
 
