@@ -44,9 +44,10 @@ TODO
 Authors
 =======
 
-###Contributors (alphabetical)
+###Contributors
  - [Przemyslaw Wroblewski](http://github.com/lowang)
  - [TJ Holowaychuk](http://vision-media.ca/)
+ - [Masatomo Nakano](http://twitter.com/masatomo2)
 
 [Michael Grosser](http://pragmatig.wordpress.com)  
 grosser.michael@gmail.com  
