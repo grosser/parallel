@@ -29,8 +29,9 @@ describe Parallel do
           `ruby spec/cases/parallel_start_and_kill.rb`
         end
         sleep 1
-        running_processes = `ps -f`.split("\n").map{|line| line.split(/\s+/)}
-        parent = running_processes.detect{|line| line.include?("00:00:00") and line.include?("ruby") }[1]
+        running_processes = `ps -f`.split("\n").map{ |line| line.split(/\s+/) }
+        uid_index         = running_processes.detect{ |line| line.include?("UID") }.index("UID") + 1
+        parent            = running_processes.detect{ |line| line.grep(/(0|)0:00(:|.)00/).any? and line.include?("ruby") }[uid_index]
         `kill -2 #{parent}` #simulates Ctrl+c
       }.should_not change{`ps`.split("\n").size}
       Time.now.should be_close(t, 3)
