@@ -1,6 +1,6 @@
 task :default => :spec
 require 'spec/rake/spectask'
-Spec::Rake::SpecTask.new {|t| t.spec_opts = ['--color']}
+Spec::Rake::SpecTask.new {|t| t.spec_opts = ['--color'] }
 
 begin
   require 'jeweler'
@@ -15,5 +15,5 @@ begin
 
   Jeweler::GemcutterTasks.new
 rescue LoadError
-  puts "Jeweler, or one of its dependencies, is not available. Install it with: sudo gem install technicalpickles-jeweler -s http://gems.github.com"
+  puts "Jeweler, or one of its dependencies, is not available. Install it with: gem install jeweler"
 end
