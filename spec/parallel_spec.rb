@@ -14,7 +14,7 @@ describe Parallel do
       `ruby spec/cases/parallel_with_nil_uses_detected_cpus.rb`.should == "HELLO\n" * @cpus
     end
 
-    it "set ammount of parallel processes" do
+    it "set amount of parallel processes" do
       `ruby spec/cases/parallel_with_set_processes.rb`.should == "HELLO\n" * 5
     end
 

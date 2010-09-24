@@ -1,2 +1,2 @@
-$LOAD_PATH << 'lib'
+$LOAD_PATH.unshift 'lib'
 require 'parallel'
