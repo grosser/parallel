@@ -44,10 +44,11 @@ TODO
 Authors
 =======
 
-###Contributors
+### [Contributors](http://github.com/grosser/parallel/contributors)
  - [Przemyslaw Wroblewski](http://github.com/lowang)
  - [TJ Holowaychuk](http://vision-media.ca/)
  - [Masatomo Nakano](http://twitter.com/masatomo2)
+ - [Fred Wu](http://fredwu.me)
 
 [Michael Grosser](http://pragmatig.wordpress.com)  
 grosser.michael@gmail.com  
