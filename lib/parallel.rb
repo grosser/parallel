@@ -2,6 +2,7 @@ require 'thread' # to get Thread.exclusive
 
 class Parallel
   VERSION = File.read( File.join(File.dirname(__FILE__),'..','VERSION') ).strip
+  SPLAT_BUG = *[] # fix for bug/feature http://redmine.ruby-lang.org/issues/show/2422
 
   def self.in_threads(options={:count => 2})
     count, options = extract_count_from_options(options)
@@ -67,6 +68,7 @@ class Parallel
       end
     end
 
+    results = results.flatten(1) if SPLAT_BUG 
     results
   end
 

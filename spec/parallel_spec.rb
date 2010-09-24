@@ -103,7 +103,7 @@ describe Parallel do
     end
 
     it 'supports ranges' do
-      `ruby spec/cases/parallel_map_range.rb`.should == '12345'
+      `ruby spec/cases/parallel_map_range.rb`.should == '[1, 2, 3, 4, 5]'
     end
   end
 
