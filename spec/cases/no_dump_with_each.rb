@@ -1,4 +1,4 @@
-require 'spec/spec_helper.rb'
+require File.expand_path('spec/spec_helper')
 
 class NotDumpable
   def marshal_dump

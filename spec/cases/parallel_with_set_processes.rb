@@ -1,4 +1,4 @@
-require 'spec/spec_helper.rb'
+require File.expand_path('spec/spec_helper')
 
 x = Parallel.in_processes(5) do
   "HELLO"

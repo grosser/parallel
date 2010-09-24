@@ -1,4 +1,4 @@
-require File.dirname(__FILE__) + '/spec_helper'
+require File.expand_path('spec/spec_helper')
 
 describe Parallel do
   describe :in_processes do
