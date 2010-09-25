@@ -105,6 +105,10 @@ describe Parallel do
     it 'supports ranges' do
       `ruby spec/cases/parallel_map_range.rb`.should == '[1, 2, 3, 4, 5]'
     end
+
+    it 'handles nested arrays and nil correctly' do
+      `ruby spec/cases/map_with_nested_arrays_and_nil.rb`.should == '[nil, [2, 2], [[3], [3]]]'
+    end
   end
 
   describe :map_with_index do
