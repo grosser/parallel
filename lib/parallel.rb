@@ -79,9 +79,7 @@ class Parallel
   def self.processor_count
     case RUBY_PLATFORM
     when /darwin/
-      physical_cpus = `hwprefs cpu_count`.to_i
-      hyperthreading = `hwprefs cpu_ht`.to_i == 1
-      hyperthreading ? physical_cpus * 2 : physical_cpus
+      `hwprefs thread_count`.to_i
     when /linux/
       `cat /proc/cpuinfo | grep processor | wc -l`.to_i
     when /freebsd/
