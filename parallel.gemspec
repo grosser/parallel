@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{parallel}
-  s.version = "0.4.4"
+  s.version = "0.4.5"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Michael Grosser"]
-  s.date = %q{2010-09-24}
+  s.date = %q{2010-10-06}
   s.email = %q{grosser.michael@gmail.com}
   s.files = [
     "Rakefile",
@@ -22,6 +22,7 @@ Gem::Specification.new do |s|
      "spec/cases/each_with_index.rb",
      "spec/cases/map_with_index.rb",
      "spec/cases/map_with_index_empty.rb",
+     "spec/cases/map_with_nested_arrays_and_nil.rb",
      "spec/cases/no_dump_with_each.rb",
      "spec/cases/parallel_high_fork_rate.rb",
      "spec/cases/parallel_influence_outside_data.rb",
@@ -59,6 +60,7 @@ Gem::Specification.new do |s|
      "spec/cases/cloeses_processes_at_runtime.rb",
      "spec/cases/parallel_with_detected_cpus.rb",
      "spec/cases/each.rb",
+     "spec/cases/map_with_nested_arrays_and_nil.rb",
      "spec/cases/map_with_index_empty.rb",
      "spec/cases/parallel_raise.rb",
      "spec/cases/each_with_index.rb",
