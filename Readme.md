@@ -50,6 +50,7 @@ Authors
  - [Masatomo Nakano](http://twitter.com/masatomo2)
  - [Fred Wu](http://fredwu.me)
  - [mikezter](http://github.com/mikezter)
+ - [Jeremy Durham](http://www.jeremydurham.com)
 
 [Michael Grosser](http://pragmatig.wordpress.com)  
 grosser.michael@gmail.com  
