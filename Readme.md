@@ -49,6 +49,7 @@ Authors
  - [TJ Holowaychuk](http://vision-media.ca/)
  - [Masatomo Nakano](http://twitter.com/masatomo2)
  - [Fred Wu](http://fredwu.me)
+ - [mikezter](http://github.com/mikezter)
 
 [Michael Grosser](http://pragmatig.wordpress.com)  
 grosser.michael@gmail.com  
