@@ -78,7 +78,9 @@ class Parallel
 
   def self.processor_count
     case RUBY_PLATFORM
-    when /darwin/
+    when /darwin9/
+      `hwprefs cpu_count`.to_i
+    when /darwin10/
       `hwprefs thread_count`.to_i
     when /linux/
       `cat /proc/cpuinfo | grep processor | wc -l`.to_i
