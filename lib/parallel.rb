@@ -61,10 +61,7 @@ class Parallel
         loop do
           index = Thread.exclusive{ current+=1 }
           break if index >= array.size
-
-          args = [array[index]]
-          args << index if options[:with_index]
-          results[index] = yield *args
+          results[index] = call_with_index(array, index, options, &block)
         end
       end
 
@@ -171,6 +168,12 @@ class Parallel
       exit 1 # Quit with 'failed' signal
     end
   end
+
+  def self.call_with_index(array, index, options, &block)
+    args = [array[index]]
+    args << index if options[:with_index]
+    block.call(*args)
+  end
 end
 
 
@@ -247,7 +250,7 @@ module ForkQueue
     return result
   end
 
-  def worker(items, options, &blk)
+  def worker(items, options, &block)
     child_read, parent_write = IO.pipe
     parent_read, child_write = IO.pipe
     pid = Process.fork do
@@ -257,7 +260,7 @@ module ForkQueue
         while input = child_read.gets and input != "\n"
           index = decode(input.chomp)
           begin
-            result = blk.call(items[index])
+            result = Parallel.call_with_index(items, index, options, &block)
             result = nil if options[:preserve_results] == false
           rescue Exception => ex
             result = ForkQueueExceptionWrapper.new(ex)
