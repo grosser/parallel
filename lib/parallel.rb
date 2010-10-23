@@ -234,7 +234,7 @@ module ForkQueue
             result << output
 
             next_index = Thread.exclusive do
-              if items.size <= current_index
+              if items.size > current_index
                 current_index += 1
                 current_index - 1
               else
@@ -243,11 +243,11 @@ module ForkQueue
             end
 
             if next_index
+              p[:write].write(encode(next_index)+"\n")
+            else
               p[:read].close
               p[:write].close
               break
-            else
-              p[:write].write(encode(next_index)+"\n")
             end
           end
         rescue Interrupt
