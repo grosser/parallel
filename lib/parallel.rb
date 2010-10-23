@@ -105,17 +105,14 @@ class Parallel
       listener_threads << Thread.new do
         begin
           while output = worker[:read].gets
-            # handle output from running child
+            # store output from worker
             result_index, output = decode(output.chomp)
             result[result_index] = output
 
-            # give child next item
+            # give worker next item
             next_index = Thread.exclusive{ current_index += 1 }
-            if next_index < items.size
-              write_to_pipe(worker[:write], next_index)
-            else
-              break
-            end
+            break if next_index >= items.size
+            write_to_pipe(worker[:write], next_index)
           end
         ensure
           worker[:read].close
@@ -124,21 +121,8 @@ class Parallel
       end
     end
 
-    listener_threads.each do |t|
-      begin
-        t.join
-      rescue Interrupt
-        # listener died
-      end
-    end
-
-    workers.each do |worker|
-      begin
-        Process.wait(worker[:pid])
-      rescue Interrupt
-        # child died
-      end
-    end
+    wait_for_threads(listener_threads)
+    wait_for_processes(workers.map{|worker| worker[:pid] })
 
     result
   end
@@ -176,6 +160,26 @@ class Parallel
 
   def self.write_to_pipe(pipe, item)
     pipe.write(encode(item))
+  end
+
+  def self.wait_for_threads(threads)
+    threads.each do |t|
+      begin
+        t.join
+      rescue Interrupt
+        # thread died
+      end
+    end
+  end
+
+  def self.wait_for_processes(pids)
+    pids.each do |pid|
+      begin
+        Process.wait(pid)
+      rescue Interrupt
+        # process died
+      end
+    end
   end
 
   def self.encode(obj)
