@@ -197,7 +197,7 @@ module ForkQueue
             input = items[decode(input.chomp)]
             begin
               result = blk.call(input)
-              result = nil unless options[:preserve_results]
+              result = nil if options[:preserve_results] == false
             rescue Exception => ex
               result = ForqueExceptionWrapper.new(ex)
             end
