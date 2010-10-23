@@ -136,22 +136,4 @@ describe Parallel do
       `ruby spec/cases/each_with_index.rb 2>&1`.should == 'a0b1'
     end
   end
-
-  describe :in_groups_of do
-    it "works for empty" do
-      Parallel.send(:in_groups_of, [], 3).should == []
-    end
-
-    it "works for smaller then count" do
-      Parallel.send(:in_groups_of, [1,2], 3).should == [[1,2]]
-    end
-
-    it "works for count" do
-      Parallel.send(:in_groups_of, [1,2,3], 3).should == [[1,2,3]]
-    end
-
-    it "works for larger than count" do
-      Parallel.send(:in_groups_of, [1,2,3,4], 3).should == [[1,2,3],[4]]
-    end
-  end
 end

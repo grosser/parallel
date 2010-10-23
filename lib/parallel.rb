@@ -1,4 +1,5 @@
 require 'thread' # to get Thread.exclusive
+require 'base64'
 
 class Parallel
   VERSION = File.read( File.join(File.dirname(__FILE__),'..','VERSION') ).strip
@@ -22,12 +23,7 @@ class Parallel
   def self.in_processes(options = {}, &block)
     count, options = extract_count_from_options(options)
     count ||= processor_count
-    preserve_results = (options[:preserve_results] != false)
-
-    pipes, pids = fork_and_start_writing(count, :preserve_results => preserve_results, &block)
-    out = read_from_pipes(pipes)
-    pids.each { |pid| Process.wait(pid) }
-    out.map{|x| deserialize(x) } if preserve_results
+    map(0...count, options.merge(:in_processes => count), &block)
   end
 
   def self.each(array, options={}, &block)
@@ -88,53 +84,7 @@ class Parallel
     end
   end
 
-  private
-
-  # Collect results from pipes simultanously
-  # otherwise pipes get stuck when to much is written (buffer full)
-  def self.read_from_pipes(reads)
-    out = []
-    in_threads(reads.size) do |i|
-      out[i] = ''
-      while text = reads[i].gets
-        out[i] += text
-      end
-      reads[i].close
-    end
-    out
-  end
-
-  # fork and start writing results into n pipes
-  def self.fork_and_start_writing(count, options, &block)
-    reads = []
-    pids = []
-    count.times do |i|
-      reads[i], write = IO.pipe
-      pids << do_in_new_process(i, options.merge(:write_to => (options[:preserve_results] ? write : nil)), &block)
-      write.close
-    end
-    kill_on_ctrl_c(pids)
-    [reads, pids]
-  end
-
-  def self.do_in_new_process(work_item, options)
-    # activate copy on write friendly GC of REE
-    GC.copy_on_write_friendly = true if GC.respond_to?(:copy_on_write_friendly=)
-    Process.fork do
-      result = yield(work_item)
-      serialize(result, options) if options[:write_to]
-    end
-  end
-
-  def self.serialize(something, options)
-    Marshal.dump(something, options[:write_to])
-  end
-
-  def self.deserialize(something)
-    Marshal.load(something)
-  end
-
-  # options is either a Interger or a Hash with :count
+  # options is either a Integer or a Hash with :count
   def self.extract_count_from_options(options)
     if options.is_a?(Hash)
       count = options[:count]
@@ -143,21 +93,6 @@ class Parallel
       options = {}
     end
     [count, options]
-  end
-
-  # split an array into groups of size items
-  # (copied from ActiveSupport, to not require it)
-  def self.in_groups_of(array, size)
-    results = []
-    loop do
-      slice = array[(results.size * size)...((results.size+1) * size)]
-      if slice.nil? or slice.empty?
-        break
-      else
-        results << slice
-      end
-    end
-    results
   end
 
   # kill all these processes (children) if user presses Ctrl+c
@@ -182,9 +117,6 @@ class Parallel
     end
   end
 end
-
-
-require 'base64'
 
 module ForkQueue
   module_function
