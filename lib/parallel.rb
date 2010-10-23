@@ -186,6 +186,7 @@ module ForkQueue
     children_pids = []
     children_pipes = []
 
+    # build  child workers
     [THREADS, items.size].min.times do
       child_read, parent_write = IO.pipe
       parent_read, child_write = IO.pipe
@@ -194,14 +195,14 @@ module ForkQueue
         parent_read.close
         begin
           while input = child_read.gets and input != "\n"
-            input = items[decode(input.chomp)]
+            index = decode(input.chomp)
             begin
-              result = blk.call(input)
+              result = blk.call(items[index])
               result = nil if options[:preserve_results] == false
             rescue Exception => ex
-              result = ForqueExceptionWrapper.new(ex)
+              result = ForkQueueExceptionWrapper.new(ex)
             end
-            child_write.write(encode(result)+"\n")
+            child_write.write(encode([index, result])+"\n")
           end
         rescue Interrupt
           # init forque aborted
@@ -214,25 +215,25 @@ module ForkQueue
       children_pipes << {:read => parent_read, :write => parent_write}
     end
 
+    # give every child something to work on
     children_pipes.each do |p|
       p[:write].write(encode(current_index) + "\n")
       current_index += 1
     end
 
+    # fetch results and hand out new work
     listener_threads = []
-
-    result = []
+    result = Array.new(items.size)
 
     children_pipes.each do |p|
       listener_threads << Thread.new do
         begin
           while output = p[:read].gets
-            output = decode(output.chomp)
-            if ForqueExceptionWrapper === output
-              raise output.exception
-            end
-            result << output
+            # handle output from running child
+            result_index, output = decode(output.chomp)
+            result[result_index] = output
 
+            # more work to do ?
             next_index = Thread.exclusive do
               if items.size > current_index
                 current_index += 1
@@ -242,6 +243,7 @@ module ForkQueue
               end
             end
 
+            # give child next item
             if next_index
               p[:write].write(encode(next_index)+"\n")
             else
@@ -251,7 +253,7 @@ module ForkQueue
             end
           end
         rescue Interrupt
-          # listener forque aborted
+          # listener aborted
           p[:read].close
           p[:write].close
           raise "Forque Aborted"
@@ -278,7 +280,7 @@ module ForkQueue
     return result
   end
 
-  class ForqueExceptionWrapper
+  class ForkQueueExceptionWrapper
     attr_reader :exception
     def initialize(exception)
       @exception = exception
@@ -293,7 +295,11 @@ module ForkQueue
   end
 
   def decode(str)
-    Marshal.load(Base64.decode64(str))
+    result = Marshal.load(Base64.decode64(str))
+    if ForkQueueExceptionWrapper === result
+      raise result.exception
+    end
+    result
   end
 end
 
