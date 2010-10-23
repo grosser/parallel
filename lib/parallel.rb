@@ -183,41 +183,14 @@ module ForkQueue
 
   def collect(items, options, &blk)
     current_index = 0
-    children_pids = []
-    children_pipes = []
 
-    # build  child workers
-    [THREADS, items.size].min.times do
-      child_read, parent_write = IO.pipe
-      parent_read, child_write = IO.pipe
-      children_pids << Process.fork do
-        parent_write.close
-        parent_read.close
-        begin
-          while input = child_read.gets and input != "\n"
-            index = decode(input.chomp)
-            begin
-              result = blk.call(items[index])
-              result = nil if options[:preserve_results] == false
-            rescue Exception => ex
-              result = ForkQueueExceptionWrapper.new(ex)
-            end
-            child_write.write(encode([index, result])+"\n")
-          end
-        rescue Interrupt
-          # init forque aborted
-          child_read.close
-          child_write.close
-        end
-      end
-      child_write.close
-      child_read.close
-      children_pipes << {:read => parent_read, :write => parent_write}
+    workers = Array.new([THREADS, items.size].min).map do
+      worker(items, options, &blk)
     end
 
-    # give every child something to work on
-    children_pipes.each do |p|
-      p[:write].write(encode(current_index) + "\n")
+    # give every worker something to do
+    workers.each do |child|
+      child[:write].write(encode(current_index) + "\n")
       current_index += 1
     end
 
@@ -225,10 +198,10 @@ module ForkQueue
     listener_threads = []
     result = Array.new(items.size)
 
-    children_pipes.each do |p|
+    workers.each do |worker|
       listener_threads << Thread.new do
         begin
-          while output = p[:read].gets
+          while output = worker[:read].gets
             # handle output from running child
             result_index, output = decode(output.chomp)
             result[result_index] = output
@@ -245,18 +218,14 @@ module ForkQueue
 
             # give child next item
             if next_index
-              p[:write].write(encode(next_index)+"\n")
+              worker[:write].write(encode(next_index)+"\n")
             else
-              p[:read].close
-              p[:write].close
               break
             end
           end
-        rescue Interrupt
-          # listener aborted
-          p[:read].close
-          p[:write].close
-          raise "Forque Aborted"
+        ensure
+          worker[:read].close
+          worker[:write].close
         end
       end
     end
@@ -269,15 +238,44 @@ module ForkQueue
       end
     end
 
-    children_pids.each do |p|
+    workers.each do |worker|
       begin
-        Process.wait(p)
+        Process.wait(worker[:pid])
       rescue Interrupt
         # child died
       end
     end
 
     return result
+  end
+
+  def worker(items, options, &blk)
+    child_read, parent_write = IO.pipe
+    parent_read, child_write = IO.pipe
+    pid = Process.fork do
+      parent_write.close
+      parent_read.close
+      begin
+        while input = child_read.gets and input != "\n"
+          index = decode(input.chomp)
+          begin
+            result = blk.call(items[index])
+            result = nil if options[:preserve_results] == false
+          rescue Exception => ex
+            result = ForkQueueExceptionWrapper.new(ex)
+          end
+          child_write.write(encode([index, result])+"\n")
+        end
+      rescue Interrupt
+        # init forque aborted
+        child_read.close
+        child_write.close
+      end
+    end
+    child_write.close
+    child_read.close
+
+    {:read => parent_read, :write => parent_write, :pid => pid}
   end
 
   class ForkQueueExceptionWrapper
