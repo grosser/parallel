@@ -174,6 +174,13 @@ class Parallel
     args << index if options[:with_index]
     block.call(*args)
   end
+
+  class ExceptionWrapper
+    attr_reader :exception
+    def initialize(exception)
+      @exception = exception
+    end
+  end
 end
 
 
@@ -191,7 +198,7 @@ module ForkQueue
 
     # give every worker something to do
     workers.each do |child|
-      child[:write].write(encode(current_index) + "\n")
+      child[:write].write(encode(current_index))
       current_index += 1
     end
 
@@ -219,7 +226,7 @@ module ForkQueue
 
             # give child next item
             if next_index
-              worker[:write].write(encode(next_index)+"\n")
+              worker[:write].write(encode(next_index))
             else
               break
             end
@@ -253,46 +260,40 @@ module ForkQueue
   def worker(items, options, &block)
     child_read, parent_write = IO.pipe
     parent_read, child_write = IO.pipe
+
     pid = Process.fork do
       parent_write.close
       parent_read.close
+
       begin
         while input = child_read.gets and input != "\n"
           index = decode(input.chomp)
           begin
             result = Parallel.call_with_index(items, index, options, &block)
             result = nil if options[:preserve_results] == false
-          rescue Exception => ex
-            result = ForkQueueExceptionWrapper.new(ex)
+          rescue Exception => e
+            result = Parallel::ExceptionWrapper.new(e)
           end
-          child_write.write(encode([index, result])+"\n")
+          child_write.write(encode([index, result]))
         end
       rescue Interrupt
-        # init forque aborted
         child_read.close
         child_write.close
       end
     end
-    child_write.close
     child_read.close
+    child_write.close
 
     {:read => parent_read, :write => parent_write, :pid => pid}
   end
 
-  class ForkQueueExceptionWrapper
-    attr_reader :exception
-    def initialize(exception)
-      @exception = exception
-    end
-  end
-
   def encode(obj)
-    Base64.encode64(Marshal.dump(obj)).split("\n").join
+    Base64.encode64(Marshal.dump(obj)).split("\n").join + "\n"
   end
 
   def decode(str)
     result = Marshal.load(Base64.decode64(str))
-    if ForkQueueExceptionWrapper === result
+    if Parallel::ExceptionWrapper === result
       raise result.exception
     end
     result
