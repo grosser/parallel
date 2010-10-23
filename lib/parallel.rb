@@ -233,13 +233,21 @@ module ForkQueue
             end
             result << output
 
-            if items.size <= current_index
+            next_index = Thread.exclusive do
+              if items.size <= current_index
+                current_index += 1
+                current_index - 1
+              else
+                nil
+              end
+            end
+
+            if next_index
               p[:read].close
               p[:write].close
               break
             else
-              p[:write].write(encode(current_index)+"\n")
-              current_index += 1
+              p[:write].write(encode(next_index)+"\n")
             end
           end
         rescue Interrupt
