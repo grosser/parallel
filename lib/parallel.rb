@@ -63,7 +63,7 @@ class Parallel
 
       results
     else
-      ForkQueue.collect(array, options.merge(:count => size), &block)
+      work_in_processes(array, options.merge(:count => size), &block)
     end
   end
 
@@ -84,44 +84,9 @@ class Parallel
     end
   end
 
-  # options is either a Integer or a Hash with :count
-  def self.extract_count_from_options(options)
-    if options.is_a?(Hash)
-      count = options[:count]
-    else
-      count = options
-      options = {}
-    end
-    [count, options]
-  end
+  private
 
-  # kill all these processes (children) if user presses Ctrl+c
-  def self.kill_on_ctrl_c(pids)
-    Signal.trap :SIGINT do
-      $stderr.puts 'Parallel execution interrupted, exiting ...'
-      pids.each { |pid| Process.kill(:KILL, pid) }
-      exit 1 # Quit with 'failed' signal
-    end
-  end
-
-  def self.call_with_index(array, index, options, &block)
-    args = [array[index]]
-    args << index if options[:with_index]
-    block.call(*args)
-  end
-
-  class ExceptionWrapper
-    attr_reader :exception
-    def initialize(exception)
-      @exception = exception
-    end
-  end
-end
-
-module ForkQueue
-  module_function
-
-  def collect(items, options, &blk)
+  def self.work_in_processes(items, options, &blk)
     current_index = 0
 
     workers = Array.new([options[:count], items.size].min).map do
@@ -191,7 +156,7 @@ module ForkQueue
     result
   end
 
-  def worker(items, options, &block)
+  def self.worker(items, options, &block)
     child_read, parent_write = IO.pipe
     parent_read, child_write = IO.pipe
 
@@ -206,7 +171,7 @@ module ForkQueue
             result = Parallel.call_with_index(items, index, options, &block)
             result = nil if options[:preserve_results] == false
           rescue Exception => e
-            result = Parallel::ExceptionWrapper.new(e)
+            result = ExceptionWrapper.new(e)
           end
           child_write.write(encode([index, result]))
         end
@@ -221,16 +186,48 @@ module ForkQueue
     {:read => parent_read, :write => parent_write, :pid => pid}
   end
 
-  def encode(obj)
+  def self.encode(obj)
     Base64.encode64(Marshal.dump(obj)).split("\n").join + "\n"
   end
 
-  def decode(str)
+  def self.decode(str)
     result = Marshal.load(Base64.decode64(str))
-    if Parallel::ExceptionWrapper === result
+    if ExceptionWrapper === result
       raise result.exception
     end
     result
   end
-end
 
+  # options is either a Integer or a Hash with :count
+  def self.extract_count_from_options(options)
+    if options.is_a?(Hash)
+      count = options[:count]
+    else
+      count = options
+      options = {}
+    end
+    [count, options]
+  end
+
+  # kill all these processes (children) if user presses Ctrl+c
+  def self.kill_on_ctrl_c(pids)
+    Signal.trap :SIGINT do
+      $stderr.puts 'Parallel execution interrupted, exiting ...'
+      pids.each { |pid| Process.kill(:KILL, pid) }
+      exit 1 # Quit with 'failed' signal
+    end
+  end
+
+  def self.call_with_index(array, index, options, &block)
+    args = [array[index]]
+    args << index if options[:with_index]
+    block.call(*args)
+  end
+
+  class ExceptionWrapper
+    attr_reader :exception
+    def initialize(exception)
+      @exception = exception
+    end
+  end
+end
