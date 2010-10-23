@@ -2,7 +2,6 @@ require 'thread' # to get Thread.exclusive
 
 class Parallel
   VERSION = File.read( File.join(File.dirname(__FILE__),'..','VERSION') ).strip
-  SPLAT_BUG = *[] # fix for bug/feature http://redmine.ruby-lang.org/issues/show/2422
 
   def self.in_threads(options={:count => 2})
     count, options = extract_count_from_options(options)
@@ -69,10 +68,9 @@ class Parallel
         end
       end
 
-      results = results.flatten(1) if SPLAT_BUG
       results
     else
-      ForkQueue.collect(array, options, &block)
+      ForkQueue.collect(array, options.merge(:count => size), &block)
     end
   end
 
@@ -184,7 +182,7 @@ module ForkQueue
   def collect(items, options, &blk)
     current_index = 0
 
-    workers = Array.new([THREADS, items.size].min).map do
+    workers = Array.new([options[:count], items.size].min).map do
       worker(items, options, &blk)
     end
 
@@ -284,9 +282,6 @@ module ForkQueue
       @exception = exception
     end
   end
-
-  # detect system
-  THREADS = Parallel.processor_count
 
   def encode(obj)
     Base64.encode64(Marshal.dump(obj)).split("\n").join
