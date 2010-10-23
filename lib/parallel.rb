@@ -128,6 +128,8 @@ module ForkQueue
       worker(items, options, &blk)
     end
 
+    Parallel.kill_on_ctrl_c(workers.map{|worker| worker[:pid] })
+
     # give every worker something to do
     workers.each do |child|
       child[:write].write(encode(current_index))
@@ -186,7 +188,7 @@ module ForkQueue
       end
     end
 
-    return result
+    result
   end
 
   def worker(items, options, &block)
