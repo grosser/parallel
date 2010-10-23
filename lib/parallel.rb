@@ -72,7 +72,7 @@ class Parallel
       results = results.flatten(1) if SPLAT_BUG
       results
     else
-      ForkQueue.new(array).collect(options,&block)
+      ForkQueue.collect(array, options, &block)
     end
   end
 
@@ -178,15 +178,13 @@ end
 
 require 'base64'
 
-class ForkQueue
-  def initialize(*items)
-    @items = Array(items)
-  end
+module ForkQueue
+  module_function
 
-  def collect(options, &blk)
+  def collect(items, options, &blk)
     children_pids = []
     children_pipes = []
-    [THREADS, @items.size].min.times do
+    [THREADS, items.size].min.times do
       child_read, parent_write = IO.pipe
       parent_read, child_write = IO.pipe
       children_pids << Process.fork do
@@ -214,10 +212,10 @@ class ForkQueue
       children_pipes << {:read => parent_read, :write => parent_write}
     end
 
-    items_to_send = @items.dup
+    items = items.dup
 
     children_pipes.each do |p|
-      p[:write].write(encode(items_to_send.pop) + "\n")
+      p[:write].write(encode(items.pop) + "\n")
     end
 
     listener_threads = []
@@ -233,12 +231,12 @@ class ForkQueue
               raise input.exception
             end
             result << input
-            if items_to_send.empty?
+            if items.empty?
               p[:read].close
               p[:write].close
               break
             else
-              p[:write].write(encode(items_to_send.pop)+"\n")
+              p[:write].write(encode(items.pop)+"\n")
             end
           end
         rescue Interrupt
@@ -275,8 +273,6 @@ class ForkQueue
       @exception = exception
     end
   end
-
-  private
 
   # detect system
   THREADS = Parallel.processor_count
