@@ -182,8 +182,10 @@ module ForkQueue
   module_function
 
   def collect(items, options, &blk)
+    current_index = 0
     children_pids = []
     children_pipes = []
+
     [THREADS, items.size].min.times do
       child_read, parent_write = IO.pipe
       parent_read, child_write = IO.pipe
@@ -192,7 +194,7 @@ module ForkQueue
         parent_read.close
         begin
           while input = child_read.gets and input != "\n"
-            input = decode(input.chomp)
+            input = items[decode(input.chomp)]
             begin
               result = blk.call(input)
               result = nil unless options[:preserve_results]
@@ -212,10 +214,9 @@ module ForkQueue
       children_pipes << {:read => parent_read, :write => parent_write}
     end
 
-    items = items.dup
-
     children_pipes.each do |p|
-      p[:write].write(encode(items.pop) + "\n")
+      p[:write].write(encode(current_index) + "\n")
+      current_index += 1
     end
 
     listener_threads = []
@@ -225,18 +226,20 @@ module ForkQueue
     children_pipes.each do |p|
       listener_threads << Thread.new do
         begin
-          while input = p[:read].gets
-            input = decode(input.chomp)
-            if ForqueExceptionWrapper === input
-              raise input.exception
+          while output = p[:read].gets
+            output = decode(output.chomp)
+            if ForqueExceptionWrapper === output
+              raise output.exception
             end
-            result << input
-            if items.empty?
+            result << output
+
+            if items.size <= current_index
               p[:read].close
               p[:write].close
               break
             else
-              p[:write].write(encode(items.pop)+"\n")
+              p[:write].write(encode(current_index)+"\n")
+              current_index += 1
             end
           end
         rescue Interrupt

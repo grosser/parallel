@@ -127,7 +127,7 @@ describe Parallel do
     end
 
     it "does not use marshal_dump" do
-      `ruby spec/cases/no_dump_with_each.rb 2>&1`.should == 'not dumpable'
+      `ruby spec/cases/no_dump_with_each.rb 2>&1`.should == 'no dump for resultno dump for each'
     end
   end
 

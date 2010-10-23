@@ -15,7 +15,7 @@ Parallel.each([1]) do
   NotDumpable.new
 end
 
-#Parallel.each([NotDumpable.new]) do
-#  print 'no dump for each'
-#  1
-#end
+Parallel.each([NotDumpable.new]) do
+  print 'no dump for each'
+  1
+end
