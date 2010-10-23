@@ -10,7 +10,12 @@ class NotDumpable
   end
 end
 
-Parallel.each([NotDumpable.new]) do |x|
-  print 'not dumpable'
-  x
+Parallel.each([1]) do
+  print 'no dump for result'
+  NotDumpable.new
 end
+
+#Parallel.each([NotDumpable.new]) do
+#  print 'no dump for each'
+#  1
+#end
