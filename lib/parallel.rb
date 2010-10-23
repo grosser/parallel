@@ -87,18 +87,14 @@ class Parallel
   private
 
   def self.work_in_processes(items, options, &blk)
-    current_index = 0
-
-    workers = Array.new([options[:count], items.size].min).map do
-      worker(items, options, &blk)
-    end
-
+    workers = Array.new(options[:count]).map{ worker(items, options, &blk) }
     Parallel.kill_on_ctrl_c(workers.map{|worker| worker[:pid] })
 
+    current_index = -1
+
     # give every worker something to do
-    workers.each do |child|
-      child[:write].write(encode(current_index))
-      current_index += 1
+    workers.each do |worker|
+      write_to_pipe(worker[:write], current_index += 1)
     end
 
     # fetch results and hand out new work
@@ -113,19 +109,10 @@ class Parallel
             result_index, output = decode(output.chomp)
             result[result_index] = output
 
-            # more work to do ?
-            next_index = Thread.exclusive do
-              if items.size > current_index
-                current_index += 1
-                current_index - 1
-              else
-                nil
-              end
-            end
-
             # give child next item
-            if next_index
-              worker[:write].write(encode(next_index))
+            next_index = Thread.exclusive{ current_index += 1 }
+            if next_index < items.size
+              write_to_pipe(worker[:write], next_index)
             else
               break
             end
@@ -173,17 +160,22 @@ class Parallel
           rescue Exception => e
             result = ExceptionWrapper.new(e)
           end
-          child_write.write(encode([index, result]))
+          write_to_pipe(child_write, [index, result])
         end
       rescue Interrupt
         child_read.close
         child_write.close
       end
     end
+
     child_read.close
     child_write.close
 
     {:read => parent_read, :write => parent_write, :pid => pid}
+  end
+
+  def self.write_to_pipe(pipe, item)
+    pipe.write(encode(item))
   end
 
   def self.encode(obj)
