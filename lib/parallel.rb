@@ -50,26 +50,48 @@ class Parallel
       method = :in_processes
       size = options[method] || processor_count
     end
+    size = [array.size, size].min
 
-    # work in #{size} threads that use threads/processes
-    results = []
-    current = -1
+    if method == :in_threads
+      # work in #{size} threads that use threads/processes
+      results = []
+      current = -1
 
-    in_threads(size) do
-      # as long as there are more items, work on one of them
-      loop do
-        index = Thread.exclusive{ current+=1 }
-        break if index >= array.size
-        results[index] = *send(method, options.merge(:count => 1)) do
+      in_threads(size) do
+        # as long as there are more items, work on one of them
+        loop do
+          index = Thread.exclusive{ current+=1 }
+          break if index >= array.size
+
           args = [array[index]]
           args << index if options[:with_index]
-          yield *args
+          results[index] = yield *args
         end
       end
-    end
 
-    results = results.flatten(1) if SPLAT_BUG 
-    results
+      results = results.flatten(1) if SPLAT_BUG
+      results
+    else
+      # work in #{size} threads that use threads/processes
+      results = []
+      current = -1
+
+      in_threads(size) do
+        # as long as there are more items, work on one of them
+        loop do
+          index = Thread.exclusive{ current+=1 }
+          break if index >= array.size
+          results[index] = *send(method, options.merge(:count => 1)) do
+            args = [array[index]]
+            args << index if options[:with_index]
+            yield *args
+          end
+        end
+      end
+
+      results = results.flatten(1) if SPLAT_BUG
+      results
+    end
   end
 
   def self.map_with_index(array, options={}, &block)
