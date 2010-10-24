@@ -131,6 +131,9 @@ class Parallel
   end
 
   def self.worker(items, options, &block)
+    # use less memory on REE
+    GC.copy_on_write_friendly = true if GC.respond_to?(:copy_on_write_friendly=)
+
     child_read, parent_write = IO.pipe
     parent_read, child_write = IO.pipe
 
