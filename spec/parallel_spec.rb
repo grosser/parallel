@@ -53,7 +53,7 @@ describe Parallel do
     end
 
     it 'it does not leave processes behind while running' do
-      `ruby spec/cases/cloeses_processes_at_runtime.rb`.should == 'OK'
+      `ruby spec/cases/closes_processes_at_runtime.rb`.should == 'OK'
     end
   end
 
