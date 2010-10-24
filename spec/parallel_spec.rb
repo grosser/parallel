@@ -45,8 +45,7 @@ describe Parallel do
     end
 
     it "raises when one of the processes raises" do
-      pending 'there is some kind of error, but not the original...'
-      `ruby spec/cases/parallel_raise.rb`.should == 'TEST'
+      `ruby spec/cases/parallel_raise.rb`.strip.should == 'TEST'
     end
 
     it 'can handle to high fork rate' do

@@ -107,6 +107,7 @@ class Parallel
           while output = worker[:read].gets
             # store output from worker
             result_index, output = decode(output.chomp)
+            raise output.exception if ExceptionWrapper === output
             result[result_index] = output
 
             # give worker next item
@@ -189,11 +190,7 @@ class Parallel
   end
 
   def self.decode(str)
-    result = Marshal.load(Base64.decode64(str))
-    if ExceptionWrapper === result
-      raise result.exception
-    end
-    result
+    Marshal.load(Base64.decode64(str))
   end
 
   # options is either a Integer or a Hash with :count
