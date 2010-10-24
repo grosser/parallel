@@ -122,6 +122,8 @@ class Parallel
     end
 
     wait_for_threads(listener_threads)
+
+    # if they go zombie, rather wait here to be able to debug
     wait_for_processes(workers.map{|worker| worker[:pid] })
 
     result
@@ -167,7 +169,7 @@ class Parallel
       begin
         t.join
       rescue Interrupt
-        # thread died
+        # thread died, do not stop other threads
       end
     end
   end
