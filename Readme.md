@@ -51,6 +51,7 @@ Authors
  - [Fred Wu](http://fredwu.me)
  - [mikezter](http://github.com/mikezter)
  - [Jeremy Durham](http://www.jeremydurham.com)
+ - [Nick Gauthier](http://www.ngauthier.com)
 
 [Michael Grosser](http://pragmatig.wordpress.com)  
 grosser.michael@gmail.com  
