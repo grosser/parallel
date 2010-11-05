@@ -53,6 +53,6 @@ Authors
  - [Jeremy Durham](http://www.jeremydurham.com)
  - [Nick Gauthier](http://www.ngauthier.com)
 
-[Michael Grosser](http://pragmatig.wordpress.com)  
+[Michael Grosser](http://grosser.it)  
 grosser.michael@gmail.com  
 Hereby placed under public domain, do what you want, just do not hold me accountable...
