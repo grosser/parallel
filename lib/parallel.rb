@@ -16,7 +16,8 @@ class Parallel
       end
     end
 
-    threads.each{|t| t.join }
+    wait_for_threads(threads)
+
     out
   end
 
@@ -48,20 +49,7 @@ class Parallel
     size = [array.size, size].min
 
     if method == :in_threads
-      # work in #{size} threads that use threads/processes
-      results = []
-      current = -1
-
-      in_threads(size) do
-        # as long as there are more items, work on one of them
-        loop do
-          index = Thread.exclusive{ current+=1 }
-          break if index >= array.size
-          results[index] = call_with_index(array, index, options, &block)
-        end
-      end
-
-      results
+      work_in_threads(array, options.merge(:count => size), &block)
     else
       work_in_processes(array, options.merge(:count => size), &block)
     end
@@ -85,6 +73,33 @@ class Parallel
   end
 
   private
+
+  def self.work_in_threads(items, options, &block)
+    results = []
+    current = -1
+    exception = nil
+
+    in_threads(options[:count]) do
+      # as long as there are more items, work on one of them
+      loop do
+        break if exception
+
+        index = Thread.exclusive{ current+=1 }
+        break if index >= items.size
+
+        begin
+          results[index] = call_with_index(items, index, options, &block)
+        rescue Exception => e
+          exception = e
+          break
+        end
+      end
+    end
+
+    raise exception if exception
+
+    results
+  end
 
   def self.work_in_processes(items, options, &blk)
     workers = Array.new(options[:count]).map{ worker(items, options, &blk) }
@@ -182,7 +197,7 @@ class Parallel
   end
 
   def self.wait_for_threads(threads)
-    threads.each do |t|
+    threads.compact.each do |t|
       begin
         t.join
       rescue Interrupt
