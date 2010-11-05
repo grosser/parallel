@@ -142,7 +142,7 @@ class Parallel
         parent_write.close
         parent_read.close
 
-        process_incoming_jobs(child_read, child_write, options, &block)
+        process_incoming_jobs(child_read, child_write, items, options, &block)
       ensure
         child_read.close
         child_write.close
@@ -155,7 +155,7 @@ class Parallel
     {:read => parent_read, :write => parent_write, :pid => pid}
   end
 
-  def self.process_incoming_jobs(read, write, options, &block)
+  def self.process_incoming_jobs(read, write, items, options, &block)
     while input = read.gets and input != "\n"
       index = decode(input.chomp)
       begin

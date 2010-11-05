@@ -6,12 +6,11 @@ end
 
 begin
   require 'jeweler'
-  project_name = 'parallel'
   Jeweler::Tasks.new do |gem|
-    gem.name = project_name
+    gem.name = 'parallel'
     gem.summary = "Run any kind of code in parallel processes"
     gem.email = "grosser.michael@gmail.com"
-    gem.homepage = "http://github.com/grosser/#{project_name}"
+    gem.homepage = "http://github.com/grosser/#{gem.name}"
     gem.authors = ["Michael Grosser"]
   end
 
