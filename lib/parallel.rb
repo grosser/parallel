@@ -100,6 +100,7 @@ class Parallel
     # fetch results and hand out new work
     listener_threads = []
     result = Array.new(items.size)
+    exception = nil
 
     workers.each do |worker|
       listener_threads << Thread.new do
@@ -107,7 +108,13 @@ class Parallel
           while output = worker[:read].gets
             # store output from worker
             result_index, output = decode(output.chomp)
-            raise output.exception if ExceptionWrapper === output
+            if ExceptionWrapper === output
+              exception = output.exception
+              break
+            elsif exception # some other thread failed
+              break
+            end
+
             result[result_index] = output
 
             # give worker next item
@@ -126,6 +133,8 @@ class Parallel
 
     # if they go zombie, rather wait here to be able to debug
     wait_for_processes(workers.map{|worker| worker[:pid] })
+
+    raise exception if exception
 
     result
   end
@@ -159,7 +168,7 @@ class Parallel
     while input = read.gets and input != "\n"
       index = decode(input.chomp)
       begin
-        result = Parallel.call_with_index(items, index, options, &block)
+        result = call_with_index(items, index, options, &block)
         result = nil if options[:preserve_results] == false
       rescue Exception => e
         result = ExceptionWrapper.new(e)

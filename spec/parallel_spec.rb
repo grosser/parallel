@@ -2,16 +2,16 @@ require File.expand_path('spec/spec_helper')
 
 describe Parallel do
   describe :in_processes do
-    before do
-      @cpus = Parallel.processor_count
+    def cpus
+      Parallel.processor_count
     end
 
     it "executes with detected cpus" do
-      `ruby spec/cases/parallel_with_detected_cpus.rb`.should == "HELLO\n" * @cpus
+      `ruby spec/cases/parallel_with_detected_cpus.rb`.should == "HELLO\n" * cpus
     end
 
     it "executes with detected cpus when nil was given" do
-      `ruby spec/cases/parallel_with_nil_uses_detected_cpus.rb`.should == "HELLO\n" * @cpus
+      `ruby spec/cases/parallel_with_nil_uses_detected_cpus.rb`.should == "HELLO\n" * cpus
     end
 
     it "set amount of parallel processes" do
@@ -52,7 +52,7 @@ describe Parallel do
       `ruby spec/cases/parallel_high_fork_rate.rb`.should == 'OK'
     end
 
-    it 'it does not leave processes behind while running' do
+    it 'does not leave processes behind while running' do
       `ruby spec/cases/closes_processes_at_runtime.rb`.should == 'OK'
     end
   end
@@ -108,6 +108,10 @@ describe Parallel do
 
     it 'handles nested arrays and nil correctly' do
       `ruby spec/cases/map_with_nested_arrays_and_nil.rb`.should == '[nil, [2, 2], [[3], [3]]]'
+    end
+
+    it 'joins all workers, when one fails' do
+      `ruby spec/cases/exceptions_join_threads.rb 2>&1`.should =~ /^\d{4} all joined raised$/
     end
   end
 
