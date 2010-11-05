@@ -138,21 +138,12 @@ class Parallel
     parent_read, child_write = IO.pipe
 
     pid = Process.fork do
-      parent_write.close
-      parent_read.close
-
       begin
-        while input = child_read.gets and input != "\n"
-          index = decode(input.chomp)
-          begin
-            result = Parallel.call_with_index(items, index, options, &block)
-            result = nil if options[:preserve_results] == false
-          rescue Exception => e
-            result = ExceptionWrapper.new(e)
-          end
-          write_to_pipe(child_write, [index, result])
-        end
-      rescue Interrupt
+        parent_write.close
+        parent_read.close
+
+        process_incoming_jobs(child_read, child_write, options, &block)
+      ensure
         child_read.close
         child_write.close
       end
@@ -162,6 +153,19 @@ class Parallel
     child_write.close
 
     {:read => parent_read, :write => parent_write, :pid => pid}
+  end
+
+  def self.process_incoming_jobs(read, write, options, &block)
+    while input = read.gets and input != "\n"
+      index = decode(input.chomp)
+      begin
+        result = Parallel.call_with_index(items, index, options, &block)
+        result = nil if options[:preserve_results] == false
+      rescue Exception => e
+        result = ExceptionWrapper.new(e)
+      end
+      write_to_pipe(write, [index, result])
+    end
   end
 
   def self.write_to_pipe(pipe, item)
