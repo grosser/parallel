@@ -5,7 +5,7 @@
 
 Gem::Specification.new do |s|
   s.name = %q{parallel}
-  s.version = "0.5.0"
+  s.version = "0.5.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Michael Grosser"]
@@ -22,10 +22,11 @@ Gem::Specification.new do |s|
      "spec/cases/closes_processes_at_runtime.rb",
      "spec/cases/each.rb",
      "spec/cases/each_with_index.rb",
-     "spec/cases/exceptions_join_threads.rb",
      "spec/cases/map_with_index.rb",
      "spec/cases/map_with_index_empty.rb",
      "spec/cases/map_with_nested_arrays_and_nil.rb",
+     "spec/cases/map_with_processes_and_exceptions.rb",
+     "spec/cases/map_with_threads_and_exceptions.rb",
      "spec/cases/no_dump_with_each.rb",
      "spec/cases/parallel_high_fork_rate.rb",
      "spec/cases/parallel_influence_outside_data.rb",
@@ -51,14 +52,15 @@ Gem::Specification.new do |s|
     "spec/spec_helper.rb",
      "spec/parallel_spec.rb",
      "spec/cases/parallel_sleeping_2.rb",
+     "spec/cases/map_with_processes_and_exceptions.rb",
      "spec/cases/no_dump_with_each.rb",
      "spec/cases/parallel_high_fork_rate.rb",
      "spec/cases/map_with_index.rb",
      "spec/cases/parallel_with_set_processes.rb",
      "spec/cases/parallel_map.rb",
+     "spec/cases/map_with_threads_and_exceptions.rb",
      "spec/cases/parallel_influence_outside_data.rb",
      "spec/cases/parallel_start_and_kill.rb",
-     "spec/cases/exceptions_join_threads.rb",
      "spec/cases/parallel_map_uneven.rb",
      "spec/cases/parallel_map_sleeping.rb",
      "spec/cases/parallel_with_detected_cpus.rb",
