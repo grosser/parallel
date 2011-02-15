@@ -1,4 +1,4 @@
-Run any code in parallel Processes(> use all CPUs) or Threads(> speedup blocking operations).  
+Run any code in parallel Processes(> use all CPUs) or Threads(> speedup blocking operations).<br/>
 Best suited for map-reduce or e.g. parallel downloads/uploads.
 
 Install
@@ -53,6 +53,6 @@ Authors
  - [Jeremy Durham](http://www.jeremydurham.com)
  - [Nick Gauthier](http://www.ngauthier.com)
 
-[Michael Grosser](http://grosser.it)  
-grosser.michael@gmail.com  
+[Michael Grosser](http://grosser.it)<br/>
+michael@grosser.it<br/>
 Hereby placed under public domain, do what you want, just do not hold me accountable...
