@@ -52,6 +52,8 @@ Authors
  - [mikezter](http://github.com/mikezter)
  - [Jeremy Durham](http://www.jeremydurham.com)
  - [Nick Gauthier](http://www.ngauthier.com)
+ - [Andrew Bowerman](http://andrewbowerman.com)
+ - [Byron Bowerman](http://me.bm5k.com/)
 
 [Michael Grosser](http://grosser.it)<br/>
 michael@grosser.it<br/>
