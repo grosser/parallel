@@ -64,7 +64,8 @@ class Parallel
     when /darwin9/
       `hwprefs cpu_count`.to_i
     when /darwin10/
-      `hwprefs thread_count`.to_i
+      value = hwprefs_available? ? `hwprefs thread_count` : `sysctl -n hw.ncpu`
+      value.to_i
     when /linux/
       `cat /proc/cpuinfo | grep processor | wc -l`.to_i
     when /freebsd/
@@ -73,6 +74,10 @@ class Parallel
   end
 
   private
+
+  def self.hwprefs_available?
+    `which hwprefs` != ''
+  end
 
   def self.work_in_threads(items, options, &block)
     results = []
