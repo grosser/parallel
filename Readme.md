@@ -37,6 +37,10 @@ or `each_with_index` or `map_with_index`
 
 Processes/Threads are workers, they grab the next piece of work when they finish
 
+Tips
+====
+ - [ActiveRecord] `ActiveRecord::Base.allow_concurrency = true` or do a `ActiveRecord::Base.connection.reconnect!` inside the block
+
 TODO
 ====
  - JRuby / Windows support <-> possible ?
