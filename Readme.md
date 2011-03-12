@@ -39,7 +39,7 @@ Processes/Threads are workers, they grab the next piece of work when they finish
 
 Tips
 ====
- - [ActiveRecord] `ActiveRecord::Base.allow_concurrency = true` or do a `ActiveRecord::Base.connection.reconnect!` inside the block
+ - [ActiveRecord] `ActiveRecord::Base.connection.reconnect!` inside the parallel block prevents errors
 
 TODO
 ====
