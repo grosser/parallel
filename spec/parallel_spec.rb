@@ -116,7 +116,7 @@ describe Parallel do
       Parallel.map([1,2,3,4,5,6,7,8,9], :in_threads=>4){|x| x+2 }.should == [3,4,5,6,7,8,9,10,11]
     end
 
-    it 'supports ranges' do
+    it 'supports all Enumerable-s' do
       `ruby spec/cases/parallel_map_range.rb`.should == '[1, 2, 3, 4, 5]'
     end
 

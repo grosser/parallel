@@ -37,7 +37,7 @@ class Parallel
   end
 
   def self.map(array, options = {}, &block)
-    array = array.to_a if array.is_a?(Range)
+    array = array.to_a # turn Range and other Enumerable-s into an Array
 
     if options[:in_threads]
       method = :in_threads
