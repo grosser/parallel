@@ -63,7 +63,7 @@ class Parallel
     case RUBY_PLATFORM
     when /darwin9/
       `hwprefs cpu_count`.to_i
-    when /darwin10/
+    when /darwin/
       (hwprefs_available? ? `hwprefs thread_count` : `sysctl -n hw.ncpu`).to_i
     when /linux/
       `cat /proc/cpuinfo | grep processor | wc -l`.to_i
