@@ -1,5 +1,6 @@
 require 'thread' # to get Thread.exclusive
 require 'base64'
+require 'rbconfig'
 
 class Parallel
   VERSION = File.read( File.join(File.dirname(__FILE__),'..','VERSION') ).strip
@@ -60,7 +61,7 @@ class Parallel
   end
 
   def self.processor_count
-    case RUBY_PLATFORM
+    case RbConfig::CONFIG['host_os']
     when /darwin9/
       `hwprefs cpu_count`.to_i
     when /darwin/
