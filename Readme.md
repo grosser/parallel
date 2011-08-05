@@ -58,6 +58,7 @@ Authors
  - [Nick Gauthier](http://www.ngauthier.com)
  - [Andrew Bowerman](http://andrewbowerman.com)
  - [Byron Bowerman](http://me.bm5k.com/)
+ - [Mikko Kokkonen](https://github.com/mikian)
 
 [Michael Grosser](http://grosser.it)<br/>
 michael@grosser.it<br/>
