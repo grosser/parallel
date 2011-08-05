@@ -73,8 +73,8 @@ class Parallel
     when /mswin|mingw/
       require 'win32ole'
       wmi = WIN32OLE.connect("winmgmts://")
-      cpu = wmi.ExecQuery("select NumberOfCores from Win32_Processor") # TODO count hyper-threaded in this
-      cpu.to_enum.first.NumberOfCores
+      cpu = wmi.ExecQuery("select NumberOfLogicalProcessors from Win32_Processor")
+      cpu.to_enum.first.NumberOfLogicalProcessors
     end
   end
 
