@@ -40,6 +40,7 @@ Processes/Threads are workers, they grab the next piece of work when they finish
 Tips
 ====
  - [ActiveRecord] `ActiveRecord::Base.connection.reconnect!` inside the parallel block prevents errors
+ - [Benchmark/Test] Disable threading/forking with `:in_threads => 0` or `:in_processes => 0`, great to test performance or to debug parallel issues
 
 TODO
 ====

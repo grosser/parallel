@@ -131,6 +131,16 @@ describe Parallel do
     it 'joins all workers, when one fails in thread' do
       `ruby spec/cases/map_with_threads_and_exceptions.rb 2>&1`.should =~ /^\d{0,4} all joined raised$/
     end
+
+    it "can run with 0 threads" do
+      Thread.should_not_receive(:exclusive)
+      Parallel.map([1,2,3,4,5,6,7,8,9], :in_threads => 0){|x| x+2 }.should == [3,4,5,6,7,8,9,10,11]
+    end
+
+    it "can run with 0 processes" do
+      Process.should_not_receive(:fork)
+      Parallel.map([1,2,3,4,5,6,7,8,9], :in_processes => 0){|x| x+2 }.should == [3,4,5,6,7,8,9,10,11]
+    end
   end
 
   describe :map_with_index do
@@ -140,6 +150,16 @@ describe Parallel do
 
     it "does not crash with empty set" do
       `ruby spec/cases/map_with_index_empty.rb 2>&1`.should == ''
+    end
+
+    it "can run with 0 threads" do
+      Thread.should_not_receive(:exclusive)
+      Parallel.map_with_index([1,2,3,4,5,6,7,8,9], :in_threads => 0){|x| x+2 }.should == [3,4,5,6,7,8,9,10,11]
+    end
+
+    it "can run with 0 processes" do
+      Process.should_not_receive(:fork)
+      Parallel.map_with_index([1,2,3,4,5,6,7,8,9], :in_processes => 0){|x| x+2 }.should == [3,4,5,6,7,8,9,10,11]
     end
   end
 

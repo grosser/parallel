@@ -49,6 +49,8 @@ class Parallel
     end
     size = [array.size, size].min
 
+    return work_direct(array, options, &block) if size == 0
+
     if method == :in_threads
       work_in_threads(array, options.merge(:count => size), &block)
     else
@@ -79,6 +81,14 @@ class Parallel
   end
 
   private
+
+  def self.work_direct(array, options)
+    results = []
+    array.each_with_index do |e,i|
+      results << (options[:with_index] ? yield(e,i) : yield(e))
+    end
+    results
+  end
 
   def self.hwprefs_available?
     `which hwprefs` != ''
