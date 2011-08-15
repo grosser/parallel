@@ -53,9 +53,9 @@ describe Parallel do
     end
 
     it "saves time" do
-      t = Time.now
+      t = Time.now.to_f
       `ruby spec/cases/parallel_sleeping_2.rb`
-      Time.now.should be_close(t, 3)
+      (Time.now.to_f - t).should < 3.5
     end
 
     it "raises when one of the processes raises" do
@@ -93,9 +93,9 @@ describe Parallel do
 
   describe :map do
     it "saves time" do
-      t = Time.now
+      t = Time.now.to_f
       `ruby spec/cases/parallel_map_sleeping.rb`
-      Time.now.should be_close(t, 3)
+      (Time.now.to_f - t).should <= 3.5
     end
 
     it "executes with given parameters" do
