@@ -9,7 +9,7 @@ end
 begin
   Parallel.map(1..100, :in_threads => 4) do |x|
     print x
-    raise 'foo' if x == 1
+    raise 'foo'
   end
 rescue
   print ' raised'

@@ -18,6 +18,7 @@ Gem::Specification.new do |s|
      "Readme.md",
      "VERSION",
      "lib/parallel.rb",
+     "lib/core_ext/queue.rb",
      "parallel.gemspec",
      "spec/cases/closes_processes_at_runtime.rb",
      "spec/cases/each.rb",
