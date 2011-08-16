@@ -1,5 +1,20 @@
 require File.expand_path('spec/spec_helper')
 
+# array that just responds to each
+class EachOnlyArray
+  def initialize(values)
+    @values = values
+  end
+
+  def each(&block)
+    @values.each(&block)
+  end
+
+  def to_a
+    self
+  end
+end
+
 describe Parallel do
   def time_taken
     t = Time.now.to_f
@@ -145,6 +160,11 @@ describe Parallel do
     it "can run with 0 processes" do
       Process.should_not_receive(:fork)
       Parallel.map([1,2,3,4,5,6,7,8,9], :in_processes => 0){|x| x+2 }.should == [3,4,5,6,7,8,9,10,11]
+    end
+
+    it "works on enumerables" do
+      items = EachOnlyArray.new([1,2,3])
+      Parallel.map(items, :in_threads=>2){|x| [x,x]}.should == [[1,1],[2,2],[3,3]]
     end
   end
 

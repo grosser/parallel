@@ -46,8 +46,9 @@ class Parallel
     else
       method = :in_processes
       size = options[method] || processor_count
+      size = [array.size, size].min
     end
-    size = [array.size, size].min
+
 
     return work_direct(array, options, &block) if size == 0
 
@@ -99,16 +100,53 @@ class Parallel
     current = -1
     exception = nil
 
+    queue = []
+
+    producer = Thread.new do
+      items.each do |item|
+        # wait until queue is empty
+        loop do
+          could_add = false
+
+          # try to push something into the queue
+          Thread.exclusive do
+            if queue.empty?
+              queue.push item
+              could_add = true
+            end
+          end
+
+          break if could_add
+
+          sleep 0.01 # queue was already full, so wait a bit
+        end
+      end
+    end
+
+    # consumers
     in_threads(options[:count]) do
-      # as long as there are more items, work on one of them
       loop do
         break if exception
-
-        index = Thread.exclusive{ current+=1 }
-        break if index >= items.size
+        break if queue.empty? and producer.status == false
 
         begin
-          results[index] = call_with_index(items, index, options, &block)
+          something_to_do = false
+          item = nil
+          index = nil
+
+          Thread.exclusive do
+            if not queue.empty?
+              index = (current += 1)
+              something_to_do = true
+              item = queue.pop
+            end
+          end
+
+          if something_to_do
+            results[index] = call_with_index_item(item, index, options, &block)
+          else
+            sleep 0.01 # nothing to do atm, wait for producer
+          end
         rescue Exception => e
           exception = e
           break
@@ -249,6 +287,12 @@ class Parallel
       pids.each { |pid| Process.kill(:KILL, pid) if pid }
       exit 1 # Quit with 'failed' signal
     end
+  end
+
+  def self.call_with_index_item(item, index, options, &block)
+    args = [item]
+    args << index if options[:with_index]
+    block.call(*args)
   end
 
   def self.call_with_index(array, index, options, &block)
