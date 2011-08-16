@@ -1,6 +1,11 @@
 require File.expand_path('spec/spec_helper')
 
 describe Parallel do
+  def time_taken
+    t = Time.now.to_f
+    yield
+    Time.now.to_f - t
+  end
 
   describe :processor_count do
     it "returns a number" do
@@ -37,7 +42,7 @@ describe Parallel do
     end
 
     it "kills the processes when the main process gets killed through ctrl+c" do
-      t = Time.now
+      time_taken{
       lambda{
         Thread.new do
           `ruby spec/cases/parallel_start_and_kill.rb`
@@ -49,13 +54,13 @@ describe Parallel do
         `kill -2 #{parent_pid}` #simulates Ctrl+c
         sleep 1
       }.should_not change{`ps`.split("\n").size}
-      Time.now.should be_close(t, 3)
+      }.should <= 3
     end
 
     it "saves time" do
-      t = Time.now.to_f
-      `ruby spec/cases/parallel_sleeping_2.rb`
-      (Time.now.to_f - t).should < 3.5
+      time_taken{
+        `ruby spec/cases/parallel_sleeping_2.rb`
+      }.should < 3.5
     end
 
     it "raises when one of the processes raises" do
@@ -73,9 +78,9 @@ describe Parallel do
 
   describe :in_threads do
     it "saves time" do
-      t = Time.now
-      Parallel.in_threads(3){ sleep 2 }
-      Time.now.should be_close(t, 3)
+      time_taken{
+        Parallel.in_threads(3){ sleep 2 }
+      }.should < 3
     end
 
     it "does not create new processes" do
@@ -93,9 +98,9 @@ describe Parallel do
 
   describe :map do
     it "saves time" do
-      t = Time.now.to_f
+      time_taken{
       `ruby spec/cases/parallel_map_sleeping.rb`
-      (Time.now.to_f - t).should <= 3.5
+      }.should <= 3.5
     end
 
     it "executes with given parameters" do
@@ -103,9 +108,9 @@ describe Parallel do
     end
 
     it "starts new process imediatly when old exists" do
-      t = Time.now
+      time_taken{
       `ruby spec/cases/parallel_map_uneven.rb`
-      Time.now.should be_close(t, 3)
+      }.should <= 3.5
     end
 
     it "does not flatten results" do
@@ -154,12 +159,12 @@ describe Parallel do
 
     it "can run with 0 threads" do
       Thread.should_not_receive(:exclusive)
-      Parallel.map_with_index([1,2,3,4,5,6,7,8,9], :in_threads => 0){|x| x+2 }.should == [3,4,5,6,7,8,9,10,11]
+      Parallel.map_with_index([1,2,3,4,5,6,7,8,9], :in_threads => 0){|x,i| x+2 }.should == [3,4,5,6,7,8,9,10,11]
     end
 
     it "can run with 0 processes" do
       Process.should_not_receive(:fork)
-      Parallel.map_with_index([1,2,3,4,5,6,7,8,9], :in_processes => 0){|x| x+2 }.should == [3,4,5,6,7,8,9,10,11]
+      Parallel.map_with_index([1,2,3,4,5,6,7,8,9], :in_processes => 0){|x,i| x+2 }.should == [3,4,5,6,7,8,9,10,11]
     end
   end
 
