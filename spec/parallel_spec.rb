@@ -1,5 +1,5 @@
 require File.expand_path('spec/spec_helper')
-
+require 'thread'
 describe Parallel do
 
   describe :processor_count do
@@ -115,9 +115,34 @@ describe Parallel do
     it "can run in threads" do
       Parallel.map([1,2,3,4,5,6,7,8,9], :in_threads=>4){|x| x+2 }.should == [3,4,5,6,7,8,9,10,11]
     end
+    
+    it "can run in threads with queue" do
+      queue = Queue.new()
+      Thread.new do
+        [1,2,3,4,5,6,7,8,9].each {|i|
+          queue.push(i)
+          sleep 0.2
+        }
+        queue.close
+      end
+      
+      Parallel.map(queue, :in_threads=>4){|x| x+2 }.should == [3,4,5,6,7,8,9,10,11]
+    end
 
     it 'supports all Enumerable-s' do
       `ruby spec/cases/parallel_map_range.rb`.should == '[1, 2, 3, 4, 5]'
+    end
+    it 'supports all process queue' do
+      `ruby spec/cases/parallel_map_process_queue.rb`.should == '[1, 2, 3, 4, 5]'
+    end
+    it 'supports all process queue with fewer items then processes' do
+      `ruby spec/cases/parallel_map_process_queue_few_items.rb`.should == '[1, 2]'
+    end
+    it 'supports all thread queue' do
+      `ruby spec/cases/parallel_map_thread_queue.rb`.should == '[1, 2, 3, 4, 5]'
+    end
+    it 'supports all thread queue with fewer items then processes' do
+      `ruby spec/cases/parallel_map_thread_queue_few_items.rb`.should == '[1, 2]'
     end
 
     it 'handles nested arrays and nil correctly' do
@@ -125,11 +150,11 @@ describe Parallel do
     end
 
     it 'joins all workers, when one fails in process' do
-      `ruby spec/cases/map_with_processes_and_exceptions.rb 2>&1`.should =~ /^\d{4} all joined raised$/
+      `ruby spec/cases/map_with_processes_and_exceptions.rb 2>&1`.should =~ /^\d{6} all joined raised$/
     end
 
     it 'joins all workers, when one fails in thread' do
-      `ruby spec/cases/map_with_threads_and_exceptions.rb 2>&1`.should =~ /^\d{0,4} all joined raised$/
+      `ruby spec/cases/map_with_threads_and_exceptions.rb 2>&1`.should =~ /^\d{0,6} all joined raised$/
     end
 
     it "can run with 0 threads" do
