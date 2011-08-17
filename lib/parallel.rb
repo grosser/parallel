@@ -122,56 +122,47 @@ class Parallel
   end
 
   def self.work_in_processes(items, options, &blk)
-    workers = Array.new(options[:count]).map{ worker(items, options, &blk) }
-    Parallel.kill_on_ctrl_c(workers.map{|worker| worker[:pid] })
-
     current_index = -1
-
-    # give every worker something to do
-    workers.each do |worker|
-      write_to_pipe(worker[:write], current_index += 1)
-    end
-
-    # fetch results and hand out new work
-    listener_threads = []
-    result = Array.new(items.size)
+    results = []
+    pids = []
     exception = nil
 
-    workers.each do |worker|
-      listener_threads << Thread.new do
-        begin
-          while output = worker[:read].gets
-            # store output from worker
-            result_index, output = decode(output.chomp)
-            if ExceptionWrapper === output
-              exception = output.exception
-              break
-            elsif exception # some other thread failed
-              break
-            end
+    Parallel.kill_on_ctrl_c(pids)
 
-            result[result_index] = output
+    in_threads(options[:count]) do |i|
+      worker = worker(items, options, &blk)
+      pids[i] = worker[:pid]
 
-            # give worker next item
-            next_index = Thread.exclusive{ current_index += 1 }
-            break if next_index >= items.size
-            write_to_pipe(worker[:write], next_index)
+      begin
+        loop do
+          break if exception
+          index = Thread.exclusive{ current_index += 1 }
+          break if index >= items.size
+
+          write_to_pipe(worker[:write], index)
+          output = decode(worker[:read].gets.chomp)
+
+          if ExceptionWrapper === output
+            exception = output.exception
+            break
+          elsif exception # some other thread failed
+            break
           end
-        ensure
-          worker[:read].close
-          worker[:write].close
+
+          results[index] = output
         end
+      ensure
+        worker[:read].close
+        worker[:write].close
+
+        # if it goes zombie, rather wait here to be able to debug
+        wait_for_process worker[:pid]
       end
     end
 
-    wait_for_threads(listener_threads)
-
-    # if they go zombie, rather wait here to be able to debug
-    wait_for_processes(workers.map{|worker| worker[:pid] })
-
     raise exception if exception
 
-    result
+    results
   end
 
   def self.worker(items, options, &block)
@@ -208,7 +199,7 @@ class Parallel
       rescue Exception => e
         result = ExceptionWrapper.new(e)
       end
-      write_to_pipe(write, [index, result])
+      write_to_pipe(write, result)
     end
   end
 
@@ -226,13 +217,11 @@ class Parallel
     end
   end
 
-  def self.wait_for_processes(pids)
-    pids.each do |pid|
-      begin
-        Process.wait(pid)
-      rescue Interrupt
-        # process died
-      end
+  def self.wait_for_process(pid)
+    begin
+      Process.wait(pid)
+    rescue Interrupt
+      # process died
     end
   end
 
@@ -259,7 +248,7 @@ class Parallel
   def self.kill_on_ctrl_c(pids)
     Signal.trap :SIGINT do
       $stderr.puts 'Parallel execution interrupted, exiting ...'
-      pids.each { |pid| Process.kill(:KILL, pid) }
+      pids.each { |pid| Process.kill(:KILL, pid) if pid }
       exit 1 # Quit with 'failed' signal
     end
   end
