@@ -102,10 +102,10 @@ class Parallel
 
     producer = create_producer(queue, items)
 
-    consume(queue, producer, :threads => 4) do |item|
+    consume(queue, producer, :threads => options[:count]) do |item, consumer_index|
       index = Thread.exclusive{ current += 1 }
       begin
-        results[index] = call_with_index_item(item, index, options, &block)
+        results[index] = call_with_index(item, index, options, &block)
       rescue Exception => e
         producer.exit
         exception = e
@@ -123,28 +123,27 @@ class Parallel
     results = []
     pids = []
     exception = nil
+    queue = []
+    producer = create_producer(queue, items)
 
     Parallel.kill_on_ctrl_c(pids)
 
-    in_threads(options[:count]) do |i|
-      x = i
-      worker = worker(items, options, &blk)
-      pids[i] = worker[:pid]
+    consume(queue, producer, :threads => options[:count]) do |item, consumer_index|
+      break if exception
 
       begin
-        loop do
-          break if exception
-          index = Thread.exclusive{ current_index += 1 }
-          break if index >= items.size
+        worker = (workers[consumer_index] ||= worker(options, &blk))
+        pids[consumer_index] = worker[:pid]
 
-          write_to_pipe(worker[:write], index)
-          output = decode(worker[:read].gets.chomp)
+        index = Thread.exclusive{ current_index += 1 }
+        write_to_pipe(worker[:write], [index, item])
 
-          if ExceptionWrapper === output
-            exception = output.exception
-          else
-            results[index] = output
-          end
+        output = read_from_pipe(my_worker[:read])
+        if ExceptionWrapper === output
+          exception = output.exception
+          producer.exit
+        else
+          result[index] = output
         end
       ensure
         worker[:read].close
@@ -160,7 +159,7 @@ class Parallel
     results
   end
 
-  def self.worker(items, options, &block)
+  def self.worker(options, &block)
     # use less memory on REE
     GC.copy_on_write_friendly = true if GC.respond_to?(:copy_on_write_friendly=)
 
@@ -172,7 +171,7 @@ class Parallel
         parent_write.close
         parent_read.close
 
-        process_incoming_jobs(child_read, child_write, items, options, &block)
+        process_incoming_jobs(child_read, child_write, options, &block)
       ensure
         child_read.close
         child_write.close
@@ -185,21 +184,17 @@ class Parallel
     {:read => parent_read, :write => parent_write, :pid => pid}
   end
 
-  def self.process_incoming_jobs(read, write, items, options, &block)
+  def self.process_incoming_jobs(read, write, options, &block)
     while input = read.gets and input != "\n"
-      index = decode(input.chomp)
+      index, item = decode(input.chomp)
       begin
-        result = call_with_index(items, index, options, &block)
+        result = call_with_index(item, index, options, &block)
         result = nil if options[:preserve_results] == false
       rescue Exception => e
         result = ExceptionWrapper.new(e)
       end
       write_to_pipe(write, result)
     end
-  end
-
-  def self.write_to_pipe(pipe, item)
-    pipe.write(encode(item))
   end
 
   def self.wait_for_threads(threads)
@@ -220,12 +215,20 @@ class Parallel
     end
   end
 
+  def self.read_from_pipe(pipe)
+    decode(pipe.gets)
+  end
+
+  def self.write_to_pipe(pipe, item)
+    pipe.write(encode(item))
+  end
+
   def self.encode(obj)
     Base64.encode64(Marshal.dump(obj)).split("\n").join + "\n"
   end
 
   def self.decode(str)
-    Marshal.load(Base64.decode64(str))
+    Marshal.load(Base64.decode64(str.chomp))
   end
 
   # options is either a Integer or a Hash with :count
@@ -239,7 +242,7 @@ class Parallel
     [count, options]
   end
 
-  # kill all these processes (children) if user presses Ctrl+c
+  # kill all these processes (children) and self if user presses Ctrl+c
   def self.kill_on_ctrl_c(pids)
     Signal.trap :SIGINT do
       $stderr.puts 'Parallel execution interrupted, exiting ...'
@@ -248,14 +251,8 @@ class Parallel
     end
   end
 
-  def self.call_with_index_item(item, index, options, &block)
+  def self.call_with_index(item, index, options, &block)
     args = [item]
-    args << index if options[:with_index]
-    block.call(*args)
-  end
-
-  def self.call_with_index(array, index, options, &block)
-    args = [array[index]]
     args << index if options[:with_index]
     block.call(*args)
   end
@@ -284,7 +281,7 @@ class Parallel
   end
 
   def self.consume(queue, producer, options={}, &block)
-    in_threads(options[:threads]) do
+    in_threads(options[:threads]) do |i|
       loop do
         break if queue.empty? and producer.status == false
 
@@ -300,7 +297,7 @@ class Parallel
         end
 
         if something_to_do
-          yield item
+          yield item, i
         else
           sleep 0.01 # nothing to do atm, wait for producer
         end
