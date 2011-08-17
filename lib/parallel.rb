@@ -46,9 +46,7 @@ class Parallel
     else
       method = :in_processes
       size = options[method] || processor_count
-      size = [array.size, size].min
     end
-
 
     return work_direct(array, options, &block) if size == 0
 
@@ -102,55 +100,16 @@ class Parallel
 
     queue = []
 
-    producer = Thread.new do
-      items.each do |item|
-        # wait until queue is empty
-        loop do
-          could_add = false
+    producer = create_producer(queue, items)
 
-          # try to push something into the queue
-          Thread.exclusive do
-            if queue.empty?
-              queue.push item
-              could_add = true
-            end
-          end
-
-          break if could_add
-
-          sleep 0.01 # queue was already full, so wait a bit
-        end
-      end
-    end
-
-    # consumers
-    in_threads(options[:count]) do
-      loop do
-        break if exception
-        break if queue.empty? and producer.status == false
-
-        begin
-          something_to_do = false
-          item = nil
-          index = nil
-
-          Thread.exclusive do
-            if not queue.empty?
-              index = (current += 1)
-              something_to_do = true
-              item = queue.pop
-            end
-          end
-
-          if something_to_do
-            results[index] = call_with_index_item(item, index, options, &block)
-          else
-            sleep 0.01 # nothing to do atm, wait for producer
-          end
-        rescue Exception => e
-          exception = e
-          break
-        end
+    consume(queue, producer, :threads => 4) do |item|
+      index = Thread.exclusive{ current += 1 }
+      begin
+        results[index] = call_with_index_item(item, index, options, &block)
+      rescue Exception => e
+        producer.exit
+        exception = e
+        break
       end
     end
 
@@ -299,6 +258,54 @@ class Parallel
     args = [array[index]]
     args << index if options[:with_index]
     block.call(*args)
+  end
+
+  def self.create_producer(queue, items)
+    Thread.new do
+      items.each do |item|
+        # wait until queue is empty
+        loop do
+          could_add = false
+
+          # try to push something into the queue
+          Thread.exclusive do
+            if queue.empty?
+              queue.push item
+              could_add = true
+            end
+          end
+
+          break if could_add
+
+          sleep 0.01 # queue was already full, so wait a bit
+        end
+      end
+    end
+  end
+
+  def self.consume(queue, producer, options={}, &block)
+    in_threads(options[:threads]) do
+      loop do
+        break if queue.empty? and producer.status == false
+
+        something_to_do = false
+        item = nil
+
+        # support false and nil -> a simple pop wont do
+        Thread.exclusive do
+          if not queue.empty?
+            something_to_do = true
+            item = queue.pop
+          end
+        end
+
+        if something_to_do
+          yield item
+        else
+          sleep 0.01 # nothing to do atm, wait for producer
+        end
+      end
+    end
   end
 
   class ExceptionWrapper
