@@ -102,14 +102,16 @@ class Parallel
 
     producer = create_producer(queue, items)
 
-    consume(queue, producer, :threads => options[:count]) do |item, consumer_index|
-      index = Thread.exclusive{ current += 1 }
-      begin
-        results[index] = call_with_index(item, index, options, &block)
-      rescue Exception => e
-        producer.exit
-        exception = e
-        break
+    in_threads(options[:count]) do
+      consume(queue, producer) do |item|
+        index = Thread.exclusive{ current += 1 }
+        begin
+          results[index] = call_with_index(item, index, options, &block)
+        rescue Exception => e
+          producer.exit
+          exception = e
+          break
+        end
       end
     end
 
@@ -121,6 +123,7 @@ class Parallel
   def self.work_in_processes(items, options, &blk)
     current_index = -1
     results = []
+    workers = []
     pids = []
     exception = nil
     queue = []
@@ -128,30 +131,30 @@ class Parallel
 
     Parallel.kill_on_ctrl_c(pids)
 
-    consume(queue, producer, :threads => options[:count]) do |item, consumer_index|
-      break if exception
+    in_threads(options[:count]) do |i|
+      worker = worker(options, &blk)
+      pids[i] = worker[:pid]
 
-      begin
-        worker = (workers[consumer_index] ||= worker(options, &blk))
-        pids[consumer_index] = worker[:pid]
+      consume(queue, producer) do |item|
+        break if exception
 
         index = Thread.exclusive{ current_index += 1 }
         write_to_pipe(worker[:write], [index, item])
 
-        output = read_from_pipe(my_worker[:read])
+        output = read_from_pipe(worker[:read])
         if ExceptionWrapper === output
           exception = output.exception
           producer.exit
         else
-          result[index] = output
+          results[index] = output
         end
-      ensure
-        worker[:read].close
-        worker[:write].close
-
-        # if it goes zombie, rather wait here to be able to debug
-        wait_for_process worker[:pid]
       end
+
+      worker[:read].close
+      worker[:write].close
+
+      # if it goes zombie, rather wait here to be able to debug
+      wait_for_process worker[:pid]
     end
 
     raise exception if exception
@@ -280,27 +283,25 @@ class Parallel
     end
   end
 
-  def self.consume(queue, producer, options={}, &block)
-    in_threads(options[:threads]) do |i|
-      loop do
-        break if queue.empty? and producer.status == false
+  def self.consume(queue, producer)
+    loop do
+      break if queue.empty? and producer.status == false
 
-        something_to_do = false
-        item = nil
+      something_to_do = false
+      item = nil
 
-        # support false and nil -> a simple pop wont do
-        Thread.exclusive do
-          if not queue.empty?
-            something_to_do = true
-            item = queue.pop
-          end
+      # support false and nil -> a simple pop wont do
+      Thread.exclusive do
+        if not queue.empty?
+          something_to_do = true
+          item = queue.pop
         end
+      end
 
-        if something_to_do
-          yield item, i
-        else
-          sleep 0.01 # nothing to do atm, wait for producer
-        end
+      if something_to_do
+        yield item
+      else
+        sleep 0.01 # nothing to do atm, wait for producer
       end
     end
   end
