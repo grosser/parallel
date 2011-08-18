@@ -38,8 +38,6 @@ class Parallel
   end
 
   def self.map(array, options = {}, &block)
-    array = array.to_a # turn Range and other Enumerable-s into an Array
-
     if options[:in_threads]
       method = :in_threads
       size = options[method]
