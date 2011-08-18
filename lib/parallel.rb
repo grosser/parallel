@@ -130,6 +130,7 @@ class Parallel
     Parallel.kill_on_ctrl_c(pids)
 
     in_threads(options[:count]) do |i|
+      x = i
       worker = worker(items, options, &blk)
       pids[i] = worker[:pid]
 
@@ -144,12 +145,9 @@ class Parallel
 
           if ExceptionWrapper === output
             exception = output.exception
-            break
-          elsif exception # some other thread failed
-            break
+          else
+            results[index] = output
           end
-
-          results[index] = output
         end
       ensure
         worker[:read].close

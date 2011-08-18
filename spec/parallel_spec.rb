@@ -129,12 +129,12 @@ describe Parallel do
       `ruby spec/cases/map_with_nested_arrays_and_nil.rb`.should == '[nil, [2, 2], [[3], [3]]]'
     end
 
-    it 'joins all workers, when one fails in process' do
-      `ruby spec/cases/map_with_processes_and_exceptions.rb 2>&1`.should =~ /^\d{4} all joined raised$/
+    it 'stops all workers when one fails in process' do
+      `ruby spec/cases/map_with_processes_and_exceptions.rb 2>&1`.should =~ /^\d{4} raised$/
     end
 
-    it 'joins all workers, when one fails in thread' do
-      `ruby spec/cases/map_with_threads_and_exceptions.rb 2>&1`.should =~ /^\d{0,4} all joined raised$/
+    it 'stops all workers when one fails in thread' do
+      `ruby spec/cases/map_with_threads_and_exceptions.rb 2>&1`.should =~ /^\d{0,4} raised$/
     end
 
     it "can run with 0 threads" do
