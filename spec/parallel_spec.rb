@@ -149,7 +149,7 @@ describe Parallel do
     end
 
     it 'stops all workers when one fails in thread' do
-      `ruby spec/cases/map_with_threads_and_exceptions.rb 2>&1`.should =~ /^\d{0,4} raised$/
+      `ruby spec/cases/map_with_threads_and_exceptions.rb 2>&1`.should =~ /^\d{0,6} raised$/
     end
 
     it "can run with 0 threads" do
@@ -193,7 +193,8 @@ describe Parallel do
       `ruby spec/cases/each.rb`.should == 'a b c d'
     end
 
-    it "does not use marshal_dump" do
+    # when using enumerable we have to dump evey item to give it to the process
+    xit "does not use marshal_dump" do
       `ruby spec/cases/no_dump_with_each.rb 2>&1`.should == 'no dump for resultno dump for each'
     end
   end
