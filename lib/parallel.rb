@@ -127,7 +127,7 @@ class Parallel
     pids = []
     exception = nil
 
-    Parallel.kill_on_ctrl_c(pids)
+    kill_on_ctrl_c(pids)
 
     in_threads(options[:count]) do |i|
       x = i
