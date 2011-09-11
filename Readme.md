@@ -60,6 +60,7 @@ Authors
  - [Andrew Bowerman](http://andrewbowerman.com)
  - [Byron Bowerman](http://me.bm5k.com/)
  - [Mikko Kokkonen](https://github.com/mikian)
+ - [brian p o'rourke](https://github.com/bpo)
 
 [Michael Grosser](http://grosser.it)<br/>
 michael@grosser.it<br/>
