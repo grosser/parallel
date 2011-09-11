@@ -77,6 +77,9 @@ class Parallel
       wmi = WIN32OLE.connect("winmgmts://")
       cpu = wmi.ExecQuery("select NumberOfLogicalProcessors from Win32_Processor")
       cpu.to_enum.first.NumberOfLogicalProcessors
+    else
+      $stderr.puts "Unknown architecture - assuming one processor."
+      1
     end
   end
 
