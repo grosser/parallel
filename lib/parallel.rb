@@ -78,7 +78,7 @@ class Parallel
       cpu = wmi.ExecQuery("select NumberOfLogicalProcessors from Win32_Processor")
       cpu.to_enum.first.NumberOfLogicalProcessors
     else
-      $stderr.puts "Unknown architecture - assuming one processor."
+      $stderr.puts "Unknown architecture ( #{RbConfig::CONFIG["host_os"]} ) assuming one processor."
       1
     end
   end
