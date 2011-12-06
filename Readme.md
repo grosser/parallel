@@ -61,6 +61,7 @@ Authors
  - [Byron Bowerman](http://me.bm5k.com/)
  - [Mikko Kokkonen](https://github.com/mikian)
  - [brian p o'rourke](https://github.com/bpo)
+ - [Norio Sato]
 
 [Michael Grosser](http://grosser.it)<br/>
 michael@grosser.it<br/>
