@@ -64,5 +64,5 @@ Authors
 
 [Michael Grosser](http://grosser.it)<br/>
 michael@grosser.it<br/>
-Hereby placed under public domain, do what you want, just do not hold me accountable...<br/>
+License: MIT<br/>
 [![Flattr](http://api.flattr.com/button/flattr-badge-large.png)](https://flattr.com/submit/auto?user_id=grosser&url=https://github.com/grosser/parallel&title=parallel&language=en_GB&tags=github&category=software)

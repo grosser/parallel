@@ -12,6 +12,7 @@ begin
     gem.email = "grosser.michael@gmail.com"
     gem.homepage = "http://github.com/grosser/#{gem.name}"
     gem.authors = ["Michael Grosser"]
+    gem.license = "MIT"
   end
 
   Jeweler::GemcutterTasks.new
