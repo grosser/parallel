@@ -125,17 +125,13 @@ class Parallel
   end
 
   def self.work_in_processes(items, options, &blk)
+    workers = create_workers(items, options, &blk)
     current_index = -1
     results = []
-    pids = []
     exception = nil
 
-    kill_on_ctrl_c(pids)
-
     in_threads(options[:count]) do |i|
-      x = i
-      worker = worker(items, options, &blk)
-      pids[i] = worker[:pid]
+      worker = workers[i]
 
       begin
         loop do
@@ -164,6 +160,13 @@ class Parallel
     raise exception if exception
 
     results
+  end
+
+  def self.create_workers(items, options, &block)
+    workers = Array.new(options[:count]).map{ worker(items, options, &block) }
+    pids = workers.map{|worker| worker[:pid] }
+    kill_on_ctrl_c(pids)
+    workers
   end
 
   def self.worker(items, options, &block)
