@@ -149,11 +149,8 @@ class Parallel
           end
         end
       ensure
-        worker[:read].close
-        worker[:write].close
-
-        # if it goes zombie, rather wait here to be able to debug
-        wait_for_process worker[:pid]
+        close_pipes(worker)
+        wait_for_process worker[:pid] # if it goes zombie, rather wait here to be able to debug
       end
     end
 
@@ -163,13 +160,17 @@ class Parallel
   end
 
   def self.create_workers(items, options, &block)
-   workers = Array.new(options[:count]).inject([]){|fds, i| fds << worker(items, options, fds, &block) }
+    workers = []
+    Array.new(options[:count]).each do
+      workers << worker(items, options.merge(:started_workers => workers), &block)
+    end
+
     pids = workers.map{|worker| worker[:pid] }
     kill_on_ctrl_c(pids)
     workers
   end
 
-  def self.worker(items, options, fds, &block)
+  def self.worker(items, options, &block)
     # use less memory on REE
     GC.copy_on_write_friendly = true if GC.respond_to?(:copy_on_write_friendly=)
 
@@ -178,7 +179,8 @@ class Parallel
 
     pid = Process.fork do
       begin
-        fds.each{|prev_worker| prev_worker[:read].close; prev_worker[:write].close}
+        options.delete(:started_workers).each{|w| close_pipes w }
+
         parent_write.close
         parent_read.close
 
@@ -193,6 +195,11 @@ class Parallel
     child_write.close
 
     {:read => parent_read, :write => parent_write, :pid => pid}
+  end
+
+  def self.close_pipes(worker)
+    worker[:read].close
+    worker[:write].close
   end
 
   def self.process_incoming_jobs(read, write, items, options, &block)
