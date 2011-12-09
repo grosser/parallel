@@ -4,13 +4,13 @@
 # -*- encoding: utf-8 -*-
 
 Gem::Specification.new do |s|
-  s.name = %q{parallel}
-  s.version = "0.5.10"
+  s.name = "parallel"
+  s.version = "0.5.11"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Michael Grosser"]
-  s.date = %q{2011-12-06}
-  s.email = %q{grosser.michael@gmail.com}
+  s.date = "2011-12-09"
+  s.email = "grosser.michael@gmail.com"
   s.files = [
     "Gemfile",
      "Gemfile.lock",
@@ -20,6 +20,7 @@ Gem::Specification.new do |s|
      "lib/parallel.rb",
      "parallel.gemspec",
      "spec/cases/closes_processes_at_runtime.rb",
+     "spec/cases/count_open_pipes.rb",
      "spec/cases/each.rb",
      "spec/cases/each_with_index.rb",
      "spec/cases/host_os_override_processor_count.rb",
@@ -44,12 +45,12 @@ Gem::Specification.new do |s|
      "spec/parallel_spec.rb",
      "spec/spec_helper.rb"
   ]
-  s.homepage = %q{http://github.com/grosser/parallel}
+  s.homepage = "http://github.com/grosser/parallel"
   s.licenses = ["MIT"]
   s.rdoc_options = ["--charset=UTF-8"]
   s.require_paths = ["lib"]
-  s.rubygems_version = %q{1.6.2}
-  s.summary = %q{Run any kind of code in parallel processes}
+  s.rubygems_version = "1.8.12"
+  s.summary = "Run any kind of code in parallel processes"
   s.test_files = [
     "spec/spec_helper.rb",
      "spec/parallel_spec.rb",
@@ -57,6 +58,7 @@ Gem::Specification.new do |s|
      "spec/cases/parallel_map_range.rb",
      "spec/cases/map_with_threads_and_exceptions.rb",
      "spec/cases/parallel_influence_outside_data.rb",
+     "spec/cases/count_open_pipes.rb",
      "spec/cases/parallel_with_set_processes.rb",
      "spec/cases/parallel_with_detected_cpus.rb",
      "spec/cases/parallel_start_and_kill.rb",
