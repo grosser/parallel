@@ -163,13 +163,13 @@ class Parallel
   end
 
   def self.create_workers(items, options, &block)
-    workers = Array.new(options[:count]).map{ worker(items, options, &block) }
+   workers = Array.new(options[:count]).inject([]){|fds, i| fds << worker(items, options, fds, &block) }
     pids = workers.map{|worker| worker[:pid] }
     kill_on_ctrl_c(pids)
     workers
   end
 
-  def self.worker(items, options, &block)
+  def self.worker(items, options, fds, &block)
     # use less memory on REE
     GC.copy_on_write_friendly = true if GC.respond_to?(:copy_on_write_friendly=)
 
@@ -178,6 +178,7 @@ class Parallel
 
     pid = Process.fork do
       begin
+        fds.each{|prev_worker| prev_worker[:read].close; prev_worker[:write].close}
         parent_write.close
         parent_read.close
 
