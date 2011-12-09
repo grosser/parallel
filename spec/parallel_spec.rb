@@ -78,6 +78,12 @@ describe Parallel do
     it 'does not leave processes behind while running' do
       `ruby spec/cases/closes_processes_at_runtime.rb`.should == 'OK'
     end
+
+    it "does not open unnecessary pipes" do
+      open_pipes = `lsof | grep pipe | wc -l`.to_i
+      max_pipes = `ruby spec/cases/count_open_pipes.rb`.to_i
+      (max_pipes - open_pipes).should < 400
+    end
   end
 
   describe :in_threads do
