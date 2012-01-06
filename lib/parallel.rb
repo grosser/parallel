@@ -67,7 +67,7 @@ class Parallel
     when /darwin9/
       `hwprefs cpu_count`.to_i
     when /darwin/
-      (hwprefs_available? ? `hwprefs thread_count` : `sysctl -n hw.ncpu`).to_i
+      (hwprefs_available? ? `hwprefs thread_count` : `sysctl -n hw.physicalcpu`).to_i
     when /linux/
       `grep -c processor /proc/cpuinfo`.to_i
     when /freebsd/
