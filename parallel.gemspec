@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = "parallel"
-  s.version = "0.5.11"
+  s.version = "0.5.12"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Michael Grosser"]
-  s.date = "2011-12-09"
+  s.date = "2012-01-21"
   s.email = "grosser.michael@gmail.com"
   s.files = [
     "Gemfile",
@@ -49,7 +49,7 @@ Gem::Specification.new do |s|
   s.licenses = ["MIT"]
   s.rdoc_options = ["--charset=UTF-8"]
   s.require_paths = ["lib"]
-  s.rubygems_version = "1.8.12"
+  s.rubygems_version = "1.8.15"
   s.summary = "Run any kind of code in parallel processes"
   s.test_files = [
     "spec/spec_helper.rb",
