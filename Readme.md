@@ -62,6 +62,7 @@ Authors
  - [Mikko Kokkonen](https://github.com/mikian)
  - [brian p o'rourke](https://github.com/bpo)
  - [Norio Sato]
+ - [Neal Stewart](https://github.com/n-time)
 
 [Michael Grosser](http://grosser.it)<br/>
 michael@grosser.it<br/>
