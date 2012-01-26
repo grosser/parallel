@@ -7,18 +7,16 @@ class Parallel
 
   def self.in_threads(options={:count => 2})
     count, options = extract_count_from_options(options)
-
     out = []
-    threads = []
 
-    count.times do |i|
-      threads[i] = Thread.new do
-        out[i] = yield(i)
+    threads = count.times.map do |i|
+      Thread.new do
+        result = yield(i)
+        Thread.exclusive { out[i] = result }
       end
     end
 
     wait_for_threads(threads)
-
     out
   end
 
@@ -113,7 +111,8 @@ class Parallel
         break if index >= items.size
 
         begin
-          results[index] = call_with_index(items, index, options, &block)
+          output = call_with_index(items, index, options, &block)
+          Thread.exclusive { results[index] = output }
         rescue Exception => e
           exception = e
           break
@@ -147,7 +146,7 @@ class Parallel
           if ExceptionWrapper === output
             exception = output.exception
           else
-            results[index] = output
+            Thread.exclusive { results[index] = output }
           end
         end
       ensure
