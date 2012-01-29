@@ -24,6 +24,16 @@ describe Parallel do
     end
   end
 
+  describe :physical_processor_count do
+    it "returns a number" do
+      (1..999).should include(Parallel.physical_processor_count)
+    end
+
+    it "is half or same as normal cpu" do
+      [Parallel.processor_count, Parallel.processor_count / 2].should include Parallel.physical_processor_count
+    end
+  end
+
   describe :in_processes do
     def cpus
       Parallel.processor_count

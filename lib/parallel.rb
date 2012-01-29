@@ -78,10 +78,26 @@ class Parallel
       cpu = wmi.ExecQuery("select NumberOfLogicalProcessors from Win32_Processor")
       cpu.to_enum.first.NumberOfLogicalProcessors
     when /solaris2/
-      `psrinfo -p`.to_i
+      `psrinfo -p`.to_i # this is physical cpus afaik
     else
       $stderr.puts "Unknown architecture ( #{RbConfig::CONFIG["host_os"]} ) assuming one processor."
       1
+    end
+  end
+
+  def self.physical_processor_count
+    case RbConfig::CONFIG['host_os']
+    when /darwin1/, /freebsd/
+      `sysctl -n hw.physicalcpu`.to_i
+    when /linux/
+      `grep cores /proc/cpuinfo`[/\d+/].to_i
+    when /mswin|mingw/
+      require 'win32ole'
+      wmi = WIN32OLE.connect("winmgmts://")
+      cpu = wmi.ExecQuery("select NumberOfProcessors from Win32_Processor")
+      cpu.to_enum.first.NumberOfLogicalProcessors
+    else
+      processor_count
     end
   end
 
