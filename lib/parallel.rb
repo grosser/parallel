@@ -67,7 +67,7 @@ class Parallel
     when /darwin9/
       `hwprefs cpu_count`.to_i
     when /darwin/
-      (hwprefs_available? ? `hwprefs thread_count` : `sysctl -n hw.ncpu`).to_i
+      (hwprefs_available? ? `hwprefs thread_count` : sysctl_cpu_count).to_i
     when /linux/
       `grep -c processor /proc/cpuinfo`.to_i
     when /freebsd/
@@ -109,6 +109,15 @@ class Parallel
       results << (options[:with_index] ? yield(e,i) : yield(e))
     end
     results
+  end
+  
+  def self.sysctl_cpu_count
+    cpus = `sysctl -n hw.physicalcpu`
+    if cpus =~ /invalid/
+      # fall back to just cpu count
+      cpus = `sysctl -n hw.ncpu`
+    end
+    cpus
   end
 
   def self.hwprefs_available?

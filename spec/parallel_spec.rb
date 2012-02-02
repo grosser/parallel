@@ -12,10 +12,23 @@ describe Parallel do
       (1..999).should include(Parallel.processor_count)
     end
 
-    if RUBY_PLATFORM =~ /darwin10/
+    if RUBY_PLATFORM =~ /darwin/
       it 'works if hwprefs in not available' do
         Parallel.should_receive(:hwprefs_available?).and_return false
         (1..999).should include(Parallel.processor_count)
+      end
+      
+      it 'should return physical cpu count if possible' do
+        Parallel.should_receive(:hwprefs_available?).and_return false
+        Parallel.should_receive(:`).with('sysctl -n hw.physicalcpu').and_return '4'
+        Parallel.processor_count.should == 4
+      end
+      
+      it 'should return cpu count if physical cpu count is not possible' do
+        Parallel.should_receive(:hwprefs_available?).and_return false
+        Parallel.should_receive(:`).with('sysctl -n hw.physicalcpu').and_return 'second level name physicalcpu in hw.physicalcpu is invalid'
+        Parallel.should_receive(:`).with('sysctl -n hw.ncpu').and_return '1'
+        Parallel.processor_count.should == 1
       end
     end
 
