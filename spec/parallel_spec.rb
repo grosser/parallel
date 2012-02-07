@@ -81,6 +81,10 @@ describe Parallel do
       `ruby spec/cases/parallel_raise.rb`.strip.should == 'TEST'
     end
 
+    it "can raise an undumpable exception" do
+      `ruby spec/cases/parallel_raise_undumpable.rb`.strip.should include('Undumpable Exception')
+    end
+
     it 'can handle to high fork rate' do
       `ruby spec/cases/parallel_high_fork_rate.rb`.should == 'OK'
     end

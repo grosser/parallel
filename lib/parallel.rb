@@ -292,6 +292,11 @@ class Parallel
   class ExceptionWrapper
     attr_reader :exception
     def initialize(exception)
+      dumpable = Parallel.encode(exception) rescue nil
+      unless dumpable
+        exception = RuntimeError.new("Undumpable Exception -- #{exception.inspect}")
+      end
+
       @exception = exception
     end
   end
