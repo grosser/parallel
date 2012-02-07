@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = "parallel"
-  s.version = "0.5.13"
+  s.version = "0.5.14"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Michael Grosser"]
-  s.date = "2012-02-02"
+  s.date = "2012-02-07"
   s.email = "grosser.michael@gmail.com"
   s.files = [
     "Gemfile",
@@ -37,6 +37,7 @@ Gem::Specification.new do |s|
      "spec/cases/parallel_map_sleeping.rb",
      "spec/cases/parallel_map_uneven.rb",
      "spec/cases/parallel_raise.rb",
+     "spec/cases/parallel_raise_undumpable.rb",
      "spec/cases/parallel_sleeping_2.rb",
      "spec/cases/parallel_start_and_kill.rb",
      "spec/cases/parallel_with_detected_cpus.rb",
@@ -62,6 +63,7 @@ Gem::Specification.new do |s|
      "spec/cases/parallel_with_set_processes.rb",
      "spec/cases/parallel_with_detected_cpus.rb",
      "spec/cases/parallel_start_and_kill.rb",
+     "spec/cases/parallel_raise_undumpable.rb",
      "spec/cases/parallel_sleeping_2.rb",
      "spec/cases/host_os_override_processor_count.rb",
      "spec/cases/map_with_index.rb",
