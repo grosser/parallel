@@ -63,6 +63,7 @@ Authors
  - [brian p o'rourke](https://github.com/bpo)
  - [Norio Sato]
  - [Neal Stewart](https://github.com/n-time)
+ - [Jurriaan Pruis](http://github.com/jurriaan)
 
 [Michael Grosser](http://grosser.it)<br/>
 michael@grosser.it<br/>
