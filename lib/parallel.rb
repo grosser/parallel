@@ -1,5 +1,4 @@
 require 'thread' # to get Thread.exclusive
-require 'base64'
 require 'rbconfig'
 
 class Parallel
@@ -157,8 +156,8 @@ class Parallel
           index = Thread.exclusive{ current_index += 1 }
           break if index >= items.size
 
-          write_to_pipe(worker[:write], index)
-          output = decode(worker[:read].gets.chomp)
+          Marshal.dump(index, worker[:write])
+          output = Marshal.load(worker[:read])
 
           if ExceptionWrapper === output
             exception = output.exception
@@ -221,20 +220,16 @@ class Parallel
   end
 
   def self.process_incoming_jobs(read, write, items, options, &block)
-    while input = read.gets and input != "\n"
-      index = decode(input.chomp)
+    while !read.eof?
+      index = Marshal.load(read)
       begin
         result = call_with_index(items, index, options, &block)
         result = nil if options[:preserve_results] == false
       rescue Exception => e
         result = ExceptionWrapper.new(e)
       end
-      write_to_pipe(write, result)
+      Marshal.dump(result, write)
     end
-  end
-
-  def self.write_to_pipe(pipe, item)
-    pipe.write(encode(item))
   end
 
   def self.wait_for_threads(threads)
@@ -253,14 +248,6 @@ class Parallel
     rescue Interrupt
       # process died
     end
-  end
-
-  def self.encode(obj)
-    Base64.encode64(Marshal.dump(obj)).split("\n").join + "\n"
-  end
-
-  def self.decode(str)
-    Marshal.load(Base64.decode64(str))
   end
 
   # options is either a Integer or a Hash with :count
@@ -292,7 +279,7 @@ class Parallel
   class ExceptionWrapper
     attr_reader :exception
     def initialize(exception)
-      dumpable = Parallel.encode(exception) rescue nil
+      dumpable = Marshal.dump(exception) rescue nil
       unless dumpable
         exception = RuntimeError.new("Undumpable Exception -- #{exception.inspect}")
       end
