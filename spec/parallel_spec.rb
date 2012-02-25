@@ -131,6 +131,10 @@ describe Parallel do
       `ruby spec/cases/parallel_map.rb`.should == "-a- -b- -c- -d-"
     end
 
+    it "can dump/load complex objects" do
+      `ruby spec/cases/parallel_map_complex_objects.rb`.should == "YES"
+    end
+
     it "starts new process imediatly when old exists" do
       time_taken{
       `ruby spec/cases/parallel_map_uneven.rb`
