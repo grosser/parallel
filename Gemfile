@@ -1,7 +1,7 @@
 source :rubygems
+gemspec
 
-group :dev do
+group :development do
   gem 'rake'
   gem 'rspec', '~>2'
-  gem 'jeweler'
 end

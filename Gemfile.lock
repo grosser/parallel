@@ -1,14 +1,12 @@
+PATH
+  remote: .
+  specs:
+    parallel (0.5.15)
+
 GEM
   remote: http://rubygems.org/
   specs:
     diff-lcs (1.1.2)
-    gemcutter (0.6.1)
-    git (1.2.5)
-    jeweler (1.4.0)
-      gemcutter (>= 0.1.0)
-      git (>= 1.2.5)
-      rubyforge (>= 2.0.0)
-    json_pure (1.4.6)
     rake (0.8.7)
     rspec (2.6.0)
       rspec-core (~> 2.6.0)
@@ -18,13 +16,11 @@ GEM
     rspec-expectations (2.6.0)
       diff-lcs (~> 1.1.2)
     rspec-mocks (2.6.0)
-    rubyforge (2.0.4)
-      json_pure (>= 1.1.7)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
-  jeweler
+  parallel!
   rake
   rspec (~> 2)

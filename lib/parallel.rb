@@ -1,9 +1,8 @@
 require 'thread' # to get Thread.exclusive
 require 'rbconfig'
+require 'parallel/version'
 
-class Parallel
-  VERSION = File.read( File.join(File.dirname(__FILE__),'..','VERSION') ).strip
-
+module Parallel
   def self.in_threads(options={:count => 2})
     count, options = extract_count_from_options(options)
 
