@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    soft_deletion (0.0.0)
+    soft_deletion (0.1.0)
 
 GEM
   remote: http://rubygems.org/
