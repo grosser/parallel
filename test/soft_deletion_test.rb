@@ -1,4 +1,3 @@
-require 'active_record'
 require 'soft_deletion'
 
 require 'active_support/test_case'
@@ -6,12 +5,10 @@ require 'shoulda'
 require 'redgreen'
 
 # connect
-ActiveRecord::Base.configurations = {"test" => {
+ActiveRecord::Base.establish_connection(
   :adapter => "sqlite3",
-  :database => ":memory:",
-}.with_indifferent_access}
-
-ActiveRecord::Base.establish_connection(:test)
+  :database => ":memory:"
+)
 
 # create tables
 ActiveRecord::Schema.define(:version => 1) do
@@ -25,26 +22,33 @@ ActiveRecord::Schema.define(:version => 1) do
   end
 end
 
+# setup models
+class Forum < ActiveRecord::Base
+  include SoftDeletion
+  belongs_to :category
+end
+
+class Category < ActiveRecord::Base
+  include SoftDeletion
+  has_many :forums, :dependent => :destroy
+end
+
 class SoftDeletionTest < ActiveSupport::TestCase
-  class Forum < ActiveRecord::Base
-    include SoftDeletion
-    belongs_to :category
-  end
+  context ".after_soft_delete" do
+    should "be called after soft-deletion" do
+      Category.after_soft_delete :foo
+      category = Category.create!
+      category.expects(:foo)
+      category.soft_delete!
+    end
 
-  class Category < ActiveRecord::Base
-    include SoftDeletion
-    has_many :forums, :dependent => :destroy
-  end
-
-  def test_should_add_an_after_soft_delete_callback_chain
-    assert Category.respond_to?(:after_soft_delete_callback_chain)
-  end
-
-  def test_soft_delete_should_run_after_soft_delete_callbacks
-    Category.after_soft_delete :foo
-    category = Category.create!
-    category.expects(:foo)
-    category.soft_delete!
+    should "not be called after deletion/destroy" do
+      # TODO clear all callbacks
+      Category.after_soft_delete :foo
+      category = Category.create!
+      category.does_not_expects(:foo)
+      category.soft_delete!
+    end
   end
 
   context 'A soft deletable record with dependent associations' do
