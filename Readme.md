@@ -1,4 +1,5 @@
-Explicit soft deletion for ActiveRecord via deleted_at and default scope.
+Explicit soft deletion for ActiveRecord via deleted_at and default scope + callbacks.<br/>
+Not overwriting destroy or delete.
 
 Install
 =======

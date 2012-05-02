@@ -3,14 +3,6 @@ require 'soft_deletion/version'
 require 'soft_deletion/dependency'
 
 module SoftDeletion
-  # Examples:
-  # Restoring a deleted forum and its entries:
-  #
-  # Forum.with_deleted do
-  #   forum = Forum.find 1
-  #   forum.soft_undelete!
-  # end
-  #
   def self.included(base)
     unless base.ancestors.include?(ActiveRecord::Base)
       raise "You can only include this if #{base} extends ActiveRecord::Base"
@@ -28,7 +20,7 @@ module SoftDeletion
     def soft_delete_dependents
       self.reflect_on_all_associations.
         select { |a| [:destroy, :delete_all, :nullify].include?(a.options[:dependent]) }.
-        map(&:name) || []
+        map(&:name)
     end
 
     def with_deleted

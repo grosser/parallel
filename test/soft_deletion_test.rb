@@ -33,7 +33,43 @@ class Category < ActiveRecord::Base
   has_many :forums, :dependent => :destroy
 end
 
+class NoAssociationCategory < ActiveRecord::Base
+  include SoftDeletion
+  set_table_name 'categories'
+end
+
+# Independent association
+class IDACategory < ActiveRecord::Base
+  include SoftDeletion
+  set_table_name 'categories'
+  has_many :forums, :dependent => :destroy, :foreign_key => :category_id
+end
+
+# Nullified dependent association
+class NDACategory < ActiveRecord::Base
+  include SoftDeletion
+  set_table_name 'categories'
+  has_many :forums, :dependent => :destroy, :foreign_key => :category_id
+end
+
 class SoftDeletionTest < ActiveSupport::TestCase
+  def assert_deleted(resource)
+    resource.class.with_deleted do
+      resource.reload
+      assert resource.deleted?
+    end
+  end
+
+  def assert_not_deleted(resource)
+    resource.reload
+    assert !resource.deleted?
+  end
+
+  setup do
+    # clear callbacks
+    Category.class_eval{ @after_soft_delete_callbacks = nil }
+  end
+
   context ".after_soft_delete" do
     should "be called after soft-deletion" do
       Category.after_soft_delete :foo
@@ -42,16 +78,33 @@ class SoftDeletionTest < ActiveSupport::TestCase
       category.soft_delete!
     end
 
-    should "not be called after deletion/destroy" do
+    should "not be called after normal destroy" do
       # TODO clear all callbacks
       Category.after_soft_delete :foo
       category = Category.create!
-      category.does_not_expects(:foo)
-      category.soft_delete!
+      category.expects(:foo).never
+      category.destroy
     end
   end
 
-  context 'A soft deletable record with dependent associations' do
+  context 'without dependent associations' do
+    should 'only soft-delete itself' do
+      category = NoAssociationCategory.create!
+      category.soft_delete!
+      assert_deleted category
+    end
+  end
+
+  context 'with independent associations' do
+    should 'not delete associations' do
+      category = IDACategory.create!
+      forum = category.forums.create!
+      category.soft_delete!
+      assert_deleted forum
+    end
+  end
+
+  context 'with dependent associations' do
     setup do
       @category = Category.create!
       @forum = @category.forums.create!
@@ -64,17 +117,12 @@ class SoftDeletionTest < ActiveSupport::TestCase
       end
 
       should 'not mark itself as deleted' do
-        category = Category.find_by_id @category
-        assert category
-        assert_equal false, category.deleted?
+        assert_not_deleted @category
       end
 
       should 'not soft delete its dependent associations' do
-        forum = Forum.find_by_id(@forum)
-        assert forum
-        assert_equal false, forum.deleted?
+        assert_not_deleted @forum
       end
-
     end
 
     context 'successfully soft deleted' do
@@ -83,17 +131,11 @@ class SoftDeletionTest < ActiveSupport::TestCase
       end
 
       should 'mark itself as deleted' do
-        Category.with_deleted do
-          @category.reload
-          assert_equal true, @category.deleted?
-        end
+        assert_deleted @category
       end
 
       should 'soft delete its dependent associations' do
-        Forum.with_deleted do
-          @forum.reload
-          assert_equal true, @forum.deleted?
-        end
+        assert_deleted @forum
       end
     end
 
@@ -108,30 +150,22 @@ class SoftDeletionTest < ActiveSupport::TestCase
       end
 
       should 'not mark itself as deleted' do
-        assert_equal false, @category.deleted?
+        assert_not_deleted @category
       end
 
       should 'restore its dependent associations' do
-        @forum.reload
-        assert_equal false, @forum.deleted?
+        assert_not_deleted @forum
       end
     end
   end
 
   context 'a soft-deleted has-many category that nullifies forum references on delete' do
-    setup do
-      Category.has_many :nullify_forums, :class_name => Forum.name, :dependent => :nullify,
-        :foreign_key => :category_id
-      @category = Category.new
-      @category.stubs(:save).returns(true)
-      @forum = Forum.new
-      @category.stubs(:nullify_forums).returns([@forum])
-    end
-
     should 'nullify those references' do
-      @category.expects(:save!).returns(true)
-      @forum.expects(:update_attribute).with(:category_id, nil)
-      @category.soft_delete!
+      category = NDACategory.create!
+      forum = category.forums.create!
+      category.soft_delete!
+      assert_deleted forum
+      #assert_nil forum.category_id # TODO
     end
   end
 end
