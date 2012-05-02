@@ -34,17 +34,17 @@ module SoftDeletion
     deleted_at.present?
   end
 
-  def mark_as_deleted!
+  def mark_as_deleted
     self.deleted_at = Time.now
   end
 
-  def mark_as_undeleted!
+  def mark_as_undeleted
     self.deleted_at = nil
   end
 
   def soft_delete!
     self.class.transaction do
-      mark_as_deleted!
+      mark_as_deleted
       soft_delete_dependencies.each(&:soft_delete!)
       save!
       run_callbacks(:after_soft_delete)
@@ -53,7 +53,7 @@ module SoftDeletion
 
   def soft_undelete!
     self.class.transaction do
-      mark_as_undeleted!
+      mark_as_undeleted
       soft_delete_dependencies.each(&:soft_undelete!)
       save!
     end
