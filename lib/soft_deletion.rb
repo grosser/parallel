@@ -9,7 +9,18 @@ module SoftDeletion
     end
     base.extend(ClassMethods)
     base.send(:default_scope, :conditions => base.soft_delete_default_scope_conditions)
-    base.define_callbacks :after_soft_delete
+
+    # backport after_soft_delete so we can safely upgrade to rails 3
+    if ActiveRecord::VERSION::MAJOR > 2
+      base.define_callbacks :soft_delete
+      class << base
+        def after_soft_delete(callback)
+          set_callback :soft_delete, :after, callback
+        end
+      end
+    else
+      base.define_callbacks :after_soft_delete
+    end
   end
 
   module ClassMethods
@@ -44,10 +55,14 @@ module SoftDeletion
 
   def soft_delete!
     self.class.transaction do
-      mark_as_deleted
-      soft_delete_dependencies.each(&:soft_delete!)
-      save!
-      run_callbacks(:after_soft_delete)
+      if ActiveRecord::VERSION::MAJOR > 2
+        run_callbacks :soft_delete do
+          _soft_delete!
+        end
+      else
+        _soft_delete!
+        run_callbacks :after_soft_delete
+      end
     end
   end
 
@@ -60,6 +75,12 @@ module SoftDeletion
   end
 
   protected
+
+  def _soft_delete!
+    mark_as_deleted
+    soft_delete_dependencies.each(&:soft_delete!)
+    save!
+  end
 
   def soft_delete_dependencies
     self.class.soft_delete_dependents.map { |dependent| Dependency.new(self, dependent) }

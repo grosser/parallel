@@ -9,7 +9,6 @@ task :test do
   sh "ruby -Itest test/soft_deletion_test.rb"
 end
 
-
 # extracted from https://github.com/grosser/project_template
 rule /^version:bump:.*/ do |t|
   sh "git status | grep 'nothing to commit'" # ensure we are not dirty

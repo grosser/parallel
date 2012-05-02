@@ -22,6 +22,16 @@ ActiveRecord::Schema.define(:version => 1) do
   end
 end
 
+class ActiveRecord::Base
+  def self.silent_set_table_name(name)
+    if ActiveRecord::VERSION::MAJOR > 2
+      self.table_name = name
+    else
+      set_table_name name
+    end
+  end
+end
+
 # setup models
 class Forum < ActiveRecord::Base
   include SoftDeletion
@@ -35,21 +45,29 @@ end
 
 class NoAssociationCategory < ActiveRecord::Base
   include SoftDeletion
-  set_table_name 'categories'
+  silent_set_table_name 'categories'
 end
 
 # Independent association
 class IDACategory < ActiveRecord::Base
   include SoftDeletion
-  set_table_name 'categories'
+  silent_set_table_name 'categories'
   has_many :forums, :dependent => :destroy, :foreign_key => :category_id
 end
 
 # Nullified dependent association
 class NDACategory < ActiveRecord::Base
   include SoftDeletion
-  set_table_name 'categories'
+  silent_set_table_name 'categories'
   has_many :forums, :dependent => :destroy, :foreign_key => :category_id
+end
+
+def clear_callbacks(model, callback)
+  if ActiveRecord::VERSION::MAJOR > 2
+    model.define_callbacks callback
+  else
+    model.class_eval{ instance_variable_set "@after_#{callback}_callbacks", nil }
+  end
 end
 
 class SoftDeletionTest < ActiveSupport::TestCase
@@ -66,8 +84,7 @@ class SoftDeletionTest < ActiveSupport::TestCase
   end
 
   setup do
-    # clear callbacks
-    Category.class_eval{ @after_soft_delete_callbacks = nil }
+    clear_callbacks Category, :soft_delete
   end
 
   context ".after_soft_delete" do
