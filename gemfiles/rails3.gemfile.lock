@@ -1,5 +1,5 @@
 PATH
-  remote: .
+  remote: /Users/mgrosser/code/tools/soft_deletion
   specs:
     soft_deletion (0.1.0)
 
@@ -37,8 +37,8 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  activerecord
-  activesupport
+  activerecord (= 3.2.3)
+  activesupport (= 3.2.3)
   appraisal
   mocha
   mynyml-redgreen
