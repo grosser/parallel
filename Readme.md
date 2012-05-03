@@ -14,6 +14,10 @@ Usage
     # mix into any model ...
     class User < ActiveRecord::Base
       include SoftDeletion
+
+      after_soft_delete :send_deletion_emails # Rails 2 + 3
+      set_callback :soft_delete, :after, :prepare_emails # Rails 3
+
       has_many :products
     end
 
@@ -33,6 +37,7 @@ Usage
     # soft undelete them all
     user.soft_undelete!
     user.products.count == 10
+
 
 TODO
 ====

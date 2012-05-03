@@ -14,8 +14,8 @@ module SoftDeletion
     if ActiveRecord::VERSION::MAJOR > 2
       base.define_callbacks :soft_delete
       class << base
-        def after_soft_delete(callback)
-          set_callback :soft_delete, :after, callback
+        def after_soft_delete(*callbacks)
+          set_callback :soft_delete, :after, *callbacks
         end
       end
     else

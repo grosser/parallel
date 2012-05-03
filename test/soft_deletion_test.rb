@@ -95,8 +95,15 @@ class SoftDeletionTest < ActiveSupport::TestCase
       category.soft_delete!
     end
 
+    should "be call multiple after soft-deletion" do
+      Category.after_soft_delete :foo, :bar
+      category = Category.create!
+      category.expects(:foo)
+      category.expects(:bar)
+      category.soft_delete!
+    end
+
     should "not be called after normal destroy" do
-      # TODO clear all callbacks
       Category.after_soft_delete :foo
       category = Category.create!
       category.expects(:foo).never
