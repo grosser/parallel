@@ -47,7 +47,7 @@ TODO
 
 Author
 ======
-[ZenDesk](http://zendesk.com)<br/>
+[Zendesk](http://zendesk.com)<br/>
 michael@grosser.it<br/>
 License: MIT<br/>
 [![Build Status](https://secure.travis-ci.org/grosser/soft_deletion.png)](http://travis-ci.org/grosser/soft_deletion)

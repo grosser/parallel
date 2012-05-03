@@ -4,7 +4,7 @@ require "#{name}/version"
 
 Gem::Specification.new name, SoftDeletion::VERSION do |s|
   s.summary = "Explicit soft deletion for ActiveRecord via deleted_at and default scope."
-  s.authors = ["ZenDesk"]
+  s.authors = ["Zendesk"]
   s.email = "michael@grosser.it"
   s.homepage = "http://github.com/grosser/#{name}"
   s.files = `git ls-files`.split("\n")
