@@ -38,7 +38,7 @@ module SoftDeletion
     end
 
     def can_soft_delete?
-      klass.instance_methods.map(&:to_sym).include?(:soft_delete!)
+      respond_to? :soft_delete!
     end
 
     def klass
@@ -50,7 +50,7 @@ module SoftDeletion
     end
 
     def dependencies
-      Array.wrap(record.send(association_name.to_sym))
+      Array.wrap(record.send(association_name))
     end
   end
 end

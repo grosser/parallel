@@ -43,7 +43,8 @@ class Category < ActiveRecord::Base
   has_many :forums, :dependent => :destroy
 end
 
-class NoAssociationCategory < ActiveRecord::Base
+# No association
+class NACategory < ActiveRecord::Base
   include SoftDeletion
   silent_set_table_name 'categories'
 end
@@ -61,6 +62,14 @@ class NDACategory < ActiveRecord::Base
   silent_set_table_name 'categories'
   has_many :forums, :dependent => :destroy, :foreign_key => :category_id
 end
+
+# Has ome association
+class HOACategory < ActiveRecord::Base
+  include SoftDeletion
+  silent_set_table_name 'categories'
+  has_one :forum, :dependent => :destroy, :foreign_key => :category_id
+end
+
 
 def clear_callbacks(model, callback)
   if ActiveRecord::VERSION::MAJOR > 2
@@ -81,6 +90,22 @@ class SoftDeletionTest < ActiveSupport::TestCase
   def assert_not_deleted(resource)
     resource.reload
     assert !resource.deleted?
+  end
+
+  def self.successfully_soft_deletes
+    context 'successfully soft deleted' do
+      setup do
+        @category.soft_delete!
+      end
+
+      should 'mark itself as deleted' do
+        assert_deleted @category
+      end
+
+      should 'soft delete its dependent associations' do
+        assert_deleted @forum
+      end
+    end
   end
 
   setup do
@@ -113,7 +138,7 @@ class SoftDeletionTest < ActiveSupport::TestCase
 
   context 'without dependent associations' do
     should 'only soft-delete itself' do
-      category = NoAssociationCategory.create!
+      category = NACategory.create!
       category.soft_delete!
       assert_deleted category
     end
@@ -128,7 +153,16 @@ class SoftDeletionTest < ActiveSupport::TestCase
     end
   end
 
-  context 'with dependent associations' do
+  context 'with dependent has_one association' do
+    setup do
+      @category = HOACategory.create!
+      @forum = @category.create_forum
+    end
+
+    successfully_soft_deletes
+  end
+
+  context 'with dependent has_many associations' do
     setup do
       @category = Category.create!
       @forum = @category.forums.create!
@@ -149,19 +183,7 @@ class SoftDeletionTest < ActiveSupport::TestCase
       end
     end
 
-    context 'successfully soft deleted' do
-      setup do
-        @category.soft_delete!
-      end
-
-      should 'mark itself as deleted' do
-        assert_deleted @category
-      end
-
-      should 'soft delete its dependent associations' do
-        assert_deleted @forum
-      end
-    end
+    successfully_soft_deletes
 
     context 'being restored from soft deletion' do
       setup do
