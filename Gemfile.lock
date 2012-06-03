@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    parallel (0.5.16)
+    parallel (0.5.17)
 
 GEM
   remote: http://rubygems.org/
