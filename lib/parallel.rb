@@ -68,7 +68,7 @@ module Parallel
       (hwprefs_available? ? `hwprefs thread_count` : `sysctl -n hw.ncpu`).to_i
     when /linux/
       `grep -c processor /proc/cpuinfo`.to_i
-    when /freebsd/
+    when /(open|free)bsd/
       `sysctl -n hw.ncpu`.to_i
     when /mswin|mingw/
       require 'win32ole'
