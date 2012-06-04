@@ -20,6 +20,9 @@ ActiveRecord::Schema.define(:version => 1) do
   create_table :categories do |t|
     t.timestamp :deleted_at
   end
+
+  create_table :original_categories do |t|
+  end
 end
 
 class ActiveRecord::Base
@@ -45,31 +48,35 @@ end
 
 # No association
 class NACategory < ActiveRecord::Base
-  include SoftDeletion
   silent_set_table_name 'categories'
+  include SoftDeletion
 end
 
 # Independent association
 class IDACategory < ActiveRecord::Base
-  include SoftDeletion
   silent_set_table_name 'categories'
+  include SoftDeletion
   has_many :forums, :dependent => :destroy, :foreign_key => :category_id
 end
 
 # Nullified dependent association
 class NDACategory < ActiveRecord::Base
-  include SoftDeletion
   silent_set_table_name 'categories'
+  include SoftDeletion
   has_many :forums, :dependent => :destroy, :foreign_key => :category_id
 end
 
 # Has ome association
 class HOACategory < ActiveRecord::Base
-  include SoftDeletion
   silent_set_table_name 'categories'
+  include SoftDeletion
   has_one :forum, :dependent => :destroy, :foreign_key => :category_id
 end
 
+# Class without column deleted_at
+class OriginalCategory < ActiveRecord::Base
+  include SoftDeletion
+end
 
 def clear_callbacks(model, callback)
   if ActiveRecord::VERSION::MAJOR > 2
@@ -212,6 +219,14 @@ class SoftDeletionTest < ActiveSupport::TestCase
       category.soft_delete!
       assert_deleted forum
       #assert_nil forum.category_id # TODO
+    end
+  end
+
+  context 'without deleted_at column' do
+    should 'default scope should not provoke an error' do
+      assert_nothing_raised do
+        OriginalCategory.create!
+      end
     end
   end
 end

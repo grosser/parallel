@@ -8,7 +8,12 @@ module SoftDeletion
       raise "You can only include this if #{base} extends ActiveRecord::Base"
     end
     base.extend(ClassMethods)
-    base.send(:default_scope, :conditions => base.soft_delete_default_scope_conditions)
+
+    # Avoids a bad SQL request with versions of code without the colun deleted_at (for example a migration prior to the migration
+    # that adds deleted_at)
+    if base.column_names.include?('deleted_at')
+      base.send(:default_scope, :conditions => base.soft_delete_default_scope_conditions)
+    end
 
     # backport after_soft_delete so we can safely upgrade to rails 3
     if ActiveRecord::VERSION::MAJOR > 2
