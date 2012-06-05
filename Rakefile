@@ -2,7 +2,7 @@ require 'appraisal'
 require 'bundler/gem_tasks'
 
 task :default do
-  sh "bundle exec rake appraisal test"
+  sh "bundle exec rake appraisal:install && bundle exec rake appraisal test"
 end
 
 task :test do
