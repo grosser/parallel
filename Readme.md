@@ -44,9 +44,12 @@ TODO
  - Rails 3 from with inspiration from https://github.com/JackDanger/permanent_records/blob/master/lib/permanent_records.rb
  - maybe stuff from https://github.com/smoku/soft_delete
 
+Authors
+=======
 
-Author
-======
+### [Contributors](https://github.com/grosser/soft_deletion/contributors)
+ - [Michel Pigassou](https://github.com/Dagnan)
+
 [Zendesk](http://zendesk.com)<br/>
 michael@grosser.it<br/>
 License: MIT<br/>
