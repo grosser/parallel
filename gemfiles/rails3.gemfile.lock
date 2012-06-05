@@ -1,5 +1,5 @@
 PATH
-  remote: /Users/michel/ruby/fidzup/soft_deletion
+  remote: /Users/mgrosser/code/tools/soft_deletion
   specs:
     soft_deletion (0.1.3)
 
