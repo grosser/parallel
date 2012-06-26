@@ -38,6 +38,9 @@ Usage
     user.soft_undelete!
     user.products.count == 10
 
+    # soft delete many
+    User.soft_delete_all!(1,2,3,4)
+
 
 TODO
 ====

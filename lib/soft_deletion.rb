@@ -48,7 +48,7 @@ module SoftDeletion
     def soft_delete_all!(ids_or_models)
       ids_or_models = Array.wrap(ids_or_models)
 
-      if ids_or_models.first.respond_to?(:id)
+      if ids_or_models.first.is_a?(ActiveRecord::Base)
         ids = ids_or_models.map(&:id)
         models = ids_or_models
       else
