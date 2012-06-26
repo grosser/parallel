@@ -115,6 +115,22 @@ class SoftDeletionTest < ActiveSupport::TestCase
     end
   end
 
+  def self.successfully_bulk_soft_deletes
+    context 'successfully bulk soft deleted' do
+      setup do
+        Category.soft_delete_all!(@category)
+      end
+
+      should 'mark itself as deleted' do
+        assert_deleted @category
+      end
+
+      should 'soft delete its dependent associations' do
+        assert_deleted @forum
+      end
+    end
+  end
+
   setup do
     clear_callbacks Category, :soft_delete
   end
@@ -125,6 +141,13 @@ class SoftDeletionTest < ActiveSupport::TestCase
       category = Category.create!
       category.expects(:foo)
       category.soft_delete!
+    end
+
+    should "be called after bulk soft-deletion" do
+      Category.after_soft_delete :foo
+      category = Category.create!
+      category.expects(:foo)
+      Category.soft_delete_all!(category)
     end
 
     should "be call multiple after soft-deletion" do
@@ -167,6 +190,7 @@ class SoftDeletionTest < ActiveSupport::TestCase
     end
 
     successfully_soft_deletes
+    successfully_bulk_soft_deletes
   end
 
   context 'with dependent has_many associations' do
@@ -191,6 +215,7 @@ class SoftDeletionTest < ActiveSupport::TestCase
     end
 
     successfully_soft_deletes
+    successfully_bulk_soft_deletes
 
     context 'being restored from soft deletion' do
       setup do
@@ -226,6 +251,36 @@ class SoftDeletionTest < ActiveSupport::TestCase
     should 'default scope should not provoke an error' do
       assert_nothing_raised do
         OriginalCategory.create!
+      end
+    end
+  end
+
+  context "bulk soft deletion" do
+    setup do
+      @categories = 2.times.map { Category.create! }
+    end
+
+    context "by id" do
+      setup do
+        Category.soft_delete_all!(@categories.map(&:id))
+      end
+
+      should "delete all models" do
+        @categories.each do |category|
+          assert_deleted category
+        end
+      end
+    end
+
+    context "by model" do
+      setup do
+        Category.soft_delete_all!(@categories)
+      end
+
+      should "delete all models" do
+        @categories.each do |category|
+          assert_deleted category
+        end
       end
     end
   end

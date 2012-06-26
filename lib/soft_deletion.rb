@@ -44,6 +44,27 @@ module SoftDeletion
         yield self
       end
     end
+
+    def soft_delete_all!(ids_or_models)
+      ids_or_models = Array.wrap(ids_or_models)
+
+      if ids_or_models.first.respond_to?(:id)
+        ids = ids_or_models.map(&:id)
+        models = ids_or_models
+      else
+        ids = ids_or_models
+        models = all(:conditions => { :id => ids })
+      end
+
+      transaction do
+        update_all(["deleted_at = ?", Time.now], :id => ids)
+
+        models.each do |model|
+          model.soft_delete_dependencies.each(&:soft_delete!)
+          model.run_callbacks ActiveRecord::VERSION::MAJOR > 2 ? :soft_delete : :after_soft_delete
+        end
+      end
+    end
   end
 
   def deleted?
@@ -79,15 +100,15 @@ module SoftDeletion
     end
   end
 
+  def soft_delete_dependencies
+    self.class.soft_delete_dependents.map { |dependent| Dependency.new(self, dependent) }
+  end
+
   protected
 
   def _soft_delete!
     mark_as_deleted
     soft_delete_dependencies.each(&:soft_delete!)
     save!
-  end
-
-  def soft_delete_dependencies
-    self.class.soft_delete_dependents.map { |dependent| Dependency.new(self, dependent) }
   end
 end
