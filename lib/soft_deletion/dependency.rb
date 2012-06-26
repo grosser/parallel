@@ -38,7 +38,7 @@ module SoftDeletion
     end
 
     def can_soft_delete?
-      respond_to? :soft_delete!
+      klass.method_defined? :soft_delete!
     end
 
     def klass
