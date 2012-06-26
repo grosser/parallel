@@ -92,9 +92,12 @@ end
 
 def clear_callbacks(model, callback)
   if ActiveRecord::VERSION::MAJOR > 2
-    model.define_callbacks callback
+    model.reset_callbacks callback
   else
-    model.class_eval{ instance_variable_set "@after_#{callback}_callbacks", nil }
+    model.class_eval do
+      instance_variable_set "@before_#{callback}_callbacks", nil
+      instance_variable_set "@after_#{callback}_callbacks", nil
+    end
   end
 end
 
@@ -145,6 +148,15 @@ class SoftDeletionTest < ActiveSupport::TestCase
 
   setup do
     clear_callbacks Category, :soft_delete
+  end
+
+  context ".before_soft_delete" do
+    should "be called on soft-deletion" do
+      Category.before_soft_delete :foo
+      category = Category.create!
+      category.expects(:foo)
+      category.soft_delete!
+    end
   end
 
   context ".after_soft_delete" do
