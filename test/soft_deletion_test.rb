@@ -78,6 +78,18 @@ class OriginalCategory < ActiveRecord::Base
   include SoftDeletion
 end
 
+# Has many destroyable association
+class DACategory < ActiveRecord::Base
+  silent_set_table_name 'categories'
+  include SoftDeletion
+  has_many :destroyable_forums, :dependent => :destroy, :foreign_key => :category_id
+end
+
+# Forum that isn't soft deletable for association checing
+class DestroyableForum < ActiveRecord::Base
+  silent_set_table_name 'forums'
+end
+
 def clear_callbacks(model, callback)
   if ActiveRecord::VERSION::MAJOR > 2
     model.define_callbacks callback
@@ -191,6 +203,27 @@ class SoftDeletionTest < ActiveSupport::TestCase
 
     successfully_soft_deletes
     successfully_bulk_soft_deletes
+  end
+
+  context "with dependent association that doesn't have soft deletion" do
+    setup do
+      @category = DACategory.create!
+      @forum = @category.destroyable_forums.create!
+    end
+
+    context 'successfully soft deleted' do
+      setup do
+        @category.soft_delete!
+      end
+
+      should 'mark itself as deleted' do
+        assert_deleted @category
+      end
+
+      should 'not destroy dependent association' do
+        assert DestroyableForum.exists?(@forum.id)
+      end
+    end
   end
 
   context 'with dependent has_many associations' do
