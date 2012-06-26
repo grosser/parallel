@@ -52,6 +52,7 @@ Authors
 
 ### [Contributors](https://github.com/grosser/soft_deletion/contributors)
  - [Michel Pigassou](https://github.com/Dagnan)
+ - [Steven Davidovitz](https://github.com/steved555)
 
 [Zendesk](http://zendesk.com)<br/>
 michael@grosser.it<br/>
