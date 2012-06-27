@@ -8,29 +8,33 @@ module SoftDeletion
       raise "You can only include this if #{base} extends ActiveRecord::Base"
     end
     base.extend(ClassMethods)
-
-    # Avoids a bad SQL request with versions of code without the colun deleted_at (for example a migration prior to the migration
-    # that adds deleted_at)
-    if base.column_names.include?('deleted_at')
-      base.send(:default_scope, :conditions => base.soft_delete_default_scope_conditions)
-    end
+    base.define_default_soft_delete_scope
 
     # backport after_soft_delete so we can safely upgrade to rails 3
     if ActiveRecord::VERSION::MAJOR > 2
       base.define_callbacks :soft_delete
       class << base
+        def before_soft_delete(*callbacks)
+          set_callback :soft_delete, :before, *callbacks
+        end
+
         def after_soft_delete(*callbacks)
           set_callback :soft_delete, :after, *callbacks
         end
       end
     else
+      base.define_callbacks :before_soft_delete
       base.define_callbacks :after_soft_delete
     end
   end
 
   module ClassMethods
-    def soft_delete_default_scope_conditions
-      {:deleted_at => nil}
+    def define_default_soft_delete_scope
+      # Avoids a bad SQL request with versions of code without the column deleted_at (for example a migration prior to the migration
+      # that adds deleted_at)
+      if column_names.include?('deleted_at')
+        default_scope :conditions => { :deleted_at => nil }
+      end
     end
 
     def soft_delete_dependents
@@ -45,6 +49,10 @@ module SoftDeletion
       end
     end
 
+    def mark_as_deleted
+      ["deleted_at = ?", Time.now]
+    end
+
     def soft_delete_all!(ids_or_models)
       ids_or_models = Array.wrap(ids_or_models)
 
@@ -57,8 +65,7 @@ module SoftDeletion
       end
 
       transaction do
-        update_all(["deleted_at = ?", Time.now], :id => ids)
-
+        update_all(mark_as_deleted, :id => ids)
         models.each do |model|
           model.soft_delete_dependencies.each(&:soft_delete!)
           model.run_callbacks ActiveRecord::VERSION::MAJOR > 2 ? :soft_delete : :after_soft_delete
@@ -80,15 +87,12 @@ module SoftDeletion
   end
 
   def soft_delete!
-    self.class.transaction do
-      if ActiveRecord::VERSION::MAJOR > 2
-        run_callbacks :soft_delete do
-          _soft_delete!
-        end
-      else
-        _soft_delete!
-        run_callbacks :after_soft_delete
-      end
+    _run_soft_delete { save! }
+  end
+
+  def soft_delete(*args)
+    _run_soft_delete do
+      return false unless save(*args)
     end
   end
 
@@ -106,9 +110,21 @@ module SoftDeletion
 
   protected
 
-  def _soft_delete!
-    mark_as_deleted
-    soft_delete_dependencies.each(&:soft_delete!)
-    save!
+  def _run_soft_delete(&block)
+    self.class.transaction do
+      if ActiveRecord::VERSION::MAJOR > 2
+        run_callbacks :soft_delete do
+          mark_as_deleted
+          soft_delete_dependencies.each(&:soft_delete!)
+          block.call
+        end
+      else
+        run_callbacks :before_soft_delete
+        mark_as_deleted
+        soft_delete_dependencies.each(&:soft_delete!)
+        block.call
+        run_callbacks :after_soft_delete
+      end
+    end
   end
 end
