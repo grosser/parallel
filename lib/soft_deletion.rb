@@ -9,7 +9,7 @@ module SoftDeletion
     end
     base.extend(ClassMethods)
 
-    if base.method_defined?(:define_default_soft_delete_scope)
+    if base.respond_to?(:define_default_soft_delete_scope)
       base.define_default_soft_delete_scope
     else
       # Avoids a bad SQL request with versions of code without the column deleted_at (for example a migration prior to the migration
