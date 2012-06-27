@@ -49,7 +49,7 @@ module SoftDeletion
       end
     end
 
-    def mark_as_deleted
+    def mark_as_soft_deleted_sql
       ["deleted_at = ?", Time.now]
     end
 
@@ -65,7 +65,7 @@ module SoftDeletion
       end
 
       transaction do
-        update_all(mark_as_deleted, :id => ids)
+        update_all(mark_as_soft_deleted_sql, :id => ids)
         models.each do |model|
           model.soft_delete_dependencies.each(&:soft_delete!)
           model.run_callbacks ActiveRecord::VERSION::MAJOR > 2 ? :soft_delete : :after_soft_delete
