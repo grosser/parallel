@@ -1,17 +1,6 @@
 require File.expand_path '../test_helper', __FILE__
 
 class SoftDeletionTest < ActiveSupport::TestCase
-  def clear_callbacks(model, callback)
-    if ActiveRecord::VERSION::MAJOR > 2
-      model.reset_callbacks callback
-    else
-      model.class_eval do
-        instance_variable_set "@before_#{callback}_callbacks", nil
-        instance_variable_set "@after_#{callback}_callbacks", nil
-      end
-    end
-  end
-
   def assert_deleted(resource)
     resource.class.with_deleted do
       resource.reload
@@ -247,7 +236,10 @@ class SoftDeletionTest < ActiveSupport::TestCase
     end
 
     should "not find by new scope" do
-      forum = Cat1Forum.create(:category_id => 2)
+      # create! does not work here on rails 2
+      forum = Cat1Forum.new
+      forum.category_id = 2
+      forum.save!
       assert_nil Cat1Forum.find_by_id(forum.id)
     end
   end

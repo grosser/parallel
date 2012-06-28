@@ -4,6 +4,17 @@ require 'active_record'
 
 ENV['EMACS'] = 't' # colors for test-unit < 2.4.9
 
+def clear_callbacks(model, callback)
+  if ActiveRecord::VERSION::MAJOR > 2
+    model.reset_callbacks callback
+  else
+    model.class_eval do
+      instance_variable_set "@before_#{callback}_callbacks", nil
+      instance_variable_set "@after_#{callback}_callbacks", nil
+    end
+  end
+end
+
 # connect
 ActiveRecord::Base.establish_connection(
   :adapter => "sqlite3",
@@ -97,7 +108,7 @@ class Cat1Forum < ActiveRecord::Base
   silent_set_table_name 'forums'
 
   def self.define_default_soft_delete_scope
-    default_scope :conditions => { :category_id => 1 }
+    default_scope :conditions => {:category_id => 1}
   end
 
   include SoftDeletion
