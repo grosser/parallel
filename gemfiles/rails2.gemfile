@@ -7,7 +7,7 @@ gem "rake"
 gem "shoulda"
 gem "mocha"
 gem "sqlite3"
-gem "mynyml-redgreen"
+gem "test-unit", "2.2"
 gem "activerecord", "2.3.14"
 gem "activesupport", "2.3.14"
 

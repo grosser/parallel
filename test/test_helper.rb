@@ -1,7 +1,8 @@
 require 'active_support/test_case'
 require 'shoulda'
-require 'redgreen'
 require 'active_record'
+
+ENV['EMACS'] = 't' # colors for test-unit < 2.4.9
 
 # connect
 ActiveRecord::Base.establish_connection(
