@@ -239,4 +239,16 @@ class SoftDeletionTest < ActiveSupport::TestCase
       end
     end
   end
+
+  context "overwritten default scope" do
+    should "find even with deleted_at" do
+      forum = Cat1Forum.create(:deleted_at => Time.now)
+      assert Cat1Forum.find_by_id(forum.id)
+    end
+
+    should "not find by new scope" do
+      forum = Cat1Forum.create(:category_id => 2)
+      assert_nil Cat1Forum.find_by_id(forum.id)
+    end
+  end
 end

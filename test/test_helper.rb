@@ -87,7 +87,20 @@ class DACategory < ActiveRecord::Base
   has_many :destroyable_forums, :dependent => :destroy, :foreign_key => :category_id
 end
 
-# Forum that isn't soft deletable for association checing
+# Forum that isn't soft deletable for association checking
 class DestroyableForum < ActiveRecord::Base
   silent_set_table_name 'forums'
 end
+
+# Forum with other default scope
+class Cat1Forum < ActiveRecord::Base
+  silent_set_table_name 'forums'
+
+  def self.define_default_soft_delete_scope
+    default_scope :conditions => { :category_id => 1 }
+  end
+
+  include SoftDeletion
+  belongs_to :category
+end
+
