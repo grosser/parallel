@@ -1,6 +1,17 @@
 require File.expand_path '../test_helper', __FILE__
 
 class SoftDeletionTest < ActiveSupport::TestCase
+  def clear_callbacks(model, callback)
+    if ActiveRecord::VERSION::MAJOR > 2
+      model.reset_callbacks callback
+    else
+      model.class_eval do
+        instance_variable_set "@before_#{callback}_callbacks", nil
+        instance_variable_set "@after_#{callback}_callbacks", nil
+      end
+    end
+  end
+
   def assert_deleted(resource)
     resource.class.with_deleted do
       resource.reload

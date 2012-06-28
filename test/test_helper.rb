@@ -91,14 +91,3 @@ end
 class DestroyableForum < ActiveRecord::Base
   silent_set_table_name 'forums'
 end
-
-def clear_callbacks(model, callback)
-  if ActiveRecord::VERSION::MAJOR > 2
-    model.reset_callbacks callback
-  else
-    model.class_eval do
-      instance_variable_set "@before_#{callback}_callbacks", nil
-      instance_variable_set "@after_#{callback}_callbacks", nil
-    end
-  end
-end
