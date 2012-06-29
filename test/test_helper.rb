@@ -103,6 +103,11 @@ class DestroyableForum < ActiveRecord::Base
   silent_set_table_name 'forums'
 end
 
+# test that it does not blow up when the table is not yet defined (e.g. in rake db:reset)
+class NoTable < ActiveRecord::Base
+  include SoftDeletion
+end
+
 # Forum with other default scope
 class Cat1Forum < ActiveRecord::Base
   silent_set_table_name 'forums'
