@@ -49,7 +49,7 @@ TODO
 Authors
 =======
 
-### [Contributors](http://github.com/grosser/parallel/contributors)
+### [Contributors](https://github.com/grosser/parallel/contributors)
  - [Przemyslaw Wroblewski](http://github.com/lowang)
  - [TJ Holowaychuk](http://vision-media.ca/)
  - [Masatomo Nakano](http://twitter.com/masatomo2)
