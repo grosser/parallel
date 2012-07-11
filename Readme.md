@@ -9,7 +9,7 @@ Usage
 =====
     # 2 CPUs -> work in 2 processes (a,b + c)
     results = Parallel.map(['a','b','c']) do |one_letter|
-      expensive_calculation(letter)
+      expensive_calculation(one_letter)
     end
 
     # 3 Processes -> finished after 1 run
