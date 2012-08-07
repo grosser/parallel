@@ -90,9 +90,7 @@ module SoftDeletion
   end
 
   def soft_delete(*args)
-    _run_soft_delete do
-      return false unless save(*args)
-    end
+    _run_soft_delete{ save(*args) }
   end
 
   def soft_undelete!
@@ -111,19 +109,21 @@ module SoftDeletion
 
   def _run_soft_delete(&block)
     self.class.transaction do
+      result = nil
       if ActiveRecord::VERSION::MAJOR > 2
         run_callbacks :soft_delete do
           mark_as_deleted
           soft_delete_dependencies.each(&:soft_delete!)
-          block.call
+          result = block.call
         end
       else
         run_callbacks :before_soft_delete
         mark_as_deleted
         soft_delete_dependencies.each(&:soft_delete!)
-        block.call
+        result = block.call
         run_callbacks :after_soft_delete
       end
+      result
     end
   end
 end

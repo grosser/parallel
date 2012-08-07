@@ -199,7 +199,7 @@ class SoftDeletionTest < ActiveSupport::TestCase
     end
   end
 
-  context "bulk soft deletion" do
+  context ".soft_delete_all!" do
     setup do
       @categories = 2.times.map { Category.create! }
     end
@@ -241,6 +241,46 @@ class SoftDeletionTest < ActiveSupport::TestCase
       forum.category_id = 2
       forum.save!
       assert_nil Cat1Forum.find_by_id(forum.id)
+    end
+  end
+
+  context "validations" do
+    should "fail when validations fail" do
+      forum = ValidatedForum.create!(:category_id => 1)
+      forum.category_id = nil
+      assert_raise ActiveRecord::RecordInvalid do
+        forum.soft_delete!
+      end
+      assert_not_deleted forum
+    end
+
+    should "pass when validations pass" do
+      forum = ValidatedForum.create!(:category_id => 1)
+      forum.soft_delete!
+      assert_deleted forum
+    end
+  end
+
+  context "#soft_delete" do
+    should "return true if it succeeds" do
+      forum = ValidatedForum.create!(:category_id => 1)
+      assert_equal true, forum.soft_delete
+      assert_deleted forum
+    end
+
+    should "return false if validations fail" do
+      forum = ValidatedForum.create!(:category_id => 1)
+      forum.category_id = nil
+      assert_equal false, forum.soft_delete
+      assert_not_deleted forum
+    end
+
+    should "return true if validations are prevented and it succeeds" do
+      forum = ValidatedForum.create!(:category_id => 1)
+      forum.category_id = nil
+      skip_validations = (ActiveRecord::VERSION::MAJOR == 2 ? false : {:validate => false})
+      assert_equal true, forum.soft_delete(skip_validations)
+      assert_deleted forum
     end
   end
 end

@@ -54,6 +54,13 @@ class Forum < ActiveRecord::Base
   belongs_to :category
 end
 
+class ValidatedForum < ActiveRecord::Base
+  silent_set_table_name 'forums'
+  include SoftDeletion
+  belongs_to :category
+  validates_presence_of :category_id
+end
+
 class Category < ActiveRecord::Base
   include SoftDeletion
   has_many :forums, :dependent => :destroy
