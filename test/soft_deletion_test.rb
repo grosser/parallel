@@ -14,32 +14,32 @@ class SoftDeletionTest < ActiveSupport::TestCase
   end
 
   def self.successfully_soft_deletes
-    context 'successfully soft deleted' do
+    context "successfully soft deleted" do
       setup do
         @category.soft_delete!
       end
 
-      should 'mark itself as deleted' do
+      should "mark itself as deleted" do
         assert_deleted @category
       end
 
-      should 'soft delete its dependent associations' do
+      should "soft delete its dependent associations" do
         assert_deleted @forum
       end
     end
   end
 
   def self.successfully_bulk_soft_deletes
-    context 'successfully bulk soft deleted' do
+    context "successfully bulk soft deleted" do
       setup do
         Category.soft_delete_all!(@category)
       end
 
-      should 'mark itself as deleted' do
+      should "mark itself as deleted" do
         assert_deleted @category
       end
 
-      should 'soft delete its dependent associations' do
+      should "soft delete its dependent associations" do
         assert_deleted @forum
       end
     end
@@ -89,16 +89,16 @@ class SoftDeletionTest < ActiveSupport::TestCase
     end
   end
 
-  context 'without dependent associations' do
-    should 'only soft-delete itself' do
+  context "without dependent associations" do
+    should "only soft-delete itself" do
       category = NACategory.create!
       category.soft_delete!
       assert_deleted category
     end
   end
 
-  context 'with independent associations' do
-    should 'not delete associations' do
+  context "with independent associations" do
+    should "not delete associations" do
       category = IDACategory.create!
       forum = category.forums.create!
       category.soft_delete!
@@ -106,7 +106,7 @@ class SoftDeletionTest < ActiveSupport::TestCase
     end
   end
 
-  context 'with dependent has_one association' do
+  context "with dependent has_one association" do
     setup do
       @category = HOACategory.create!
       @forum = @category.create_forum
@@ -122,38 +122,38 @@ class SoftDeletionTest < ActiveSupport::TestCase
       @forum = @category.destroyable_forums.create!
     end
 
-    context 'successfully soft deleted' do
+    context "successfully soft deleted" do
       setup do
         @category.soft_delete!
       end
 
-      should 'mark itself as deleted' do
+      should "mark itself as deleted" do
         assert_deleted @category
       end
 
-      should 'not destroy dependent association' do
+      should "not destroy dependent association" do
         assert DestroyableForum.exists?(@forum.id)
       end
     end
   end
 
-  context 'with dependent has_many associations' do
+  context "with dependent has_many associations" do
     setup do
       @category = Category.create!
       @forum = @category.forums.create!
     end
 
-    context 'failing to soft delete' do
+    context "failing to soft delete" do
       setup do
         @category.stubs(:valid?).returns(false)
         assert_raise(ActiveRecord::RecordInvalid) { @category.soft_delete! }
       end
 
-      should 'not mark itself as deleted' do
+      should "not mark itself as deleted" do
         assert_not_deleted @category
       end
 
-      should 'not soft delete its dependent associations' do
+      should "not soft delete its dependent associations" do
         assert_not_deleted @forum
       end
     end
@@ -161,7 +161,7 @@ class SoftDeletionTest < ActiveSupport::TestCase
     successfully_soft_deletes
     successfully_bulk_soft_deletes
 
-    context 'being restored from soft deletion' do
+    context "being restored from soft deletion" do
       setup do
         @category.soft_delete!
         Category.with_deleted do
@@ -171,18 +171,18 @@ class SoftDeletionTest < ActiveSupport::TestCase
         end
       end
 
-      should 'not mark itself as deleted' do
+      should "not mark itself as deleted" do
         assert_not_deleted @category
       end
 
-      should 'restore its dependent associations' do
+      should "restore its dependent associations" do
         assert_not_deleted @forum
       end
     end
   end
 
-  context 'a soft-deleted has-many category that nullifies forum references on delete' do
-    should 'nullify those references' do
+  context "a soft-deleted has-many category that nullifies forum references on delete" do
+    should "nullify those references" do
       category = NDACategory.create!
       forum = category.forums.create!
       category.soft_delete!
@@ -191,8 +191,8 @@ class SoftDeletionTest < ActiveSupport::TestCase
     end
   end
 
-  context 'without deleted_at column' do
-    should 'default scope should not provoke an error' do
+  context "without deleted_at column" do
+    should "default scope should not provoke an error" do
       assert_nothing_raised do
         OriginalCategory.create!
       end
