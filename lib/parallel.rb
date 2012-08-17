@@ -66,7 +66,7 @@ module Parallel
       `hwprefs cpu_count`.to_i
     when /darwin/
       (hwprefs_available? ? `hwprefs thread_count` : `sysctl -n hw.ncpu`).to_i
-    when /linux/
+    when /linux|cygwin/
       `grep -c processor /proc/cpuinfo`.to_i
     when /(open|free)bsd/
       `sysctl -n hw.ncpu`.to_i
