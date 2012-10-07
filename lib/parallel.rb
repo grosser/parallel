@@ -264,7 +264,14 @@ module Parallel
   def self.kill_on_ctrl_c(pids)
     Signal.trap :SIGINT do
       $stderr.puts 'Parallel execution interrupted, exiting ...'
-      pids.each { |pid| Process.kill(:KILL, pid) if pid }
+      pids.compact.each do |pid|
+        begin
+          Process.kill(:KILL, pid)
+        rescue Errno::ESRCH
+          # some linux systems already automatically killed the children at this point
+          # so we just ignore them not being there
+        end
+      end
       exit 1 # Quit with 'failed' signal
     end
   end
