@@ -7,7 +7,7 @@ describe Parallel do
     Time.now.to_f - t
   end
 
-  describe :processor_count do
+  describe ".processor_count" do
     it "returns a number" do
       (1..999).should include(Parallel.processor_count)
     end
@@ -24,7 +24,7 @@ describe Parallel do
     end
   end
 
-  describe :physical_processor_count do
+  describe ".physical_processor_count" do
     it "returns a number" do
       (1..999).should include(Parallel.physical_processor_count)
     end
@@ -34,7 +34,7 @@ describe Parallel do
     end
   end
 
-  describe :in_processes do
+  describe ".in_processes" do
     def cpus
       Parallel.processor_count
     end
@@ -100,7 +100,7 @@ describe Parallel do
     end
   end
 
-  describe :in_threads do
+  describe ".in_threads" do
     it "saves time" do
       time_taken{
         Parallel.in_threads(3){ sleep 2 }
@@ -120,7 +120,7 @@ describe Parallel do
     end
   end
 
-  describe :map do
+  describe ".map" do
     it "saves time" do
       time_taken{
       `ruby spec/cases/parallel_map_sleeping.rb`
@@ -176,7 +176,7 @@ describe Parallel do
     end
   end
 
-  describe :map_with_index do
+  describe ".map_with_index" do
     it "yields object and index" do
       `ruby spec/cases/map_with_index.rb 2>&1`.should == 'a0b1'
     end
@@ -196,7 +196,7 @@ describe Parallel do
     end
   end
 
-  describe :each do
+  describe ".each" do
     it "returns original array, works like map" do
       `ruby spec/cases/each.rb`.should == 'a b c d'
     end
@@ -206,7 +206,7 @@ describe Parallel do
     end
   end
 
-  describe :each_with_index do
+  describe ".each_with_index" do
     it "yields object and index" do
       `ruby spec/cases/each_with_index.rb 2>&1`.should == 'a0b1'
     end
