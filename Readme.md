@@ -34,12 +34,27 @@ or `each_with_index` or `map_with_index`
  - Global data can be modified
  - No extra memory used
 
+### ActiveRecord
+
+Try either of those to get working parallel AR
+
+```Ruby
+Parallel.each(User.all, :in_threads => 8) do |user|
+  ActiveRecord::Base.connection_pool.with_connection do
+    user.update_attribute(:some_attribute, some_value)
+  end
+end
+
+Parallel.each(User.all, :in_processes => 8) do |user|
+  ActiveRecord::Base.connection.reconnect!
+  user.update_attribute(:some_attribute, some_value)
+end
+```
 
 Processes/Threads are workers, they grab the next piece of work when they finish
 
 Tips
 ====
- - [ActiveRecord] `ActiveRecord::Base.connection.reconnect!` inside the parallel block prevents errors
  - [Benchmark/Test] Disable threading/forking with `:in_threads => 0` or `:in_processes => 0`, great to test performance or to debug parallel issues
 
 TODO
