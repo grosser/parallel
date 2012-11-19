@@ -174,6 +174,18 @@ describe Parallel do
       Process.should_not_receive(:fork)
       Parallel.map([1,2,3,4,5,6,7,8,9], :in_processes => 0){|x| x+2 }.should == [3,4,5,6,7,8,9,10,11]
     end
+
+    it "notifies when an item of work is dispatched to a worker process" do
+      monitor = double('monitor', :call => nil)
+      monitor.should_receive(:call).exactly(5).times
+      Parallel.map([1,2,3,4,5], :monitor => monitor, :in_processes => 5) {}
+    end
+
+    it "notifies when an item of work is dispatched to a threaded worker" do
+      monitor = double('monitor', :call => nil)
+      monitor.should_receive(:call).exactly(5).times
+      Parallel.map([1,2,3,4,5], :monitor => monitor, :in_threads => 5) {}
+    end
   end
 
   describe ".map_with_index" do

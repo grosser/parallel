@@ -117,6 +117,7 @@ module Parallel
     results = []
     current = -1
     exception = nil
+    monitor = options[:monitor]
 
     in_threads(options[:count]) do
       # as long as there are more items, work on one of them
@@ -125,6 +126,8 @@ module Parallel
 
         index = Thread.exclusive{ current+=1 }
         break if index >= items.size
+
+        monitor.call(index) if monitor
 
         begin
           results[index] = call_with_index(items, index, options, &block)
@@ -145,6 +148,7 @@ module Parallel
     current_index = -1
     results = []
     exception = nil
+    monitor = options[:monitor]
 
     in_threads(options[:count]) do |i|
       worker = workers[i]
@@ -156,6 +160,7 @@ module Parallel
           break if index >= items.size
 
           Marshal.dump(index, worker[:write])
+          monitor.call(index) if monitor
           output = Marshal.load(worker[:read])
 
           if ExceptionWrapper === output
