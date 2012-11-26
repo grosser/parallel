@@ -177,14 +177,34 @@ describe Parallel do
 
     it "notifies when an item of work is dispatched to a worker process" do
       monitor = double('monitor', :call => nil)
-      monitor.should_receive(:call).exactly(5).times
-      Parallel.map([1,2,3,4,5], :monitor => monitor, :in_processes => 5) {}
+      monitor.should_receive(:call).once.with(:first, 0)
+      monitor.should_receive(:call).once.with(:second, 1)
+      monitor.should_receive(:call).once.with(:third, 2)
+      Parallel.map([:first, :second, :third], :start => monitor, :in_processes => 3) {}
+    end
+
+    it "notifies when an item of work is completed by a worker process" do
+      monitor = double('monitor', :call => nil)
+      monitor.should_receive(:call).once.with(:first, 0)
+      monitor.should_receive(:call).once.with(:second, 1)
+      monitor.should_receive(:call).once.with(:third, 2)
+      Parallel.map([:first, :second, :third], :finish => monitor, :in_processes => 3) {}
     end
 
     it "notifies when an item of work is dispatched to a threaded worker" do
       monitor = double('monitor', :call => nil)
-      monitor.should_receive(:call).exactly(5).times
-      Parallel.map([1,2,3,4,5], :monitor => monitor, :in_threads => 5) {}
+      monitor.should_receive(:call).once.with(:first, 0)
+      monitor.should_receive(:call).once.with(:second, 1)
+      monitor.should_receive(:call).once.with(:third, 2)
+      Parallel.map([:first, :second, :third], :start => monitor, :in_threads => 3) {}
+    end
+
+    it "notifies when an item of work is completed by a threaded worker" do
+      monitor = double('monitor', :call => nil)
+      monitor.should_receive(:call).once.with(:first, 0)
+      monitor.should_receive(:call).once.with(:second, 1)
+      monitor.should_receive(:call).once.with(:third, 2)
+      Parallel.map([:first, :second, :third], :finish => monitor, :in_threads => 3) {}
     end
   end
 
