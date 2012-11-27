@@ -117,6 +117,8 @@ module Parallel
     results = []
     current = -1
     exception = nil
+    on_start = options[:start]
+    on_finish = options[:finish]
 
     in_threads(options[:count]) do
       # as long as there are more items, work on one of them
@@ -126,11 +128,16 @@ module Parallel
         index = Thread.exclusive{ current+=1 }
         break if index >= items.size
 
+        item = items[index]
+        on_start.call(item, index) if on_start
+
         begin
           results[index] = call_with_index(items, index, options, &block)
         rescue Exception => e
           exception = e
           break
+        ensure
+          on_finish.call(item, index) if on_finish
         end
       end
     end
@@ -145,6 +152,8 @@ module Parallel
     current_index = -1
     results = []
     exception = nil
+    on_start = options[:start]
+    on_finish = options[:finish]
 
     in_threads(options[:count]) do |i|
       worker = workers[i]
@@ -155,8 +164,13 @@ module Parallel
           index = Thread.exclusive{ current_index += 1 }
           break if index >= items.size
 
+          item = items[index]
+
           Marshal.dump(index, worker[:write])
+          on_start.call(item, index) if on_start
+
           output = Marshal.load(worker[:read])
+          on_finish.call(item, index) if on_finish
 
           if ExceptionWrapper === output
             exception = output.exception
