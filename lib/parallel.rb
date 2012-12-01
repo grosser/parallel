@@ -61,7 +61,7 @@ module Parallel
   end
 
   def self.processor_count
-    case RbConfig::CONFIG['host_os']
+    @processor_count ||= case RbConfig::CONFIG['host_os']
     when /darwin9/
       `hwprefs cpu_count`.to_i
     when /darwin/
@@ -84,7 +84,7 @@ module Parallel
   end
 
   def self.physical_processor_count
-    case RbConfig::CONFIG['host_os']
+    @physical_processor_count ||= case RbConfig::CONFIG['host_os']
     when /darwin1/, /freebsd/
       `sysctl -n hw.physicalcpu`.to_i
     when /linux/
