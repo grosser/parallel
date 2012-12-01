@@ -89,6 +89,7 @@ Authors
  - [Neal Stewart](https://github.com/n-time)
  - [Jurriaan Pruis](http://github.com/jurriaan)
  - [Rob Worley](http://github.com/robworley)
+ - [Tasveer Singh](https://github.com/tazsingh)
 
 [Michael Grosser](http://grosser.it)<br/>
 michael@grosser.it<br/>
