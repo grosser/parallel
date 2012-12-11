@@ -170,14 +170,14 @@ module Parallel
           on_start.call(item, index) if on_start
 
           worker_alive = begin
-                           Process.getpgid( worker[:read].pid)
+                           Process.getpgid( worker[:pid])
                            true
                          rescue Errno::ESRCH
                            false
                          end
 
           if worker_alive
-            unles = Marshal.load(worker[:read])
+            output = Marshal.load(worker[:read])
           else
             raise "Process with ID #{worker[:read].pid} is no longer running"
           end
