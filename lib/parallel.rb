@@ -169,7 +169,11 @@ module Parallel
           Marshal.dump(index, worker[:write])
           on_start.call(item, index) if on_start
 
+          unless worker[:read].closed?
           output = Marshal.load(worker[:read])
+          else
+            raise "process with id #{worker[:read].pid} quit prematurely"
+          end
           on_finish.call(item, index) if on_finish
 
           if ExceptionWrapper === output
