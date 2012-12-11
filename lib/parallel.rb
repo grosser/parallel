@@ -1,7 +1,6 @@
 require 'thread' # to get Thread.exclusive
 require 'rbconfig'
 require 'parallel/version'
-require 'ruby-debug'
 
 module Parallel
   def self.in_threads(options={:count => 2})
@@ -170,21 +169,16 @@ module Parallel
 
           Marshal.dump(index, worker[:write])
           on_start.call(item, index) if on_start
-          trap "TTIN" do
-            debugger
-          end
 
           worker_alive = begin
                            Process.getpgid( worker[:pid]) >= 0
                          rescue Errno::ESRCH
                            false
                          rescue Exception => e
-                           puts "Process.getpgid raised an exception #{e}"
                            raise e
 
                          end
 
-          puts "worker_alive is #{worker_alive}" 
 
           if worker_alive
             output = Marshal.load(worker[:read])
@@ -279,9 +273,7 @@ module Parallel
 
   def self.wait_for_process(pid)
     begin
-      puts "waiting for process #{pid}"
       Process.wait(pid, Process::WNOHANG)
-      puts "done waiting for process #{pid}"
     rescue Interrupt
       # process died
     end
