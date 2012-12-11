@@ -162,6 +162,9 @@ module Parallel
         loop do
           break if exception
           index = Thread.exclusive{ current_index += 1 }
+
+          puts "item size is #{items.size}"
+          puts "index is #{index}"
           break if index >= items.size
 
           item = items[index]
