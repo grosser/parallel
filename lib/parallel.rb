@@ -174,11 +174,7 @@ module Parallel
                            Process.getpgid( worker[:pid]) >= 0
                          rescue Errno::ESRCH
                            false
-                         rescue Exception => e
-                           raise e
-
                          end
-
 
           if worker_alive
             output = Marshal.load(worker[:read])
