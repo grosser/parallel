@@ -169,8 +169,15 @@ module Parallel
           Marshal.dump(index, worker[:write])
           on_start.call(item, index) if on_start
 
-          unless worker[:read].closed?
-          output = Marshal.load(worker[:read])
+          worker_alive = begin
+                           Process.getpgid( pid )
+                           true
+                         rescue Errno::ESRCH
+                           false
+                         end
+
+          if worker_alive
+            unles = Marshal.load(worker[:read])
           else
             raise "process with id #{worker[:read].pid} quit prematurely"
           end
