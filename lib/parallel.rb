@@ -171,8 +171,7 @@ module Parallel
           on_start.call(item, index) if on_start
 
           worker_alive = begin
-                           Process.getpgid( worker[:pid])
-                           true
+                           Process.getpgid( worker[:pid]) >= 0
                          rescue Errno::ESRCH
                            false
                          end
