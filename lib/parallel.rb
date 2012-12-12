@@ -253,7 +253,11 @@ module Parallel
       rescue Exception => e
         result = ExceptionWrapper.new(e)
       end
-      Marshal.dump(result, write)
+      unless write.closed?
+        Marshal.dump(result, write)
+      else
+        raise "Child write closed before result could be marshalled down it"
+      end
     end
   end
 
