@@ -146,6 +146,14 @@ module Parallel
 
     results
   end
+  def self.worker_alive?(worker)
+    worker_alive = begin
+                     Process.getpgid( worker[:pid]) >= 0
+                   rescue Errno::ESRCH
+                     false
+                   end
+
+  end
 
   def self.work_in_processes(items, options, &blk)
     workers = create_workers(items, options, &blk)
@@ -169,7 +177,12 @@ module Parallel
           Marshal.dump(index, worker[:write])
           on_start.call(item, index) if on_start
 
-          output = Marshal.load(worker[:read])
+          if worker_alive?(worker) and !worker[:read].closed?
+            output = Marshal.load(worker[:read])
+          else
+            raise "Process with ID #{worker[:pid]} is no longer running"
+          end
+
           on_finish.call(item, index) if on_finish
 
           if ExceptionWrapper === output
@@ -241,7 +254,11 @@ module Parallel
       rescue Exception => e
         result = ExceptionWrapper.new(e)
       end
-      Marshal.dump(result, write)
+      unless write.closed?
+        Marshal.dump(result, write)
+      else
+        raise "Child's write IO object closed before result could be marshalled through it."
+      end
     end
   end
 
