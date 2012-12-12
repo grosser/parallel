@@ -269,7 +269,7 @@ module Parallel
 
   def self.wait_for_process(pid)
     begin
-      Process.wait(pid, Process::WNOHANG)
+      Process.wait(pid)
     rescue Interrupt
       # process died
     end
