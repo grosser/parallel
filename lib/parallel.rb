@@ -162,6 +162,7 @@ module Parallel
         loop do
           break if exception
           index = Thread.exclusive{ current_index += 1 }
+
           break if index >= items.size
 
           item = items[index]
@@ -170,8 +171,7 @@ module Parallel
           on_start.call(item, index) if on_start
 
           worker_alive = begin
-                           Process.getpgid( worker[:pid])
-                           true
+                           Process.getpgid( worker[:pid]) >= 0
                          rescue Errno::ESRCH
                            false
                          end
@@ -179,7 +179,7 @@ module Parallel
           if worker_alive
             output = Marshal.load(worker[:read])
           else
-            raise "Process with ID #{worker[:read].pid} is no longer running"
+            raise "Process with ID #{worker[:pid]} is no longer running"
           end
 
           on_finish.call(item, index) if on_finish
@@ -269,7 +269,7 @@ module Parallel
 
   def self.wait_for_process(pid)
     begin
-      Process.wait(pid)
+      Process.wait(pid, Process::WNOHANG)
     rescue Interrupt
       # process died
     end
