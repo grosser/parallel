@@ -3,6 +3,9 @@ require 'rbconfig'
 require 'parallel/version'
 
 module Parallel
+  class DeadWorker < EOFError
+  end
+
   def self.in_threads(options={:count => 2})
     count, options = extract_count_from_options(options)
 
@@ -169,7 +172,12 @@ module Parallel
           Marshal.dump(index, worker[:write])
           on_start.call(item, index) if on_start
 
-          output = Marshal.load(worker[:read])
+          begin
+            output = Marshal.load(worker[:read])
+          rescue EOFError
+            raise Parallel::DeadWorker
+          end
+
           on_finish.call(item, index) if on_finish
 
           if ExceptionWrapper === output
