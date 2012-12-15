@@ -3,7 +3,7 @@ require 'rbconfig'
 require 'parallel/version'
 
 module Parallel
-  class DeadWorker < EOFError
+  class DeadWorker < Exception
   end
 
   class ExceptionWrapper
