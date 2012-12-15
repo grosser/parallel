@@ -6,6 +6,34 @@ module Parallel
   class DeadWorker < EOFError
   end
 
+  class Worker
+    attr_reader :pid, :read, :write
+    def initialize(read, write, pid)
+      @read, @write, @pid = read, write, pid
+    end
+
+    def close_pipes
+      read.close
+      write.close
+    end
+
+    def wait
+      Process.wait(pid)
+    rescue Interrupt
+      # process died
+    end
+
+    def work(index)
+      Marshal.dump(index, write)
+
+      begin
+        Marshal.load(read)
+      rescue EOFError
+        raise Parallel::DeadWorker
+      end
+    end
+  end
+
   def self.in_threads(options={:count => 2})
     count, options = extract_count_from_options(options)
 
@@ -161,7 +189,7 @@ module Parallel
           break if index >= items.size
 
           output = with_instrumentation items[index], index, options do
-            let_worker_work_on(worker, index)
+            worker.work(index)
           end
 
           if ExceptionWrapper === output
@@ -171,8 +199,8 @@ module Parallel
           end
         end
       ensure
-        close_pipes(worker)
-        wait_for_process worker[:pid] # if it goes zombie, rather wait here to be able to debug
+        worker.close_pipes
+        worker.wait # if it goes zombie, rather wait here to be able to debug
       end
     end
 
@@ -181,24 +209,13 @@ module Parallel
     results
   end
 
-  def self.let_worker_work_on(worker, index)
-    Marshal.dump(index, worker[:write])
-
-    begin
-      Marshal.load(worker[:read])
-    rescue EOFError
-      raise Parallel::DeadWorker
-    end
-  end
-
   def self.create_workers(items, options, &block)
     workers = []
     Array.new(options[:count]).each do
       workers << worker(items, options.merge(:started_workers => workers), &block)
     end
 
-    pids = workers.map{|worker| worker[:pid] }
-    kill_on_ctrl_c(pids)
+    kill_on_ctrl_c(workers.map(&:pid))
     workers
   end
 
@@ -211,7 +228,7 @@ module Parallel
 
     pid = Process.fork do
       begin
-        options.delete(:started_workers).each{|w| close_pipes w }
+        options.delete(:started_workers).each(&:close_pipes)
 
         parent_write.close
         parent_read.close
@@ -226,12 +243,7 @@ module Parallel
     child_read.close
     child_write.close
 
-    {:read => parent_read, :write => parent_write, :pid => pid}
-  end
-
-  def self.close_pipes(worker)
-    worker[:read].close
-    worker[:write].close
+    Worker.new(parent_read, parent_write, pid)
   end
 
   def self.process_incoming_jobs(read, write, items, options, &block)
@@ -254,14 +266,6 @@ module Parallel
       rescue Interrupt
         # thread died, do not stop other threads
       end
-    end
-  end
-
-  def self.wait_for_process(pid)
-    begin
-      Process.wait(pid)
-    rescue Interrupt
-      # process died
     end
   end
 
