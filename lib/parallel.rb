@@ -120,8 +120,6 @@ module Parallel
     results = []
     current = -1
     exception = nil
-    on_start = options[:start]
-    on_finish = options[:finish]
 
     in_threads(options[:count]) do
       # as long as there are more items, work on one of them
@@ -131,16 +129,13 @@ module Parallel
         index = Thread.exclusive{ current+=1 }
         break if index >= items.size
 
-        item = items[index]
-        on_start.call(item, index) if on_start
-
-        begin
-          results[index] = call_with_index(items, index, options, &block)
-        rescue Exception => e
-          exception = e
-          break
-        ensure
-          on_finish.call(item, index) if on_finish
+        with_instrumentation items[index], index, options do
+          begin
+            results[index] = call_with_index(items, index, options, &block)
+          rescue Exception => e
+            exception = e
+            break
+          end
         end
       end
     end
@@ -155,8 +150,6 @@ module Parallel
     current_index = -1
     results = []
     exception = nil
-    on_start = options[:start]
-    on_finish = options[:finish]
 
     in_threads(options[:count]) do |i|
       worker = workers[i]
@@ -167,18 +160,15 @@ module Parallel
           index = Thread.exclusive{ current_index += 1 }
           break if index >= items.size
 
-          item = items[index]
+          output = with_instrumentation items[index], index, options do
+            Marshal.dump(index, worker[:write])
 
-          Marshal.dump(index, worker[:write])
-          on_start.call(item, index) if on_start
-
-          begin
-            output = Marshal.load(worker[:read])
-          rescue EOFError
-            raise Parallel::DeadWorker
+            begin
+              Marshal.load(worker[:read])
+            rescue EOFError
+              raise Parallel::DeadWorker
+            end
           end
-
-          on_finish.call(item, index) if on_finish
 
           if ExceptionWrapper === output
             exception = output.exception
@@ -302,6 +292,15 @@ module Parallel
     args = [array[index]]
     args << index if options[:with_index]
     block.call(*args)
+  end
+
+  def self.with_instrumentation(item, index, options)
+    on_start = options[:start]
+    on_finish = options[:finish]
+    on_start.call(item, index) if on_start
+    yield
+  ensure
+    on_finish.call(item, index) if on_finish
   end
 
   class ExceptionWrapper
