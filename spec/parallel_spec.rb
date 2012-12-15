@@ -207,8 +207,12 @@ describe Parallel do
       Parallel.map([:first, :second, :third], :finish => monitor, :in_threads => 3) {}
     end
 
-    it "spits out a useful error when a worker dies" do
-      `ruby spec/cases/map_with_killed_worker.rb 2>&1`.should include "DEAD"
+    it "spits out a useful error when a worker dies before read" do
+      `ruby spec/cases/map_with_killed_worker_before_read.rb 2>&1`.should include "DEAD"
+    end
+
+    it "spits out a useful error when a worker dies before write" do
+      `ruby spec/cases/map_with_killed_worker_before_write.rb 2>&1`.should include "DEAD"
     end
   end
 

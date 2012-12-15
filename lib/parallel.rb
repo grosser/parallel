@@ -36,7 +36,11 @@ module Parallel
     end
 
     def work(index)
-      Marshal.dump(index, write)
+      begin
+        Marshal.dump(index, write)
+      rescue Errno::EPIPE
+        raise DeadWorker
+      end
 
       begin
         Marshal.load(read)
