@@ -161,13 +161,7 @@ module Parallel
           break if index >= items.size
 
           output = with_instrumentation items[index], index, options do
-            Marshal.dump(index, worker[:write])
-
-            begin
-              Marshal.load(worker[:read])
-            rescue EOFError
-              raise Parallel::DeadWorker
-            end
+            let_worker_work_on(worker, index)
           end
 
           if ExceptionWrapper === output
@@ -185,6 +179,16 @@ module Parallel
     raise exception if exception
 
     results
+  end
+
+  def self.let_worker_work_on(worker, index)
+    Marshal.dump(index, worker[:write])
+
+    begin
+      Marshal.load(worker[:read])
+    rescue EOFError
+      raise Parallel::DeadWorker
+    end
   end
 
   def self.create_workers(items, options, &block)
