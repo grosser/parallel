@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    parallel (0.6.3)
+    parallel (0.6.4)
 
 GEM
   remote: https://rubygems.org/
@@ -20,6 +20,7 @@ GEM
 
 PLATFORMS
   ruby
+  x86-mingw32
 
 DEPENDENCIES
   bump

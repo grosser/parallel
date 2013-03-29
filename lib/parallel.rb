@@ -185,7 +185,10 @@ module Parallel
         end
       end
 
-      raise exception if exception
+      if exception and not (exception.class == LocalJumpError and
+      exception.reason == :return)
+        raise exception
+      end
 
       results
     end
@@ -221,7 +224,10 @@ module Parallel
         end
       end
 
-      raise exception if exception
+      if exception and not (exception.class == LocalJumpError and
+                   exception.reason == :return)
+        raise exception
+      end
 
       results
     end
