@@ -166,11 +166,11 @@ describe Parallel do
     end
 
     it 'stops all workers when one returns in process' do
-      `ruby spec/cases/map_with_processes_and_return.rb 2>&1`.should =~ /^\d{4} raised$/
+      `ruby spec/cases/map_with_processes_and_return.rb 2>&1`.should =~ /^\d{4} returned$/
     end
 
     it 'stops all workers when one returns in thread' do
-      `ruby spec/cases/map_with_threads_and_return.rb 2>&1`.should =~ /^\d{0,4} raised$/
+      `ruby spec/cases/map_with_threads_and_return.rb 2>&1`.should =~ /^\d{0,4} returned$/
     end
 
     it "can run with 0 threads" do
