@@ -165,6 +165,14 @@ describe Parallel do
       `ruby spec/cases/map_with_threads_and_exceptions.rb 2>&1`.should =~ /^\d{0,4} raised$/
     end
 
+    it 'stops all workers when one returns in process' do
+      `ruby spec/cases/map_with_processes_and_return.rb 2>&1`.should =~ /^\d{4} raised$/
+    end
+
+    it 'stops all workers when one returns in thread' do
+      `ruby spec/cases/map_with_threads_and_return.rb 2>&1`.should =~ /^\d{0,4} raised$/
+    end
+
     it "can run with 0 threads" do
       Thread.should_not_receive(:exclusive)
       Parallel.map([1,2,3,4,5,6,7,8,9], :in_threads => 0){|x| x+2 }.should == [3,4,5,6,7,8,9,10,11]
