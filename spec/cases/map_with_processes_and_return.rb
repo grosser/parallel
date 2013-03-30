@@ -7,4 +7,4 @@ Parallel.map(1..100, :in_processes => 4) do |x|
   sleep 0.1 # so no now work gets queued before return is executed
   x
 end
-print ' return'
+print ' returned'
