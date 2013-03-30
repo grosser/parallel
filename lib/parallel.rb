@@ -188,11 +188,7 @@ module Parallel
         end
       end
 
-      if exception and not exception.class == Parallel::Break
-        raise exception
-      end
-
-      results
+      handle_exception(exception, results)
     end
 
     def work_in_processes(items, options, &blk)
@@ -226,11 +222,7 @@ module Parallel
         end
       end
 
-      if exception and not exception.class == Parallel::Break
-        raise exception
-      end
-
-      results
+      handle_exception(exception, results)
     end
 
     def create_workers(items, options, &block)
@@ -291,6 +283,12 @@ module Parallel
           # thread died, do not stop other threads
         end
       end
+    end
+
+    def handle_exception(exception, results)
+      return nil if exception.class == Parallel::Break
+      raise exception if exception
+      results
     end
 
     # options is either a Integer or a Hash with :count

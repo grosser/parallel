@@ -166,11 +166,11 @@ describe Parallel do
     end
 
     it 'stops all workers when one raises Break in process' do
-      `ruby spec/cases/map_with_processes_and_break.rb 2>&1`.should =~ /^\d{4} Parallel::Break raised$/
+      `ruby spec/cases/map_with_processes_and_break.rb 2>&1`.should =~ /^\d{4} Parallel::Break raised - result nil$/
     end
 
     it 'stops all workers when one raises Break in thread' do
-      `ruby spec/cases/map_with_threads_and_break.rb 2>&1`.should =~ /^\d{0,4} Parallel::Break raised$/
+      `ruby spec/cases/map_with_threads_and_break.rb 2>&1`.should =~ /^\d{4} Parallel::Break raised - result nil$/
     end
 
     it "can run with 0 threads" do
