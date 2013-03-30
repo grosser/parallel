@@ -51,6 +51,14 @@ Parallel.each(User.all, :in_processes => 8) do |user|
 end
 ```
 
+### Break
+
+```Ruby
+Parallel.map(User.all) do |user|
+  raise Parallel::Break # -> stop all execution
+end
+```
+
 Processes/Threads are workers, they grab the next piece of work when they finish
 
 ### Progress / ETA
@@ -90,6 +98,7 @@ Authors
  - [Jurriaan Pruis](http://github.com/jurriaan)
  - [Rob Worley](http://github.com/robworley)
  - [Tasveer Singh](https://github.com/tazsingh)
+ - [Joachim](https://github.com/jmozmoz)
 
 [Michael Grosser](http://grosser.it)<br/>
 michael@grosser.it<br/>
