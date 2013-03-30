@@ -6,6 +6,9 @@ module Parallel
   class DeadWorker < Exception
   end
 
+  class Break < Exception
+  end
+
   class ExceptionWrapper
     attr_reader :exception
     def initialize(exception)
@@ -185,8 +188,7 @@ module Parallel
         end
       end
 
-      if exception and not (exception.class == LocalJumpError and
-      exception.reason == :break)
+      if exception and not exception.class == Parallel::Break
         raise exception
       end
 
@@ -224,8 +226,7 @@ module Parallel
         end
       end
 
-      if exception and not (exception.class == LocalJumpError and
-                   exception.reason == :return)
+      if exception and not exception.class == Parallel::Break
         raise exception
       end
 

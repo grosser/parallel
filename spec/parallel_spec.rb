@@ -165,12 +165,12 @@ describe Parallel do
       `ruby spec/cases/map_with_threads_and_exceptions.rb 2>&1`.should =~ /^\d{0,4} raised$/
     end
 
-    it 'stops all workers when one returns in process' do
-      `ruby spec/cases/map_with_processes_and_return.rb 2>&1`.should =~ /^\d{4} returned$/
+    it 'stops all workers when one raises Break in process' do
+      `ruby spec/cases/map_with_processes_and_return.rb 2>&1`.should =~ /^\d{4} Parallel::Break raised$/
     end
 
-    it 'stops all workers when one breaks in thread' do
-      `ruby spec/cases/map_with_threads_and_break.rb 2>&1`.should =~ /^\d{0,4} broke$/
+    it 'stops all workers when one raises Break in thread' do
+      `ruby spec/cases/map_with_threads_and_break.rb 2>&1`.should =~ /^\d{0,4} Parallel::Break raised$/
     end
 
     it "can run with 0 threads" do
