@@ -186,7 +186,7 @@ module Parallel
       end
 
       if exception and not (exception.class == LocalJumpError and
-      exception.reason == :return)
+      exception.reason == :break)
         raise exception
       end
 
