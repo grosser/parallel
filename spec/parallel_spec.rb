@@ -30,6 +30,7 @@ describe Parallel do
     end
 
     it "is half or same as normal cpu" do
+      pending if ENV["TRAVIS"]
       [Parallel.processor_count, Parallel.processor_count / 2].should include Parallel.physical_processor_count
     end
   end
