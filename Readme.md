@@ -3,20 +3,26 @@ Best suited for map-reduce or e.g. parallel downloads/uploads.
 
 Install
 =======
-    sudo gem install parallel
+
+```Bash
+gem install parallel
+```
 
 Usage
 =====
-    # 2 CPUs -> work in 2 processes (a,b + c)
-    results = Parallel.map(['a','b','c']) do |one_letter|
-      expensive_calculation(one_letter)
-    end
 
-    # 3 Processes -> finished after 1 run
-    results = Parallel.map(['a','b','c'], :in_processes=>3){|one_letter| ... }
+```Ruby
+# 2 CPUs -> work in 2 processes (a,b + c)
+results = Parallel.map(['a','b','c']) do |one_letter|
+  expensive_calculation(one_letter)
+end
 
-    # 3 Threads -> finished after 1 run
-    results = Parallel.map(['a','b','c'], :in_threads=>3){|one_letter| ... }
+# 3 Processes -> finished after 1 run
+results = Parallel.map(['a','b','c'], :in_processes=>3){|one_letter| ... }
+
+# 3 Threads -> finished after 1 run
+results = Parallel.map(['a','b','c'], :in_threads=>3){|one_letter| ... }
+```
 
 Same can be done with `each`
 ```Ruby
@@ -73,7 +79,6 @@ gem install ruby-progressbar
 require 'ruby-progressbar'
 progress = ProgressBar.new("test", 100)
 Parallel.map(1..100, :finish => lambda { |i, item| progress.increment }) { sleep 1 }
-progress.finish
 ```
 
 Tips
