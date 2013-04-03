@@ -64,9 +64,9 @@ Processes/Threads are workers, they grab the next piece of work when they finish
 ### Progress / ETA
 
 ```Ruby
-require 'progressbar'
+require 'ruby-progressbar'
 progress = ProgressBar.new("test", 100)
-Parallel.map(1..100, :finish => lambda { |i, item| progress.inc }) { sleep 1 }
+Parallel.map(1..100, :finish => lambda { |i, item| progress.increment }) { sleep 1 }
 progress.finish
 ```
 
