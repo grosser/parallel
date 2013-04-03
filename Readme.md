@@ -19,8 +19,12 @@ Usage
     results = Parallel.map(['a','b','c'], :in_threads=>3){|one_letter| ... }
 
 Same can be done with `each`
-    Parallel.each(['a','b','c']){|one_letter| ... }
+```Ruby
+Parallel.each(['a','b','c']){|one_letter| ... }
+```
 or `each_with_index` or `map_with_index`
+
+Processes/Threads are workers, they grab the next piece of work when they finish.
 
 ### Processes
  - Speedup through multiple CPUs
@@ -59,9 +63,11 @@ Parallel.map(User.all) do |user|
 end
 ```
 
-Processes/Threads are workers, they grab the next piece of work when they finish
-
 ### Progress / ETA
+
+```Bash
+gem install ruby-progressbar
+```
 
 ```Ruby
 require 'ruby-progressbar'
