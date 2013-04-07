@@ -79,7 +79,6 @@ gem install ruby-progressbar
 require 'ruby-progressbar'
 progress = ProgressBar.new("test", 100)
 Parallel.map(1..100, :finish => lambda { |i, item| progress.increment }) { sleep 1 }
-progress.finish
 ```
 
 Tips
