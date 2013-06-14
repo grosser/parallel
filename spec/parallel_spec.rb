@@ -7,6 +7,13 @@ describe Parallel do
     Time.now.to_f - t
   end
 
+  def kill_process_with_name(file)
+    running_processes = `ps -f`.split("\n").map{ |line| line.split(/\s+/) }
+    pid_index = running_processes.detect { |p| p.include?("UID") }.index("UID") + 1
+    parent_pid = running_processes.detect { |p| p.include?(file) and not p.include?("sh") }[pid_index]
+    `kill -2 #{parent_pid}`
+  end
+
   describe ".processor_count" do
     it "returns a number" do
       (1..999).should include(Parallel.processor_count)
@@ -58,18 +65,37 @@ describe Parallel do
 
     it "kills the processes when the main process gets killed through ctrl+c" do
       time_taken{
-      lambda{
-        Thread.new do
-          `ruby spec/cases/parallel_start_and_kill.rb`
-        end
-        sleep 1
-        running_processes = `ps -f`.split("\n").map{ |line| line.split(/\s+/) }
-        pid_index = running_processes.detect{ |p| p.include?("UID") }.index("UID") + 1
-        parent_pid = running_processes.detect{ |p| p.include?("spec/cases/parallel_start_and_kill.rb") }[pid_index]
-        `kill -2 #{parent_pid}` #simulates Ctrl+c
-        sleep 1
-      }.should_not change{`ps`.split("\n").size}
+        lambda{
+          t = Thread.new { `ruby spec/cases/parallel_start_and_kill.rb PROCESS` }
+          sleep 1
+          kill_process_with_name("spec/cases/parallel_start_and_kill.rb") #simulates Ctrl+c
+          sleep 1
+          puts t.value
+        }.should_not change{`ps`.split("\n").size}
       }.should <= 3
+    end
+
+    it "kills the threads when the main process gets killed through ctrl+c" do
+      time_taken{
+        lambda{
+          Thread.new { `ruby spec/cases/parallel_start_and_kill.rb THREAD` }
+          sleep 1
+          kill_process_with_name("spec/cases/parallel_start_and_kill.rb") #simulates Ctrl+c
+          sleep 1
+        }.should_not change{`ps`.split("\n").size}
+      }.should <= 3
+    end
+
+    it "does not kill anything on ctrl+c when everything has finished" do
+      time_taken do
+        t = Thread.new { `ruby spec/cases/parallel_fast_exit.rb 2>&1` }
+        sleep 2
+        kill_process_with_name("spec/cases/parallel_fast_exit.rb") #simulates Ctrl+c
+        sleep 1
+        result = t.value
+        result.scan(/I finished/).size.should == 3
+        result.should_not include("Parallel execution interrupted")
+      end.should <= 4
     end
 
     it "saves time" do
