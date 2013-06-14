@@ -66,7 +66,7 @@ module Parallel
         end
       end
 
-      wait_for_threads(threads)
+      kill_on_ctrl_c(threads) { wait_for_threads(threads) }
 
       out
     end
@@ -196,29 +196,30 @@ module Parallel
       current_index = -1
       results = []
       exception = nil
+      kill_on_ctrl_c(workers.map(&:pid)) do
+        in_threads(options[:count]) do |i|
+          worker = workers[i]
 
-      in_threads(options[:count]) do |i|
-        worker = workers[i]
+          begin
+            loop do
+              break if exception
+              index = Thread.exclusive{ current_index += 1 }
+              break if index >= items.size
 
-        begin
-          loop do
-            break if exception
-            index = Thread.exclusive{ current_index += 1 }
-            break if index >= items.size
+              output = with_instrumentation items[index], index, options do
+                worker.work(index)
+              end
 
-            output = with_instrumentation items[index], index, options do
-              worker.work(index)
+              if ExceptionWrapper === output
+                exception = output.exception
+              else
+                results[index] = output
+              end
             end
-
-            if ExceptionWrapper === output
-              exception = output.exception
-            else
-              results[index] = output
-            end
+          ensure
+            worker.close_pipes
+            worker.wait # if it goes zombie, rather wait here to be able to debug
           end
-        ensure
-          worker.close_pipes
-          worker.wait # if it goes zombie, rather wait here to be able to debug
         end
       end
 
@@ -230,8 +231,6 @@ module Parallel
       Array.new(options[:count]).each do
         workers << worker(items, options.merge(:started_workers => workers), &block)
       end
-
-      kill_on_ctrl_c(workers.map(&:pid))
       workers
     end
 
@@ -302,19 +301,35 @@ module Parallel
       [count, options]
     end
 
-    # kill all these processes (children) if user presses Ctrl+c
-    def kill_on_ctrl_c(pids)
-      Signal.trap :SIGINT do
-        $stderr.puts 'Parallel execution interrupted, exiting ...'
-        pids.compact.each do |pid|
-          begin
-            Process.kill(:KILL, pid)
-          rescue Errno::ESRCH
-            # some linux systems already automatically killed the children at this point
-            # so we just ignore them not being there
+    # kill all these pids or threads if user presses Ctrl+c
+    def kill_on_ctrl_c(things)
+      if @to_be_killed
+        @to_be_killed << things
+      else
+        @to_be_killed = [things]
+        Signal.trap :SIGINT do
+          if @to_be_killed.any?
+            $stderr.puts 'Parallel execution interrupted, exiting ...'
+            @to_be_killed.flatten.compact.each { |thing| kill_that_thing!(thing) }
           end
+          exit 1 # Quit with 'failed' signal
         end
-        exit 1 # Quit with 'failed' signal
+      end
+      yield
+    ensure
+      @to_be_killed.pop # free threads for GC and do not kill pids that could be used for new processes
+    end
+
+    def kill_that_thing!(thing)
+      if thing.is_a?(Thread)
+        thing.kill
+      else
+        begin
+          Process.kill(:KILL, thing)
+        rescue Errno::ESRCH
+          # some linux systems already automatically killed the children at this point
+          # so we just ignore them not being there
+        end
       end
     end
 
