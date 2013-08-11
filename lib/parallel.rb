@@ -140,6 +140,8 @@ module Parallel
         `sysctl -n hw.physicalcpu`.to_i
       when /linux/
         cores_per_physical = `grep cores /proc/cpuinfo`[/\d+/].to_i
+        # as vmware guest, cores is not exposed, fall back to logical proc count
+        return processor_count if cores_per_physical == 0
         physicals = `grep 'physical id' /proc/cpuinfo |sort|uniq|wc -l`.to_i
         physicals * cores_per_physical
       when /mswin|mingw/
