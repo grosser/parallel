@@ -36,9 +36,9 @@ describe Parallel do
       (1..999).should include(Parallel.physical_processor_count)
     end
 
-    it "is half or same as normal cpu" do
+    it "is even factor of logical cpus" do
       pending if ENV["TRAVIS"]
-      [Parallel.processor_count, Parallel.processor_count / 2].should include Parallel.physical_processor_count
+      (Parallel.processor_count % Parallel.physical_processor_count).should == 0
     end
   end
 
