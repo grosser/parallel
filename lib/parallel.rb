@@ -139,7 +139,9 @@ module Parallel
       when /darwin1/, /freebsd/
         `sysctl -n hw.physicalcpu`.to_i
       when /linux/
-        `grep cores /proc/cpuinfo`[/\d+/].to_i
+        cores_per_physical = `grep cores /proc/cpuinfo`[/\d+/].to_i
+        physicals = `grep 'physical id' /proc/cpuinfo |sort|uniq|wc -l`.to_i
+        physicals * cores_per_physical
       when /mswin|mingw/
         require 'win32ole'
         wmi = WIN32OLE.connect("winmgmts://")
