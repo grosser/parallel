@@ -135,22 +135,24 @@ module Parallel
     end
 
     def physical_processor_count
-      @physical_processor_count ||= case RbConfig::CONFIG['host_os']
-      when /darwin1/, /freebsd/
-        `sysctl -n hw.physicalcpu`.to_i
-      when /linux/
-        cores_per_physical = `grep cores /proc/cpuinfo`[/\d+/].to_i
-        physicals = `grep 'physical id' /proc/cpuinfo |sort|uniq|wc -l`.to_i
-        physical_cores = physicals * cores_per_physical
+      @physical_processor_count ||= begin
+        ppc = case RbConfig::CONFIG['host_os']
+        when /darwin1/, /freebsd/
+          `sysctl -n hw.physicalcpu`.to_i
+        when /linux/
+          cores_per_physical = `grep cores /proc/cpuinfo`[/\d+/].to_i
+          physicals = `grep 'physical id' /proc/cpuinfo |sort|uniq|wc -l`.to_i
+          physicals * cores_per_physical
+        when /mswin|mingw/
+          require 'win32ole'
+          wmi = WIN32OLE.connect("winmgmts://")
+          cpu = wmi.ExecQuery("select NumberOfProcessors from Win32_Processor")
+          cpu.to_enum.first.NumberOfLogicalProcessors
+        else
+          processor_count
+        end
         # fall back to logical count if physical info is invalid
-        physical_cores > 0 ? physical_cores : processor_count
-      when /mswin|mingw/
-        require 'win32ole'
-        wmi = WIN32OLE.connect("winmgmts://")
-        cpu = wmi.ExecQuery("select NumberOfProcessors from Win32_Processor")
-        cpu.to_enum.first.NumberOfLogicalProcessors
-      else
-        processor_count
+        ppc > 0 ? ppc : processor_count
       end
     end
 
