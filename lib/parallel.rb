@@ -148,6 +148,7 @@ module Parallel
       else
         processor_count
       end
+      @physical_processor_count == 0 ? processor_count : @physical_processor_count
     end
 
     private
