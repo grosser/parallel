@@ -1,2 +1,9 @@
+language: ruby
 before_script:
   - export TRAVIS=1
+branches:
+  only:
+    - master
+rvm:
+  - 1.9.3
+  - 2.0.0
