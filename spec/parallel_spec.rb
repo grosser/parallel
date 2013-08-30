@@ -283,7 +283,7 @@ describe Parallel do
 
   describe ".each_with_index" do
     it "yields object and index" do
-      `ruby spec/cases/each_with_index.rb 2>&1`.should == 'a0b1'
+      ["a0b1", "b1a0"].should include `ruby spec/cases/each_with_index.rb 2>&1`
     end
   end
 end
