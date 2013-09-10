@@ -147,7 +147,7 @@ module Parallel
           require 'win32ole'
           wmi = WIN32OLE.connect("winmgmts://")
           cpu = wmi.ExecQuery("select NumberOfProcessors from Win32_Processor")
-          cpu.to_enum.first.NumberOfLogicalProcessors
+          cpu.to_enum.first.NumberOfProcessors
         else
           processor_count
         end
