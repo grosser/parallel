@@ -111,6 +111,7 @@ Authors
  - [Tasveer Singh](https://github.com/tazsingh)
  - [Joachim](https://github.com/jmozmoz)
  - [yaoguai](https://github.com/yaoguai)
+ - [Bartosz Dziewoński](https://github.com/MatmaRex)
 
 [Michael Grosser](http://grosser.it)<br/>
 michael@grosser.it<br/>
