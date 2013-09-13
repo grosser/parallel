@@ -1,4 +1,4 @@
-require File.expand_path('spec/spec_helper')
+require 'spec_helper'
 
 describe Parallel do
   def time_taken
@@ -278,6 +278,10 @@ describe Parallel do
 
     it "does not use marshal_dump" do
       `ruby spec/cases/no_dump_with_each.rb 2>&1`.should == 'no dump for resultno dump for each'
+    end
+
+    it "does not slow down with lots of GC work in threads" do
+      Benchmark.realtime { `ruby spec/cases/no_gc_with_each.rb 2>&1` }.should <= 10
     end
   end
 

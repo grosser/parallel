@@ -270,11 +270,10 @@ module Parallel
     def process_incoming_jobs(read, write, items, options, &block)
       while !read.eof?
         index = Marshal.load(read)
-        begin
-          result = call_with_index(items, index, options, &block)
-          result = nil if options[:preserve_results] == false
+        result = begin
+          call_with_index(items, index, options, &block)
         rescue Exception => e
-          result = ExceptionWrapper.new(e)
+          ExceptionWrapper.new(e)
         end
         Marshal.dump(result, write)
       end
@@ -342,7 +341,12 @@ module Parallel
     def call_with_index(array, index, options, &block)
       args = [array[index]]
       args << index if options[:with_index]
-      block.call(*args)
+      if options[:preserve_results] == false
+        block.call(*args)
+        nil # avoid GC overhead of passing large results around
+      else
+        block.call(*args)
+      end
     end
 
     def with_instrumentation(item, index, options)
