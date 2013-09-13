@@ -1,3 +1,3 @@
 module Parallel
-  VERSION = Version = '0.8.1'
+  VERSION = Version = '0.8.2'
 end
