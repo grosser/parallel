@@ -308,7 +308,7 @@ module Parallel
 
     # kill all these pids or threads if user presses Ctrl+c
     def kill_on_ctrl_c(things)
-      if @to_be_killed
+      if defined?(@to_be_killed) && @to_be_killed
         @to_be_killed << things
       else
         @to_be_killed = [things]
