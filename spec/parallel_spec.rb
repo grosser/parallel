@@ -15,6 +15,10 @@ describe Parallel do
   end
 
   describe ".processor_count" do
+    before do
+      Parallel.instance_variable_set(:@processor_count, nil)
+    end
+
     it "returns a number" do
       (1..999).should include(Parallel.processor_count)
     end
@@ -32,6 +36,10 @@ describe Parallel do
   end
 
   describe ".physical_processor_count" do
+    before do
+      Parallel.instance_variable_set(:@physical_processor_count, nil)
+    end
+
     it "returns a number" do
       (1..999).should include(Parallel.physical_processor_count)
     end
