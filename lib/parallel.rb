@@ -54,7 +54,7 @@ module Parallel
   end
 
   class << self
-    def in_threads(options={:count => 2})
+    def in_threads(options={:count => 2, :kill_on_ctrl_c => true})
       count, options = extract_count_from_options(options)
 
       out = []
@@ -66,7 +66,7 @@ module Parallel
         end
       end
 
-      kill_on_ctrl_c(threads) { wait_for_threads(threads) }
+      kill_on_ctrl_c(threads, options[:kill_on_ctrl_c]) { wait_for_threads(threads) }
 
       out
     end
@@ -88,6 +88,7 @@ module Parallel
 
     def map(array, options = {}, &block)
       array = array.to_a # turn Range and other Enumerable-s into an Array
+      options[:kill_on_ctrl_c] ||= true
 
       if options[:in_threads]
         method = :in_threads
@@ -202,7 +203,7 @@ module Parallel
       current_index = -1
       results = []
       exception = nil
-      kill_on_ctrl_c(workers.map(&:pid)) do
+      kill_on_ctrl_c(workers.map(&:pid), options[:kill_on_ctrl_c]) do
         in_threads(options[:count]) do |i|
           worker = workers[i]
 
@@ -307,17 +308,19 @@ module Parallel
     end
 
     # kill all these pids or threads if user presses Ctrl+c
-    def kill_on_ctrl_c(things)
-      if defined?(@to_be_killed) && @to_be_killed
-        @to_be_killed << things
-      else
-        @to_be_killed = [things]
-        Signal.trap :SIGINT do
-          if @to_be_killed.any?
-            $stderr.puts 'Parallel execution interrupted, exiting ...'
-            @to_be_killed.flatten.compact.each { |thing| kill_that_thing!(thing) }
+    def kill_on_ctrl_c(things, kill_them?=true)
+      if kill_them?
+        if defined?(@to_be_killed) && @to_be_killed
+          @to_be_killed << things
+        else
+          @to_be_killed = [things]
+          Signal.trap :SIGINT do
+            if @to_be_killed.any?
+              $stderr.puts 'Parallel execution interrupted, exiting ...'
+              @to_be_killed.flatten.compact.each { |thing| kill_that_thing!(thing) }
+            end
+            exit 1 # Quit with 'failed' signal
           end
-          exit 1 # Quit with 'failed' signal
         end
       end
       yield
