@@ -88,7 +88,9 @@ module Parallel
 
     def map(array, options = {}, &block)
       array = array.to_a # turn Range and other Enumerable-s into an Array
-      options[:kill_on_ctrl_c] ||= true
+      if options[:kill_on_ctrl_c].nil? then
+        options[:kill_on_ctrl_c] = true
+      end
 
       if options[:in_threads]
         method = :in_threads
@@ -176,7 +178,7 @@ module Parallel
       current = -1
       exception = nil
 
-      in_threads(options[:count]) do
+      in_threads(options) do
         # as long as there are more items, work on one of them
         loop do
           break if exception
@@ -204,7 +206,7 @@ module Parallel
       results = []
       exception = nil
       kill_on_ctrl_c(workers.map(&:pid), options[:kill_on_ctrl_c]) do
-        in_threads(options[:count]) do |i|
+        in_threads(options) do |i|
           worker = workers[i]
 
           begin
@@ -313,7 +315,7 @@ module Parallel
         @to_be_killed << things
       else
         @to_be_killed = [things]
-        if kill_them
+        if kill_them then
           Signal.trap :SIGINT do
             if @to_be_killed.any?
               $stderr.puts 'Parallel execution interrupted, exiting ...'
@@ -322,6 +324,7 @@ module Parallel
             exit 1 # Quit with 'failed' signal
           end
         end
+
       end
       yield
     ensure
