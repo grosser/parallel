@@ -322,6 +322,8 @@ module Parallel
             exit 1 # Quit with 'failed' signal
           end
         end
+      else
+        @to_be_killed = []
       end
       yield
     ensure
