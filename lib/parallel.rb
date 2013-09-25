@@ -309,11 +309,11 @@ module Parallel
 
     # kill all these pids or threads if user presses Ctrl+c
     def kill_on_ctrl_c(things, kill_them=true)
-      if kill_them
-        if defined?(@to_be_killed) && @to_be_killed
-          @to_be_killed << things
-        else
-          @to_be_killed = [things]
+      if defined?(@to_be_killed) && @to_be_killed
+        @to_be_killed << things
+      else
+        @to_be_killed = [things]
+        if kill_them
           Signal.trap :SIGINT do
             if @to_be_killed.any?
               $stderr.puts 'Parallel execution interrupted, exiting ...'
@@ -322,8 +322,6 @@ module Parallel
             exit 1 # Quit with 'failed' signal
           end
         end
-      else
-        @to_be_killed = []
       end
       yield
     ensure
