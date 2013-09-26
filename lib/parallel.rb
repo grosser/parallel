@@ -73,7 +73,6 @@ module Parallel
 
     def in_processes(options = {}, &block)
       count, options = extract_count_from_options(options)
-      count ||= processor_count
       map(0...count, options.merge(:in_processes => count), &block)
     end
 
@@ -94,13 +93,18 @@ module Parallel
         size = options[method]
       else
         method = :in_processes
-        size = options[method] || processor_count
+        if Process.respond_to?(:fork)
+          size = options[method] || processor_count
+        else
+          $stderr.puts "Warning: Process.fork is not supported by this Ruby"
+          size = 0
+        end
       end
       size = [array.size, size].min
 
-      return work_direct(array, options, &block) if size == 0
-
-      if method == :in_threads
+      if size == 0
+        work_direct(array, options, &block)
+      elsif method == :in_threads
         work_in_threads(array, options.merge(:count => size), &block)
       else
         work_in_processes(array, options.merge(:count => size), &block)
