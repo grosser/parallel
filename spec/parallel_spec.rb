@@ -289,7 +289,7 @@ describe Parallel do
     end
 
     it "does not slow down with lots of GC work in threads" do
-      Benchmark.realtime { `ruby spec/cases/no_gc_with_each.rb 2>&1` }.should <= 10
+      Benchmark.realtime { `ruby spec/cases/no_gc_with_each.rb 2>&1` }.should <= (ENV["TRAVIS"] ? 15 : 10)
     end
   end
 
