@@ -137,7 +137,7 @@ module Parallel
     def physical_processor_count
       @physical_processor_count ||= begin
         ppc = case RbConfig::CONFIG['host_os']
-        when /darwin1/, /freebsd/
+        when /darwin1/
           `sysctl -n hw.physicalcpu`.to_i
         when /linux/
           cores_per_physical = `grep cores /proc/cpuinfo`[/\d+/].to_i
