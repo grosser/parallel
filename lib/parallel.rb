@@ -148,14 +148,22 @@ module Parallel
         when /darwin1/
           `sysctl -n hw.physicalcpu`.to_i
         when /linux/
-          cores_per_physical = `grep cores /proc/cpuinfo`[/\d+/].to_i
-          physicals = `grep 'physical id' /proc/cpuinfo |sort|uniq|wc -l`.to_i
-          physicals * cores_per_physical
+          cores = {}  # unique physical ID / core ID combinations
+          phy = 0
+          IO.read("/proc/cpuinfo").scan(/^physical id.*|^core id.*/) do |ln|
+            if ln.start_with?("physical")
+              phy = ln[/\d+/]
+            elsif ln.start_with?("core")
+              cid = phy + ":" + ln[/\d+/]
+              cores[cid] = true if not cores[cid]
+            end
+          end
+          cores.count
         when /mswin|mingw/
           require 'win32ole'
-          wmi = WIN32OLE.connect("winmgmts://")
-          cpu = wmi.ExecQuery("select NumberOfProcessors from Win32_Processor")
-          cpu.to_enum.first.NumberOfProcessors
+          result_set = WIN32OLE.connect("winmgmts://").ExecQuery(
+              "select NumberOfCores from Win32_Processor")
+          result_set.to_enum.collect(&:NumberOfCores).reduce(:+)
         else
           processor_count
         end
