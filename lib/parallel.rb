@@ -89,7 +89,10 @@ module Parallel
     def map(array, options = {}, &block)
       array = array.to_a # turn Range and other Enumerable-s into an Array
 
-      if options[:in_threads]
+      if RUBY_PLATFORM =~ /java/ and not options[:in_processes]
+        method = :in_threads
+        size = options[method] || processor_count
+      elsif options[:in_threads]
         method = :in_threads
         size = options[method]
       else
