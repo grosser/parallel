@@ -73,7 +73,7 @@ module Parallel
 
     def in_processes(options = {}, &block)
       count, options = extract_count_from_options(options)
-      count ||= Process.respond_to?(:fork) ? processor_count : 0
+      count ||= processor_count
       map(0...count, options.merge(:in_processes => count), &block)
     end
 
