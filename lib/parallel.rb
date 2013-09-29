@@ -119,34 +119,63 @@ module Parallel
       map(array, options.merge(:with_index => true), &block)
     end
 
+    # Number of processors seen by the OS and used for process scheduling.
+    #
+    # * AIX: /usr/sbin/pmcycles (AIX 5+), /usr/sbin/lsdev
+    # * BSD: /sbin/sysctl
+    # * Cygwin: /proc/cpuinfo
+    # * Darwin: /usr/bin/hwprefs, /usr/sbin/sysctl
+    # * HP-UX: /usr/sbin/ioscan
+    # * IRIX: /usr/sbin/sysconf
+    # * Linux: /proc/cpuinfo
+    # * Minix 3+: /proc/cpuinfo
+    # * Solaris: /usr/sbin/psrinfo
+    # * Tru64 UNIX: /usr/sbin/psrinfo
+    # * UnixWare: /usr/sbin/psrinfo
+    #
     def processor_count
-      @processor_count ||= case RbConfig::CONFIG['host_os']
-      when /darwin9/
-        `hwprefs cpu_count`.to_i
-      when /darwin/
-        (hwprefs_available? ? `hwprefs thread_count` : `sysctl -n hw.ncpu`).to_i
-      when /linux|cygwin/
-        `grep -c ^processor /proc/cpuinfo`.to_i
-      when /(net|open|free)bsd/
-        `sysctl -n hw.ncpu`.to_i
-      when /mswin|mingw/
-        require 'win32ole'
-        wmi = WIN32OLE.connect("winmgmts://")
-        cpu = wmi.ExecQuery("select NumberOfLogicalProcessors from Win32_Processor")
-        cpu.to_enum.first.NumberOfLogicalProcessors
-      when /solaris2/
-        `psrinfo -p`.to_i # this is physical cpus afaik
-      else
-        $stderr.puts "Unknown architecture ( #{RbConfig::CONFIG["host_os"]} ) assuming one processor."
-        1
+      @processor_count ||= begin
+        os_name = RbConfig::CONFIG["target_os"]
+        if os_name =~ /mingw|mswin/
+          require 'win32ole'
+          result = WIN32OLE.connect("winmgmts://").ExecQuery(
+              "select NumberOfLogicalProcessors from Win32_Processor")
+          result.to_enum.collect(&:NumberOfLogicalProcessors).reduce(:+)
+        elsif File.readable?("/proc/cpuinfo")
+          IO.read("/proc/cpuinfo").scan(/^processor/).size
+        elsif File.executable?("/usr/bin/hwprefs")
+          IO.popen(%w[/usr/bin/hwprefs thread_count]).read.to_i
+        elsif File.executable?("/usr/sbin/psrinfo")
+          IO.popen("/usr/sbin/psrinfo").read.scan(/^.*on-*line/).size
+        elsif File.executable?("/usr/sbin/ioscan")
+          IO.popen(%w[/usr/sbin/ioscan -kC processor]) do |out|
+            out.read.scan(/^.*processor/).size
+          end
+        elsif File.executable?("/usr/sbin/pmcycles")
+          IO.popen(%w[/usr/sbin/pmcycles -m]).read.count("\n")
+        elsif File.executable?("/usr/sbin/lsdev")
+          IO.popen(%w[/usr/sbin/lsdev -Cc processor -S 1]).read.count("\n")
+        elsif File.executable?("/usr/sbin/sysconf") and os_name =~ /irix/i
+          IO.popen(%w[/usr/sbin/sysconf NPROC_ONLN]).read.to_i
+        elsif File.executable?("/usr/sbin/sysctl")
+          IO.popen(%w[/usr/sbin/sysctl -n hw.ncpu]).read.to_i
+        elsif File.executable?("/sbin/sysctl")
+          IO.popen(%w[/sbin/sysctl -n hw.ncpu]).read.to_i
+        else
+          $stderr.puts "Unknown platform: " + RbConfig::CONFIG["target_os"]
+          $stderr.puts "Assuming 1 processor."
+          1
+        end
       end
     end
 
+    # Number of physical processor cores on the current system.
+    #
     def physical_processor_count
       @physical_processor_count ||= begin
-        ppc = case RbConfig::CONFIG['host_os']
+        ppc = case RbConfig::CONFIG["target_os"]
         when /darwin1/
-          `sysctl -n hw.physicalcpu`.to_i
+          IO.popen(%w[/usr/sbin/sysctl -n hw.physicalcpu]).read.to_i
         when /linux/
           cores = {}  # unique physical ID / core ID combinations
           phy = 0
@@ -180,10 +209,6 @@ module Parallel
         results << (options[:with_index] ? yield(e,i) : yield(e))
       end
       results
-    end
-
-    def hwprefs_available?
-      `which hwprefs` != ''
     end
 
     def work_in_threads(items, options, &block)
