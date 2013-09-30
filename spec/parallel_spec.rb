@@ -29,10 +29,6 @@ describe Parallel do
         (1..999).should include(Parallel.processor_count)
       end
     end
-
-    it "defaults to 1 if we don't know better" do
-      `ruby spec/cases/host_os_override_processor_count.rb 2>/dev/null`.to_i.should == 1
-    end
   end
 
   describe ".physical_processor_count" do
