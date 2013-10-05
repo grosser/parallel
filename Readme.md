@@ -46,17 +46,25 @@ Processes/Threads are workers, they grab the next piece of work when they finish
 
 ### ActiveRecord
 
-Try either of those to get working parallel AR
+Try any of those to get working parallel AR
 
 ```Ruby
+# reproducibly fixes things (spec/cases/map_with_ar.rb)
+Parallel.each(User.all, :in_processes => 8) do |user|
+  user.update_attribute(:some_attribute, some_value)
+end
+User.connection.reconnect!
+
+# maybe helps: explicitly use connection pool
 Parallel.each(User.all, :in_threads => 8) do |user|
   ActiveRecord::Base.connection_pool.with_connection do
     user.update_attribute(:some_attribute, some_value)
   end
 end
 
+# maybe helps: reconnect once inside every fork
 Parallel.each(User.all, :in_processes => 8) do |user|
-  ActiveRecord::Base.connection.reconnect!
+  @reconnected ||= User.connection.reconnect! || true
   user.update_attribute(:some_attribute, some_value)
 end
 ```

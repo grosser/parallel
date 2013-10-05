@@ -48,7 +48,7 @@ module Parallel
       begin
         Marshal.load(read)
       rescue EOFError
-        raise Parallel::DeadWorker
+        raise DeadWorker
       end
     end
   end
