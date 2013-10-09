@@ -3,7 +3,7 @@ require "active_record"
 
 Tempfile.open("xxx") do |f|
   database = "parallel_with_ar_test"
-  `mysql #{database} -e '' || mysql -e 'create database database'`
+  `mysql #{database} -e '' || mysql -e 'create database #{database}'`
 
   ActiveRecord::Schema.verbose = false
   ActiveRecord::Base.establish_connection(
@@ -30,6 +30,8 @@ Tempfile.open("xxx") do |f|
   Parallel.map(1..8) do |i|
     User.create!(:name => i)
   end
+
+  puts "User.count: #{User.count}"
 
   puts User.connection.reconnect!.inspect
 
