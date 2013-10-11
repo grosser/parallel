@@ -1,5 +1,6 @@
 language: ruby
+bundler_args: ""
 rvm:
-  - 1.8.7
+  - ree
   - 1.9.3
   - 2.0.0
