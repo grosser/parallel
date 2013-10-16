@@ -120,6 +120,7 @@ Authors
  - [Joachim](https://github.com/jmozmoz)
  - [yaoguai](https://github.com/yaoguai)
  - [Bartosz Dziewoński](https://github.com/MatmaRex)
+ - [yaoguai](https://github.com/yaoguai)
 
 [Michael Grosser](http://grosser.it)<br/>
 michael@grosser.it<br/>
