@@ -3,6 +3,9 @@ require 'rbconfig'
 require 'parallel/version'
 
 module Parallel
+  # This can be returned from lambda or pushed onto queue to end iteration.
+  EndOfIteration = Object.new
+
   class DeadWorker < StandardError
   end
 
@@ -26,6 +29,77 @@ module Parallel
     end
   end
 
+  class ItemsWrapper
+    def initialize options, items
+      @mutex = options[:mutex]
+      @index = -1
+      @index_mutex = Mutex.new
+      @last_value = nil
+      @items = items
+    end
+
+    def known_size
+      nil
+    end
+
+    def [] index
+      raise "indexed access only allowed with arrays"
+    end
+
+    def next
+      @index_mutex.synchronize do
+        next_without_sync
+      end
+    end
+
+    def next_without_sync
+      if EndOfIteration == @last_value
+        EndOfIteration
+      else
+        @index += 1
+        @last_value = next!
+
+        if EndOfIteration == @last_value
+          return EndOfIteration
+        else
+          [@last_value, @index]
+        end
+      end
+    end
+  end
+
+  class ArrayWrapper < ItemsWrapper
+    def known_size
+      @items.size
+    end
+
+    def [] index
+      @items[index]
+    end
+
+    def next!
+      if @items.size > @index
+        @items[@index]
+      else
+        EndOfIteration
+      end
+    end
+  end
+
+  class QueueWrapper < ItemsWrapper
+    def next!
+      @items.pop
+    end
+  end
+
+  class LambdaWrapper < ItemsWrapper
+    def next!
+      @mutex.synchronize do
+        @items.call @index
+      end
+    end
+  end
+
   class Worker
     attr_reader :pid, :read, :write
     attr_accessor :thread
@@ -44,9 +118,9 @@ module Parallel
       # process died
     end
 
-    def work(index)
+    def work(data)
       begin
-        Marshal.dump(index, write)
+        Marshal.dump(data, write)
       rescue Errno::EPIPE
         raise DeadWorker
       end
@@ -83,17 +157,19 @@ module Parallel
       map(0...count, options.merge(:in_processes => count), &block)
     end
 
-    def each(array, options={}, &block)
-      map(array, options.merge(:preserve_results => false), &block)
-      array
+    def each(items, options={}, &block)
+      map(items, options.merge(:_preserve_results => false), &block)
+      items
     end
 
-    def each_with_index(array, options={}, &block)
-      each(array, options.merge(:with_index => true), &block)
+    def each_with_index(items, options={}, &block)
+      each(items, options.merge(:_with_index => true), &block)
     end
 
-    def map(array, options = {}, &block)
-      array = array.to_a # turn Range and other Enumerable-s into an Array
+    def map(items, options = {}, &block)
+      options[:_preserve_results] = options[:_preserve_results] != false
+      options[:_return_result] = options[:_preserve_results] || options[:finish]
+      options[:mutex] ||= Mutex.new
 
       if RUBY_PLATFORM =~ /java/ and not options[:in_processes]
         method = :in_threads
@@ -110,33 +186,38 @@ module Parallel
           size = 0
         end
       end
-      size = [array.size, size].min
 
-      add_progress_bar!(array, options)
+      items = wrap_items(options, items)
+      add_progress_bar!(items, options)
 
       if size == 0
-        work_direct(array, options, &block)
+        work_direct(items, options, &block)
       elsif method == :in_threads
-        work_in_threads(array, options.merge(:count => size), &block)
+        work_in_threads(items, options.merge(:count => size), &block)
       else
-        work_in_processes(array, options.merge(:count => size), &block)
+        work_in_processes(items, options.merge(:count => size), &block)
       end
     end
 
-    def add_progress_bar!(array, options)
-      if (title = options[:progress]) && !options[:finish]
+    def add_progress_bar!(items, options)
+      title = options[:progress]
+      if title
+        unless items.known_size
+          raise ArgumentError, "can't use progress bar with queues or lambdas"
+        end
+
         require 'ruby-progressbar'
         progress = ProgressBar.create(
           :title => title,
-          :total => array.size,
+          :total => items.known_size,
           :format => '%t |%E | %B | %a'
         )
-        options[:finish] = lambda { |item, i, result| progress.increment }
+        options[:_progressed] = lambda {progress.increment}
       end
     end
 
-    def map_with_index(array, options={}, &block)
-      map(array, options.merge(:with_index => true), &block)
+    def map_with_index(items, options={}, &block)
+      map(items, options.merge(:_with_index => true), &block)
     end
 
     # Number of processors seen by the OS and used for process scheduling.
@@ -222,18 +303,35 @@ module Parallel
     end
 
     private
-
-    def work_direct(array, options)
-      results = []
-      array.each_with_index do |e,i|
-        results << (options[:with_index] ? yield(e,i) : yield(e))
+    def wrap_items options, items
+      if items.kind_of? Array
+        items = ArrayWrapper.new options, items
+      elsif items.respond_to? :pop
+        items = QueueWrapper.new options, items
+      elsif items.respond_to? :call
+        items = LambdaWrapper.new options, items
+      elsif items.respond_to? :to_a
+        items = ArrayWrapper.new options, items.to_a
+      else
+        raise ArgumentError, "Parallel argument should respond to to_a/pop/call"
       end
+    end
+
+    def work_direct(items, options)
+      results = [] if options[:_preserve_results]
+
+      loop do
+        item, index = items.next_without_sync
+        break if EndOfIteration == item
+        result = options[:_with_index] ? yield(item,index) : yield(item)
+        results << result if results
+      end
+
       results
     end
 
     def work_in_threads(items, options, &block)
-      results = []
-      current = -1
+      results = [] if options[:_preserve_results]
       exception = nil
 
       in_threads(options[:count]) do
@@ -241,12 +339,19 @@ module Parallel
         loop do
           break if exception
 
-          index = Thread.exclusive { current += 1 }
-          break if index >= items.size
+          item, index = items.next
 
-          with_instrumentation items[index], index, options do
+          break if exception # check again. Some time might have passed.
+          break if EndOfIteration == item
+
+          with_instrumentation item, index, options do
             begin
-              results[index] = call_with_index(items, index, options, &block)
+              result = call_with_index(item, index, options, &block)
+
+              # avoid keeping large results around
+              results[index] = result if results
+
+              result
             rescue StandardError => e
               exception = e
               break
@@ -260,9 +365,9 @@ module Parallel
 
     def work_in_processes(items, options, &blk)
       workers = create_workers(items, options, &blk)
-      current_index = -1
-      results = []
+      results = [] if options[:_preserve_results]
       exception = nil
+
       kill_on_ctrl_c(workers.map(&:pid)) do
         in_threads(options[:count]) do |i|
           worker = workers[i]
@@ -271,15 +376,23 @@ module Parallel
           begin
             loop do
               break if exception
-              index = Thread.exclusive{ current_index += 1 }
-              break if index >= items.size
 
-              output = with_instrumentation items[index], index, options do
-                worker.work(index)
+              item, index = items.next
+
+              break if exception # check again. Some time might have passed.
+              break if EndOfIteration == item
+
+              result = with_instrumentation item, index, options do
+                if items.known_size
+                  worker.work [index]
+                else
+                  worker.work [item,index]
+                end
               end
 
-              if ExceptionWrapper === output
-                exception = output.exception
+              if ExceptionWrapper === result
+                exception = result.exception
+
                 if Parallel::Kill === exception
                   (workers - [worker]).each do |w|
                     kill_that_thing!(w.thread)
@@ -287,7 +400,7 @@ module Parallel
                   end
                 end
               else
-                results[index] = output
+                results[index] = result if results
               end
             end
           ensure
@@ -337,9 +450,16 @@ module Parallel
 
     def process_incoming_jobs(read, write, items, options, &block)
       while !read.eof?
-        index = Marshal.load(read)
+        item_and_index = Marshal.load(read)
+        if item_and_index.size == 1
+          index = item_and_index.first
+          item = items[index]
+        else
+          item, index = item_and_index
+        end
+
         result = begin
-          call_with_index(items, index, options, &block)
+          call_with_index(item, index, options, &block)
         rescue StandardError => e
           ExceptionWrapper.new(e)
         end
@@ -428,24 +548,29 @@ module Parallel
       end
     end
 
-    def call_with_index(array, index, options, &block)
-      args = [array[index]]
-      args << index if options[:with_index]
-      if options[:preserve_results] == false
-        block.call(*args)
-        nil # avoid GC overhead of passing large results around
-      else
-        block.call(*args)
-      end
+    def call_with_index(item, index, options, &block)
+      args = [item]
+      args << index if options[:_with_index]
+      r = block.call(*args)
+      # avoid overhead of passing large results around
+      r if options[:_return_result]
     end
 
     def with_instrumentation(item, index, options)
-      on_start = options[:start]
-      on_finish = options[:finish]
-      on_start.call(item, index) if on_start
+      if options[:start]
+        options[:mutex].synchronize do
+          options[:start].call(item, index)
+        end
+      end
+
       result = yield
     ensure
-      on_finish.call(item, index, result) if on_finish
+      if options[:finish]
+        options[:mutex].synchronize do
+          options[:finish].call(item, index, result)
+        end
+      end
+      options[:_progressed].call if options[:_progressed]
     end
   end
 end

@@ -88,6 +88,91 @@ Parallel.map([1,2,3]) do |x|
 end
 ```
 
+### Producing data as it is consumed
+
+You can use [Queue](http://ruby-doc.org/stdlib-2.0.0/libdoc/thread/rdoc/Queue.html),
+[SizedQueue](http://ruby-doc.org/stdlib-2.0.0/libdoc/thread/rdoc/SizedQueue.html)
+or a lambda to produce data while it is consumed.
+
+#### Lambda
+Your lambda will be executed on the main process and protected with a mutex.
+Return Parallel::EndOfIteration object to finish processing - your lambda will
+not be called again. For convenience index of requested item is passed as the
+sole argument.
+
+```Ruby
+get_data = lambda {|index|
+  return Parallel::EndOfIteration if index > 5
+  index
+}
+Parallel.map(get_data) {|item| ...}
+```
+
+#### Queue
+Push Parallel::EndOfIteration on your queue to finish processing.
+
+```Ruby
+queue = Queue.new
+Thread.new do
+  20.times {|i| queue.push expensive_calculation(i)}
+  queue.push Parallel::EndOfIteration
+end
+Parallel.map(queue) {|item| ...}
+```
+
+#### Queues vs Lambdas
+
+Lambdas are easier to implement, but they are always executed on the main
+thread. The same thread that runs :start and :finish callbacks and also bears
+some general Parallel code overhead. Queues require a little more coding, but
+they allow offloading your producer to a separate thread. Lambda is fully
+isolated from code running in :start and :finish callbacks, i.e. your item
+generating lambda, :start lambda and :finish lambda will run sequentially on the
+main thread, isolated by a mutex and thus can share resources. Only the block
+passed to `Parallel.each` or `Parallel.map` runs in parallel.
+
+If you want to run your producer code in parallel using queues, but still need
+to protect part of it's code from :start and :finish callbacks, create your own
+mutex and pass it to Parallel as an option.
+
+```Ruby
+mutex = Mutex.new
+queue = Queue.new
+Thread.new do
+  20.times {|i|
+    item = expensive_calculation(i)
+    mutex.synchronize do
+      puts "Generated #{item}"
+    end
+    queue.push item
+  }
+  queue.push Parallel::EndOfIteration
+end
+start = lambda {|item,index|
+  # the following puts does not compete with `puts` in the producer code
+  puts "Processing #{item}"
+}
+Parallel.map(queue, :mutex => mutex, :start => start) {|item| ...}
+```
+
+### Consuming data from multiple processes without map
+
+Using the results of `map` operation has some drawbacks. Collecting results of
+a large iteration may require massive amounts of system memory. Additionally
+your main thread cannot act on the results until all data is processed by
+workers and returned in an array. You can work around these limitations by
+using `:finish` callback. Parallel will execute it with the results of each
+iteration when it is completed. Your callback will execute on the main process,
+protected with a mutex.
+
+```Ruby
+processed = -> item, index, result {
+  STDOUT.puts result
+}
+# work in processes
+Parallel.each(1..10, :finish => processed) {|i| sleep 1; i * 2}
+```
+
 ### Progress / ETA
 
 ```Ruby
@@ -98,7 +183,9 @@ Parallel.map(1..50, :progress => "Doing stuff") { sleep 1 }
 # Doing stuff | ETA: 00:00:02 | ====================               | Time: 00:00:10
 ```
 
-Use `:finish` or `:start` hook to get progress information, `:start` has item and index, `:finish` has item, index, result.
+Use `:finish` or `:start` hook to get progress information, `:start` has item
+and index, `:finish` has item, index, result. These will be called on the main
+process and protected with a mutex.
 
 ```Ruby
 Parallel.map(1..100, :finish => lambda { |item, i, result| ... do something ... }) { sleep 1 }
