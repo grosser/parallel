@@ -97,6 +97,20 @@ TODO
 ====
  - JRuby / Windows support <-> possible ?
 
+Contribution
+============
+
+In order to contribute to this project you will need to install the dependencies after having cloned this repository.
+The Gemfile include 2 databases drivers.
+
+In the case you're using MySQL execute the following:
+
+    bundle --without postgres
+
+In the case you're using PostgreSQL execute the following:
+
+    bundle --without mysql
+
 Authors
 =======
 
