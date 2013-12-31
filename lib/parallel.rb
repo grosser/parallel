@@ -144,23 +144,23 @@ module Parallel
         elsif File.readable?("/proc/cpuinfo")
           IO.read("/proc/cpuinfo").scan(/^processor/).size
         elsif File.executable?("/usr/bin/hwprefs")
-          IO.popen(%w[/usr/bin/hwprefs thread_count]).read.to_i
+          IO.popen("/usr/bin/hwprefs thread_count").read.to_i
         elsif File.executable?("/usr/sbin/psrinfo")
           IO.popen("/usr/sbin/psrinfo").read.scan(/^.*on-*line/).size
         elsif File.executable?("/usr/sbin/ioscan")
-          IO.popen(%w[/usr/sbin/ioscan -kC processor]) do |out|
+          IO.popen("/usr/sbin/ioscan -kC processor") do |out|
             out.read.scan(/^.*processor/).size
           end
         elsif File.executable?("/usr/sbin/pmcycles")
-          IO.popen(%w[/usr/sbin/pmcycles -m]).read.count("\n")
+          IO.popen("/usr/sbin/pmcycles -m").read.count("\n")
         elsif File.executable?("/usr/sbin/lsdev")
-          IO.popen(%w[/usr/sbin/lsdev -Cc processor -S 1]).read.count("\n")
+          IO.popen("/usr/sbin/lsdev -Cc processor -S 1").read.count("\n")
         elsif File.executable?("/usr/sbin/sysconf") and os_name =~ /irix/i
-          IO.popen(%w[/usr/sbin/sysconf NPROC_ONLN]).read.to_i
+          IO.popen("/usr/sbin/sysconf NPROC_ONLN").read.to_i
         elsif File.executable?("/usr/sbin/sysctl")
-          IO.popen(%w[/usr/sbin/sysctl -n hw.ncpu]).read.to_i
+          IO.popen("/usr/sbin/sysctl -n hw.ncpu").read.to_i
         elsif File.executable?("/sbin/sysctl")
-          IO.popen(%w[/sbin/sysctl -n hw.ncpu]).read.to_i
+          IO.popen("/sbin/sysctl -n hw.ncpu").read.to_i
         else
           $stderr.puts "Unknown platform: " + RbConfig::CONFIG["target_os"]
           $stderr.puts "Assuming 1 processor."
@@ -175,7 +175,7 @@ module Parallel
       @physical_processor_count ||= begin
         ppc = case RbConfig::CONFIG["target_os"]
         when /darwin1/
-          IO.popen(%w[/usr/sbin/sysctl -n hw.physicalcpu]).read.to_i
+          IO.popen("/usr/sbin/sysctl -n hw.physicalcpu").read.to_i
         when /linux/
           cores = {}  # unique physical ID / core ID combinations
           phy = 0
