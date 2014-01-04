@@ -294,4 +294,14 @@ describe Parallel do
       ["a0b1", "b1a0"].should include `ruby spec/cases/each_with_index.rb 2>&1`
     end
   end
+
+  describe "GC" do
+    it "does not leak memory in processes" do
+      `ruby spec/cases/profile_memroy.rb processes 2>&1`.strip.split("\n").last.should == '{}'
+    end
+
+    it "does not leak memory in threads" do
+      `ruby spec/cases/profile_memroy.rb processes 2>&1`.strip.split("\n").last.should == '{}'
+    end
+  end
 end
