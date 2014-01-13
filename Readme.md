@@ -121,6 +121,7 @@ Authors
  - [yaoguai](https://github.com/yaoguai)
  - [Bartosz Dziewoński](https://github.com/MatmaRex)
  - [yaoguai](https://github.com/yaoguai)
+ - [Guillaume Hain](https://github.com/zedtux)
 
 [Michael Grosser](http://grosser.it)<br/>
 michael@grosser.it<br/>
