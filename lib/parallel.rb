@@ -1,5 +1,6 @@
 require 'thread' # to get Thread.exclusive
 require 'rbconfig'
+require 'set'
 require 'parallel/version'
 
 module Parallel
@@ -106,7 +107,7 @@ module Parallel
       end
       size = [array.size, size].min
 
-      if size == 0
+      if size.zero?
         work_direct(array, options, &block)
       elsif method == :in_threads
         work_in_threads(array, options.merge(:count => size), &block)
@@ -177,14 +178,14 @@ module Parallel
         when /darwin1/
           IO.popen("/usr/sbin/sysctl -n hw.physicalcpu").read.to_i
         when /linux/
-          cores = {}  # unique physical ID / core ID combinations
+          cores = Set.new
           phy = 0
           IO.read("/proc/cpuinfo").scan(/^physical id.*|^core id.*/) do |ln|
             if ln.start_with?("physical")
               phy = ln[/\d+/]
             elsif ln.start_with?("core")
               cid = phy + ":" + ln[/\d+/]
-              cores[cid] = true if not cores[cid]
+              cores.add(cid)
             end
           end
           cores.count
