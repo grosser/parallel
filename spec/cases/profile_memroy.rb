@@ -15,7 +15,9 @@ require File.expand_path('spec/spec_helper')
 items = Array.new(1000)
 options = {"in_#{ARGV[0]}".to_sym => 2}
 
-puts(count_objects { Parallel.map(items, options) {} })
+# TODO not sure why this fails without 2.times in threading mode :(
 
-puts(count_objects { Parallel.map(items, options) {} })
+puts(count_objects { 2.times { Parallel.map(items, options) {} } })
+
+puts(count_objects { 2.times { Parallel.map(items, options) {} } })
 

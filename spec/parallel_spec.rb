@@ -301,7 +301,7 @@ describe Parallel do
     end
 
     it "does not leak memory in threads" do
-      `ruby spec/cases/profile_memroy.rb processes 2>&1`.strip.split("\n").last.should == '{}'
+      `ruby spec/cases/profile_memroy.rb threads 2>&1`.strip.split("\n").last.should == '{}'
     end
   end
 end
