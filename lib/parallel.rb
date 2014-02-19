@@ -221,7 +221,7 @@ module Parallel
         loop do
           break if exception
 
-          index = Thread.exclusive{ current+=1 }
+          index = Thread.exclusive { current += 1 }
           break if index >= items.size
 
           with_instrumentation items[index], index, options do
