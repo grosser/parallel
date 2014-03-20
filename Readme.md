@@ -79,6 +79,8 @@ end
 
 ### Progress / ETA
 
+Use `:finish` or `:start` hook to get progress information.
+
 ```Bash
 gem install ruby-progressbar
 ```
