@@ -394,9 +394,9 @@ module Parallel
       on_start = options[:start]
       on_finish = options[:finish]
       on_start.call(item, index) if on_start
-      yield
+      result = yield
     ensure
-      on_finish.call(item, index) if on_finish
+      on_finish.call(item, index, result) if on_finish
     end
   end
 end
