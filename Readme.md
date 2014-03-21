@@ -79,7 +79,7 @@ end
 
 ### Progress / ETA
 
-Use `:finish` or `:start` hook to get progress information.
+Use `:finish` or `:start` hook to get progress information, `:start` has item and index, `:finish` has item, index, result.
 
 ```Bash
 gem install ruby-progressbar
@@ -88,7 +88,7 @@ gem install ruby-progressbar
 ```Ruby
 require 'ruby-progressbar'
 progress = ProgressBar.create(:title => "The Progress", :total => 100)
-Parallel.map(1..100, :finish => lambda { |item, i| progress.increment }) { sleep 1 }
+Parallel.map(1..100, :finish => lambda { |item, i, result| progress.increment }) { sleep 1 }
 ```
 
 Tips
