@@ -17,7 +17,7 @@ options = {"in_#{ARGV[0]}".to_sym => 2}
 
 # TODO not sure why this fails without 2.times in threading mode :(
 
-puts(count_objects { 2.times { Parallel.map(items, options) {} } })
+puts(count_objects { 2.times { Parallel.map(items, options) {} } }.inspect)
 
-puts(count_objects { 2.times { Parallel.map(items, options) {} } })
+puts(count_objects { 2.times { Parallel.map(items, options) {} } }.inspect)
 

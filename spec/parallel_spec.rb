@@ -301,11 +301,13 @@ describe Parallel do
 
   describe "GC" do
     it "does not leak memory in processes" do
-      `ruby spec/cases/profile_memroy.rb processes 2>&1`.strip.split("\n").last.should == '{}'
+      result = `ruby spec/cases/profile_memroy.rb processes 2>&1`.strip.split("\n").last
+      ["{Hash=>-1}", "{}", "{String=>-1}"].should include result
     end
 
     it "does not leak memory in threads" do
-      `ruby spec/cases/profile_memroy.rb threads 2>&1`.strip.split("\n").last.should == '{}'
+      result = `ruby spec/cases/profile_memroy.rb threads 2>&1`.strip.split("\n").last
+      ["{Hash=>-1}", "{}", "{String=>-1}"].should include result
     end
   end
 end
