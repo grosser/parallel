@@ -112,6 +112,11 @@ describe Parallel do
       `ruby spec/cases/parallel_raise.rb`.strip.should == 'TEST'
     end
 
+    it "handles an exception with the error_handler" do
+      `ruby spec/cases/parallel_raise_handled.rb`.strip.should == 'TEST'
+      `ruby spec/cases/parallel_raise_handled_in_threads.rb`.strip.should == 'TEST'
+    end
+
     it "can raise an undumpable exception" do
       `ruby spec/cases/parallel_raise_undumpable.rb`.strip.should include('Undumpable Exception')
     end

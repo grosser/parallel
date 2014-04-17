@@ -215,6 +215,7 @@ module Parallel
       results = []
       current = -1
       exception = nil
+      error_handler = options[:error_handler] || proc {|e| exception = e }
 
       in_threads(options[:count]) do
         # as long as there are more items, work on one of them
@@ -228,8 +229,8 @@ module Parallel
             begin
               results[index] = call_with_index(items, index, options, &block)
             rescue Exception => e
-              exception = e
-              break
+              error_handler.call(e)
+              break if exception
             end
           end
         end
@@ -243,6 +244,7 @@ module Parallel
       current_index = -1
       results = []
       exception = nil
+      error_handler = options[:error_handler] || proc {|e| exception = e }
       kill_on_ctrl_c(workers.map(&:pid)) do
         in_threads(options[:count]) do |i|
           worker = workers[i]
@@ -258,7 +260,7 @@ module Parallel
               end
 
               if ExceptionWrapper === output
-                exception = output.exception
+                error_handler.call(output.exception)
               else
                 results[index] = output
               end
