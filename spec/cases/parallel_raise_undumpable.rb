@@ -1,7 +1,7 @@
 require File.expand_path('spec/spec_helper')
 require 'stringio'
 
-class MyException < Exception
+class MyException < StandardError
   def initialize(object)
     @object = object
   end

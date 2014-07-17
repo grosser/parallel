@@ -3,10 +3,10 @@ require 'rbconfig'
 require 'parallel/version'
 
 module Parallel
-  class DeadWorker < Exception
+  class DeadWorker < StandardError
   end
 
-  class Break < Exception
+  class Break < StandardError
   end
 
   class ExceptionWrapper
@@ -313,7 +313,7 @@ module Parallel
         index = Marshal.load(read)
         result = begin
           call_with_index(items, index, options, &block)
-        rescue Exception => e
+        rescue StandardError => e
           ExceptionWrapper.new(e)
         end
         Marshal.dump(result, write)

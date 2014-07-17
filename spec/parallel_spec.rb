@@ -253,6 +253,10 @@ describe Parallel do
     it "spits out a useful error when a worker dies before write" do
       `ruby spec/cases/map_with_killed_worker_before_write.rb 2>&1`.should include "DEAD"
     end
+
+    it "raises DeadWorker when using exit so people learn to not kill workers and do not crash main process" do
+      `ruby spec/cases/exit_in_process.rb 2>&1`.should include "Yep, DEAD"
+    end
   end
 
   describe ".map_with_index" do
