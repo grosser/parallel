@@ -309,14 +309,16 @@ describe Parallel do
   end
 
   describe "GC" do
+    let(:nothing) { ["{Hash=>-1}", "{}", "{String=>-1}", "{Array=>1, Hash=>1}"] }
+
     it "does not leak memory in processes" do
       result = `ruby spec/cases/profile_memroy.rb processes 2>&1`.strip.split("\n").last
-      ["{Hash=>-1}", "{}", "{String=>-1}"].should include result
+      nothing.should include result
     end
 
     it "does not leak memory in threads" do
       result = `ruby spec/cases/profile_memroy.rb threads 2>&1`.strip.split("\n").last
-      ["{Hash=>-1}", "{}", "{String=>-1}"].should include result
+      nothing.should include result
     end
   end
 end
