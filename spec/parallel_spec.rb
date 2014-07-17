@@ -257,6 +257,11 @@ describe Parallel do
     it "raises DeadWorker when using exit so people learn to not kill workers and do not crash main process" do
       `ruby spec/cases/exit_in_process.rb 2>&1`.should include "Yep, DEAD"
     end
+
+    it "can be killed instantly" do
+      result = `ruby spec/cases/parallel_kill.rb 2>&1`
+      result.should == "Works nil\n"
+    end
   end
 
   describe ".map_with_index" do

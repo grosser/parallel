@@ -9,6 +9,9 @@ module Parallel
   class Break < StandardError
   end
 
+  class Kill < StandardError
+  end
+
   class ExceptionWrapper
     attr_reader :exception
     def initialize(exception)
@@ -23,6 +26,7 @@ module Parallel
 
   class Worker
     attr_reader :pid, :read, :write
+    attr_accessor :silent_death
     def initialize(read, write, pid)
       @read, @write, @pid = read, write, pid
     end
@@ -48,7 +52,7 @@ module Parallel
       begin
         Marshal.load(read)
       rescue EOFError
-        raise DeadWorker
+        raise DeadWorker unless silent_death
       end
     end
   end
@@ -227,7 +231,7 @@ module Parallel
           with_instrumentation items[index], index, options do
             begin
               results[index] = call_with_index(items, index, options, &block)
-            rescue Exception => e
+            rescue StandardError => e
               exception = e
               break
             end
@@ -259,6 +263,10 @@ module Parallel
 
               if ExceptionWrapper === output
                 exception = output.exception
+                if Parallel::Kill === exception
+                  workers.each { |w| w.silent_death = true }
+                  kill_everything_we_spawned
+                end
               else
                 results[index] = output
               end
@@ -331,7 +339,7 @@ module Parallel
     end
 
     def handle_exception(exception, results)
-      return nil if exception.class == Parallel::Break
+      return nil if [Parallel::Break, Parallel::Kill].include? exception.class
       raise exception if exception
       results
     end
@@ -356,7 +364,7 @@ module Parallel
         Signal.trap :SIGINT do
           if @to_be_killed.any?
             $stderr.puts 'Parallel execution interrupted, exiting ...'
-            @to_be_killed.flatten.compact.each { |thing| kill_that_thing!(thing) }
+            kill_everything_we_spawned
           end
           exit 1 # Quit with 'failed' signal
         end
@@ -364,6 +372,13 @@ module Parallel
       yield
     ensure
       @to_be_killed.pop # free threads for GC and do not kill pids that could be used for new processes
+    end
+
+    def kill_everything_we_spawned
+      if defined?(@to_be_killed)
+        @to_be_killed.flatten.compact.each { |thing| kill_that_thing!(thing) }
+        @to_be_killed = [] # in case the ctrl+c kicks in later ...
+      end
     end
 
     def kill_that_thing!(thing)
