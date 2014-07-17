@@ -260,7 +260,7 @@ describe Parallel do
 
     it "can be killed instantly" do
       result = `ruby spec/cases/parallel_kill.rb 2>&1`
-      result.should == "Works nil\n"
+      result.should == "DEAD\nWorks nil\n"
     end
   end
 

@@ -26,7 +26,7 @@ module Parallel
 
   class Worker
     attr_reader :pid, :read, :write
-    attr_accessor :silent_death
+    attr_accessor :thread
     def initialize(read, write, pid)
       @read, @write, @pid = read, write, pid
     end
@@ -52,7 +52,7 @@ module Parallel
       begin
         Marshal.load(read)
       rescue EOFError
-        raise DeadWorker unless silent_death
+        raise DeadWorker
       end
     end
   end
@@ -250,6 +250,7 @@ module Parallel
       kill_on_ctrl_c(workers.map(&:pid)) do
         in_threads(options[:count]) do |i|
           worker = workers[i]
+          worker.thread = Thread.current
 
           begin
             loop do
@@ -264,8 +265,10 @@ module Parallel
               if ExceptionWrapper === output
                 exception = output.exception
                 if Parallel::Kill === exception
-                  workers.each { |w| w.silent_death = true }
-                  kill_everything_we_spawned
+                  (workers - [worker]).each do |w|
+                    kill_that_thing!(w.thread)
+                    kill_that_thing!(w.pid)
+                  end
                 end
               else
                 results[index] = output
@@ -364,7 +367,7 @@ module Parallel
         Signal.trap :SIGINT do
           if @to_be_killed.any?
             $stderr.puts 'Parallel execution interrupted, exiting ...'
-            kill_everything_we_spawned
+            @to_be_killed.flatten.compact.each { |thing| kill_that_thing!(thing) }
           end
           exit 1 # Quit with 'failed' signal
         end
@@ -372,13 +375,6 @@ module Parallel
       yield
     ensure
       @to_be_killed.pop # free threads for GC and do not kill pids that could be used for new processes
-    end
-
-    def kill_everything_we_spawned
-      if defined?(@to_be_killed)
-        @to_be_killed.flatten.compact.each { |thing| kill_that_thing!(thing) }
-        @to_be_killed = [] # in case the ctrl+c kicks in later ...
-      end
     end
 
     def kill_that_thing!(thing)
