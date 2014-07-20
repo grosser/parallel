@@ -58,7 +58,7 @@ module Parallel
   end
 
   class << self
-    def in_threads(options={:count => 2})
+    def in_threads(options={:count => 2, :kill_on_ctrl_c => true})
       count, options = extract_count_from_options(options)
 
       out = []
@@ -70,7 +70,7 @@ module Parallel
         end
       end
 
-      kill_on_ctrl_c(threads) { wait_for_threads(threads) }
+      kill_on_ctrl_c(threads, options[:kill_on_ctrl_c]) { wait_for_threads(threads) }
 
       out
     end
@@ -92,6 +92,9 @@ module Parallel
 
     def map(array, options = {}, &block)
       array = array.to_a # turn Range and other Enumerable-s into an Array
+      if options[:kill_on_ctrl_c].nil? then
+        options[:kill_on_ctrl_c] = true
+      end
 
       if RUBY_PLATFORM =~ /java/ and not options[:in_processes]
         method = :in_threads
@@ -220,7 +223,7 @@ module Parallel
       current = -1
       exception = nil
 
-      in_threads(options[:count]) do
+      in_threads(options) do
         # as long as there are more items, work on one of them
         loop do
           break if exception
@@ -247,8 +250,8 @@ module Parallel
       current_index = -1
       results = []
       exception = nil
-      kill_on_ctrl_c(workers.map(&:pid)) do
-        in_threads(options[:count]) do |i|
+      kill_on_ctrl_c(workers.map(&:pid), options[:kill_on_ctrl_c]) do
+        in_threads(options) do |i|
           worker = workers[i]
           worker.thread = Thread.current
 
@@ -359,18 +362,21 @@ module Parallel
     end
 
     # kill all these pids or threads if user presses Ctrl+c
-    def kill_on_ctrl_c(things)
+    def kill_on_ctrl_c(things, kill_them=true)
       if defined?(@to_be_killed) && @to_be_killed
         @to_be_killed << things
       else
         @to_be_killed = [things]
-        Signal.trap :SIGINT do
-          if @to_be_killed.any?
-            $stderr.puts 'Parallel execution interrupted, exiting ...'
-            @to_be_killed.flatten.compact.each { |thing| kill_that_thing!(thing) }
+        if kill_them then
+          Signal.trap :SIGINT do
+            if @to_be_killed.any?
+              $stderr.puts 'Parallel execution interrupted, exiting ...'
+              @to_be_killed.flatten.compact.each { |thing| kill_that_thing!(thing) }
+            end
+            exit 1 # Quit with 'failed' signal
           end
-          exit 1 # Quit with 'failed' signal
         end
+
       end
       yield
     ensure
