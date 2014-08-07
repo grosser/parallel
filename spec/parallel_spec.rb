@@ -102,6 +102,20 @@ describe Parallel do
       end.should <= 4
     end
 
+    it "preserves original intrrupts" do
+      t = Thread.new { `ruby spec/cases/double_interrupt.rb 2>&1 && echo FIN` }
+      sleep 2
+      kill_process_with_name("spec/cases/double_interrupt.rb") #simulates Ctrl+c
+      sleep 1
+      result = t.value
+      result.should include("YES")
+      result.should include("FIN")
+    end
+
+    it "restores original intrrupts" do
+      `ruby spec/cases/after_interrupt.rb 2>&1`.should == "DEFAULT\n"
+    end
+
     it "saves time" do
       time_taken{
         `ruby spec/cases/parallel_sleeping_2.rb`

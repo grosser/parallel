@@ -108,7 +108,7 @@ Tips
 
 TODO
 ====
- - JRuby / Windows support <-> possible ?
+ - Replace Signal trapping with simple `rescue Interrupt` handler
 
 Authors
 =======

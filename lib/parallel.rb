@@ -12,6 +12,8 @@ module Parallel
   class Kill < StandardError
   end
 
+  INTERRUPT_SIGNAL = :SIGINT
+
   class ExceptionWrapper
     attr_reader :exception
     def initialize(exception)
@@ -360,21 +362,41 @@ module Parallel
 
     # kill all these pids or threads if user presses Ctrl+c
     def kill_on_ctrl_c(things)
-      if defined?(@to_be_killed) && @to_be_killed
-        @to_be_killed << things
-      else
-        @to_be_killed = [things]
-        Signal.trap :SIGINT do
-          if @to_be_killed.any?
-            $stderr.puts 'Parallel execution interrupted, exiting ...'
-            @to_be_killed.flatten.compact.each { |thing| kill_that_thing!(thing) }
-          end
-          exit 1 # Quit with 'failed' signal
+      @to_be_killed ||= []
+      old_interrupt = nil
+
+      if @to_be_killed.empty?
+        old_interrupt = trap_interrupt do
+          $stderr.puts 'Parallel execution interrupted, exiting ...'
+          @to_be_killed.flatten.compact.each { |thing| kill_that_thing!(thing) }
         end
       end
+
+      @to_be_killed << things
+
       yield
     ensure
       @to_be_killed.pop # free threads for GC and do not kill pids that could be used for new processes
+      restore_interrupt(old_interrupt) if @to_be_killed.empty?
+    end
+
+    def trap_interrupt
+      old = Signal.trap INTERRUPT_SIGNAL, 'IGNORE'
+
+      Signal.trap INTERRUPT_SIGNAL do
+        yield
+        if old == "DEFAULT"
+          raise Interrupt
+        else
+          old.call
+        end
+      end
+
+      old
+    end
+
+    def restore_interrupt(old)
+      Signal.trap INTERRUPT_SIGNAL, old
     end
 
     def kill_that_thing!(thing)
