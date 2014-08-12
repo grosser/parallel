@@ -322,6 +322,12 @@ describe Parallel do
     end
   end
 
+  describe "progress" do
+    it "shows" do
+      `ruby spec/cases/progress.rb`.sub(/=+/, '==').should == "\n\nDoing stuff: |==|\n"
+    end
+  end
+
   describe "GC" do
     let(:nothing) { ["{Hash=>-1}", "{}", "{String=>-1}", "{Array=>1, Hash=>1}", "{Array=>1}"] }
 

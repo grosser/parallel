@@ -112,12 +112,26 @@ module Parallel
       end
       size = [array.size, size].min
 
+      add_progress_bar!(array, options)
+
       if size == 0
         work_direct(array, options, &block)
       elsif method == :in_threads
         work_in_threads(array, options.merge(:count => size), &block)
       else
         work_in_processes(array, options.merge(:count => size), &block)
+      end
+    end
+
+    def add_progress_bar!(array, options)
+      if (title = options[:progress]) && !options[:finish]
+        require 'ruby-progressbar'
+        progress = ProgressBar.create(
+          :title => title,
+          :total => array.size,
+          :format => '%t |%E | %B | %a'
+        )
+        options[:finish] = lambda { |item, i, result| progress.increment }
       end
     end
 

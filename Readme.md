@@ -90,16 +90,18 @@ end
 
 ### Progress / ETA
 
-Use `:finish` or `:start` hook to get progress information, `:start` has item and index, `:finish` has item, index, result.
+```Ruby
+# gem install ruby-progressbar
 
-```Bash
-gem install ruby-progressbar
+Parallel.map(1..50, :progress => "Doing stuff") { sleep 1 }
+
+# Doing stuff | ETA: 00:00:02 | ====================               | Time: 00:00:10
 ```
 
+Use `:finish` or `:start` hook to get progress information, `:start` has item and index, `:finish` has item, index, result.
+
 ```Ruby
-require 'ruby-progressbar'
-progress = ProgressBar.create(:title => "The Progress", :total => 100)
-Parallel.map(1..100, :finish => lambda { |item, i, result| progress.increment }) { sleep 1 }
+Parallel.map(1..100, :finish => lambda { |item, i, result| ... do something ... }) { sleep 1 }
 ```
 
 Tips
