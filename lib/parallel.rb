@@ -348,13 +348,15 @@ module Parallel
     end
 
     def wait_for_threads(threads)
-      threads.compact.each do |t|
+      interrupted = threads.compact.map do |t|
         begin
           t.join
-        rescue Interrupt
-          # thread died, do not stop other threads
+          nil
+        rescue Interrupt => e
+          e # thread died, do not stop other threads
         end
-      end
+      end.compact
+      raise interrupted.first if interrupted.first
     end
 
     def handle_exception(exception, results)

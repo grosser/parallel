@@ -70,7 +70,7 @@ describe Parallel do
     it "kills the processes when the main process gets killed through ctrl+c" do
       time_taken{
         lambda{
-          t = Thread.new { `ruby spec/cases/parallel_start_and_kill.rb PROCESS` }
+          t = Thread.new { `ruby spec/cases/parallel_start_and_kill.rb PROCESS 2>&1` }
           sleep 1
           kill_process_with_name("spec/cases/parallel_start_and_kill.rb") #simulates Ctrl+c
           sleep 1
@@ -80,14 +80,16 @@ describe Parallel do
     end
 
     it "kills the threads when the main process gets killed through ctrl+c" do
+      result = nil
       time_taken{
         lambda{
-          Thread.new { `ruby spec/cases/parallel_start_and_kill.rb THREAD` }
+          Thread.new { result = `ruby spec/cases/parallel_start_and_kill.rb THREAD 2>&1 && echo FAILED` }
           sleep 1
           kill_process_with_name("spec/cases/parallel_start_and_kill.rb") #simulates Ctrl+c
           sleep 1
         }.should_not change{`ps`.split("\n").size}
       }.should <= 3
+      result.should_not include "FAILED"
     end
 
     it "does not kill anything on ctrl+c when everything has finished" do
