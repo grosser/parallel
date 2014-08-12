@@ -326,7 +326,7 @@ describe Parallel do
 
   describe "progress" do
     it "shows" do
-      `ruby spec/cases/progress.rb`.sub(/=+/, '==').should == "\n\nDoing stuff: |==|\n"
+      `ruby spec/cases/progress.rb`.sub(/=+/, '==').strip.should == "Doing stuff: |==|"
     end
   end
 
