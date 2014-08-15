@@ -277,6 +277,15 @@ describe Parallel do
       result = `ruby spec/cases/parallel_kill.rb 2>&1`
       result.should == "DEAD\nWorks nil\n"
     end
+
+    it "synchronizes :start and :finish" do
+      out = `ruby spec/cases/synchronizes_start_and_finish.rb`
+      %w{a b c}.each {|letter|
+        out.sub! letter.downcase * 10, 'OK'
+        out.sub! letter.upcase * 10, 'OK'
+      }
+      out.should == "OK\n" * 6
+    end
   end
 
   describe ".map_with_index" do
@@ -304,6 +313,22 @@ describe Parallel do
       `ruby spec/cases/each.rb`.should == 'a b c d'
     end
 
+    it "passes result to :finish callback :in_processes`" do
+      monitor = double('monitor', :call => nil)
+      monitor.should_receive(:call).once.with(:first, 0, 123)
+      monitor.should_receive(:call).once.with(:second, 1, 123)
+      monitor.should_receive(:call).once.with(:third, 2, 123)
+      Parallel.each([:first, :second, :third], :finish => monitor, :in_processes => 3) { 123 }
+    end
+
+    it "passes result to :finish callback :in_threads`" do
+      monitor = double('monitor', :call => nil)
+      monitor.should_receive(:call).once.with(:first, 0, 123)
+      monitor.should_receive(:call).once.with(:second, 1, 123)
+      monitor.should_receive(:call).once.with(:third, 2, 123)
+      Parallel.each([:first, :second, :third], :finish => monitor, :in_threads => 3) { 123 }
+    end
+
     it "does not use marshal_dump" do
       `ruby spec/cases/no_dump_with_each.rb 2>&1`.should == 'no dump for resultno dump for each'
     end
@@ -326,6 +351,10 @@ describe Parallel do
   describe "progress" do
     it "shows" do
       `ruby spec/cases/progress.rb`.sub(/=+/, '==').strip.should == "Doing stuff: |==|"
+    end
+
+    it "works with :finish" do
+      `ruby spec/cases/progress_with_finish.rb`.sub(/=+/, '==').strip.should == "Doing stuff: |==|\n100"
     end
   end
 
