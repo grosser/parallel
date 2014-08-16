@@ -74,7 +74,6 @@ describe Parallel do
           sleep 1
           kill_process_with_name("spec/cases/parallel_start_and_kill.rb") #simulates Ctrl+c
           sleep 1
-          puts t.value
         }.should_not change{`ps`.split("\n").size}
       }.should <= 3
     end
