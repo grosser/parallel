@@ -277,6 +277,115 @@ describe Parallel do
       result = `ruby spec/cases/parallel_kill.rb 2>&1`
       result.should == "DEAD\nWorks nil\n"
     end
+
+    it "supports lambdas" do
+      items = %w{A B C D}
+      generate = lambda {
+        i = items.pop
+        return Parallel::EndOfIteration unless i
+        i
+      }
+      out = Parallel.map(generate) do |i|
+        i.downcase
+      end.sort.join(" ")
+      out.should == "a b c d"
+    end
+
+    it "supports queues" do
+      queue = Queue.new
+
+      Thread.new do
+        ('a'..'z').each do |i|
+          queue.push i
+          sleep 0.1
+        end
+        queue.push Parallel::EndOfIteration
+      end
+
+      out = Parallel.map(queue) do |i|
+        i.upcase
+      end.sort.join(" ")
+      out.should == ('A'..'Z').to_a.join(' ')
+    end
+
+    it "supports SizedQueues" do
+      out = `ruby spec/cases/sized_queue.rb`
+      out.should =~ %r{^        # 40 jobs total
+        (produced){30}          # 20 threads + 10 spots on the queue
+        consumed                # at least one consumed
+        (consumed|produced){29} # the other 19 consumed and 10 produced
+        (consumed){20}          # last 20 jobs
+      $}x
+    end
+
+    it "does not lock provided produce/start/finish mutex to pop queue" do
+      mutex = Mutex.new
+      queue = Queue.new
+
+      Thread.new do
+        sleep 0.2
+
+        ('a'..'g').each do |i|
+          # this mutex guards us from code in start/finish callbacks, but should
+          # not be locked when popping queue or we might end up in a # dead lock
+          mutex.synchronize do
+            `echo Hello`
+          end
+
+          queue.push i
+        end
+        queue.push Parallel::EndOfIteration
+      end
+
+      out = Parallel.map(queue, :mutex => mutex, :in_threads => 2) do |i|
+        i.upcase
+      end.sort.join(" ")
+      out.should == ('A'..'G').to_a.join(' ')
+    end
+
+    it "synchronizes :start and :finish" do
+      out = `ruby spec/cases/synchronizes_start_and_finish.rb`
+      %w{a b c}.each {|letter|
+        out.sub! letter.downcase * 10, 'OK'
+        out.sub! letter.upcase * 10, 'OK'
+      }
+      out.should == "OK\n" * 6
+    end
+
+    it "synchronizes using mutex from options if provided" do
+      out = ""
+      items = %w{2 1}
+
+      sync = lambda {|&block|
+        out += "<"
+        r = block.call
+        out += ">"
+        r
+      }
+      generate = lambda {
+        i = items.pop
+        out += "#{i}"
+        return Parallel::EndOfIteration unless i
+        i
+      }
+      start = lambda {|item,index|
+        out += "S"
+      }
+      finish = lambda {|item,index,result|
+        out += result
+      }
+
+      mutex = Object.new
+      mutex.define_singleton_method :synchronize, sync
+
+      Parallel.map(generate, :in_threads => 1, :mutex => mutex,
+        :start => start, :finish => finish
+      ) do
+        "F"
+      end
+
+      out.should == "<1><S><F><2><S><F><>"
+    end
   end
 
   describe ".map_with_index" do
@@ -304,6 +413,22 @@ describe Parallel do
       `ruby spec/cases/each.rb`.should == 'a b c d'
     end
 
+    it "passes result to :finish callback :in_processes`" do
+      monitor = double('monitor', :call => nil)
+      monitor.should_receive(:call).once.with(:first, 0, 123)
+      monitor.should_receive(:call).once.with(:second, 1, 123)
+      monitor.should_receive(:call).once.with(:third, 2, 123)
+      Parallel.each([:first, :second, :third], :finish => monitor, :in_processes => 3) { 123 }
+    end
+
+    it "passes result to :finish callback :in_threads`" do
+      monitor = double('monitor', :call => nil)
+      monitor.should_receive(:call).once.with(:first, 0, 123)
+      monitor.should_receive(:call).once.with(:second, 1, 123)
+      monitor.should_receive(:call).once.with(:third, 2, 123)
+      Parallel.each([:first, :second, :third], :finish => monitor, :in_threads => 3) { 123 }
+    end
+
     it "does not use marshal_dump" do
       `ruby spec/cases/no_dump_with_each.rb 2>&1`.should == 'no dump for resultno dump for each'
     end
@@ -326,6 +451,10 @@ describe Parallel do
   describe "progress" do
     it "shows" do
       `ruby spec/cases/progress.rb`.sub(/=+/, '==').strip.should == "Doing stuff: |==|"
+    end
+
+    it "works with :finish" do
+      `ruby spec/cases/progress_with_finish.rb`.sub(/=+/, '==').strip.should == "Doing stuff: |==|\n100"
     end
   end
 
