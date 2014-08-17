@@ -277,6 +277,15 @@ describe Parallel do
       result = `ruby spec/cases/parallel_kill.rb 2>&1`
       result.should == "DEAD\nWorks nil\n"
     end
+
+    it "synchronizes :start and :finish" do
+      out = `ruby spec/cases/synchronizes_start_and_finish.rb`
+      %w{a b c}.each {|letter|
+        out.sub! letter.downcase * 10, 'OK'
+        out.sub! letter.upcase * 10, 'OK'
+      }
+      out.should == "OK\n" * 6
+    end
   end
 
   describe ".map_with_index" do

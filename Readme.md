@@ -98,7 +98,11 @@ Parallel.map(1..50, :progress => "Doing stuff") { sleep 1 }
 # Doing stuff | ETA: 00:00:02 | ====================               | Time: 00:00:10
 ```
 
-Use `:finish` or `:start` hook to get progress information, `:start` has item and index, `:finish` has item, index, result.
+Use `:finish` or `:start` hook to get progress information.
+ - `:start` has item and index
+ - `:finish` has item, index, result
+
+They are called on the main process and protected with a mutex.
 
 ```Ruby
 Parallel.map(1..100, :finish => lambda { |item, i, result| ... do something ... }) { sleep 1 }

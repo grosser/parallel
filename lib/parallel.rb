@@ -94,6 +94,7 @@ module Parallel
 
     def map(array, options = {}, &block)
       array = array.to_a # turn Range and other Enumerable-s into an Array
+      options[:mutex] ||= Mutex.new
 
       if RUBY_PLATFORM =~ /java/ and not options[:in_processes]
         method = :in_threads
@@ -446,10 +447,10 @@ module Parallel
     def with_instrumentation(item, index, options)
       on_start = options[:start]
       on_finish = options[:finish]
-      on_start.call(item, index) if on_start
+      options[:mutex].synchronize { on_start.call(item, index) } if on_start
       result = yield
     ensure
-      on_finish.call(item, index, result) if on_finish
+      options[:mutex].synchronize { on_finish.call(item, index, result) } if on_finish
     end
   end
 end
