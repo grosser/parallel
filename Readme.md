@@ -141,6 +141,7 @@ Authors
  - [Bartosz Dziewoński](https://github.com/MatmaRex)
  - [yaoguai](https://github.com/yaoguai)
  - [Guillaume Hain](https://github.com/zedtux)
+ - [Adam Wróbel](https://github.com/amw)
 
 [Michael Grosser](http://grosser.it)<br/>
 michael@grosser.it<br/>
