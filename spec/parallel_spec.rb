@@ -313,6 +313,22 @@ describe Parallel do
       `ruby spec/cases/each.rb`.should == 'a b c d'
     end
 
+    it "passes result to :finish callback :in_processes`" do
+      monitor = double('monitor', :call => nil)
+      monitor.should_receive(:call).once.with(:first, 0, 123)
+      monitor.should_receive(:call).once.with(:second, 1, 123)
+      monitor.should_receive(:call).once.with(:third, 2, 123)
+      Parallel.each([:first, :second, :third], :finish => monitor, :in_processes => 3) { 123 }
+    end
+
+    it "passes result to :finish callback :in_threads`" do
+      monitor = double('monitor', :call => nil)
+      monitor.should_receive(:call).once.with(:first, 0, 123)
+      monitor.should_receive(:call).once.with(:second, 1, 123)
+      monitor.should_receive(:call).once.with(:third, 2, 123)
+      Parallel.each([:first, :second, :third], :finish => monitor, :in_threads => 3) { 123 }
+    end
+
     it "does not use marshal_dump" do
       `ruby spec/cases/no_dump_with_each.rb 2>&1`.should == 'no dump for resultno dump for each'
     end

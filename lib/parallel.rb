@@ -84,7 +84,7 @@ module Parallel
     end
 
     def each(array, options={}, &block)
-      map(array, options.merge(:preserve_results => false), &block)
+      map(array, options.merge(:preserve_results => !!options[:finish]), &block)
       array
     end
 
