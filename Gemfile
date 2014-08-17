@@ -6,5 +6,6 @@ gem 'rake'
 gem 'rspec', '~>2'
 gem 'activerecord', :platforms => [:ruby_19, :ruby_20]
 gem 'ruby-progressbar'
+gem 'rspec-rerun'
 
 gem 'mysql2', :group => :mysql
