@@ -327,6 +327,10 @@ describe Parallel do
     it "shows" do
       `ruby spec/cases/progress.rb`.sub(/=+/, '==').strip.should == "Doing stuff: |==|"
     end
+
+    it "works with :finish" do
+      `ruby spec/cases/progress_with_finish.rb`.strip.sub(/=+/, '==').gsub(/\n+/,"\n").should == "Doing stuff: |==|\n100"
+    end
   end
 
   describe "GC" do

@@ -124,14 +124,18 @@ module Parallel
     end
 
     def add_progress_bar!(array, options)
-      if (title = options[:progress]) && !options[:finish]
+      if title = options[:progress]
         require 'ruby-progressbar'
         progress = ProgressBar.create(
           :title => title,
           :total => array.size,
           :format => '%t |%E | %B | %a'
         )
-        options[:finish] = lambda { |item, i, result| progress.increment }
+        old_finish = options[:finish]
+        options[:finish] = lambda do |item, i, result|
+          old_finish.call(item, i, result) if old_finish
+          progress.increment
+        end
       end
     end
 
