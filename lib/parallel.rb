@@ -87,7 +87,7 @@ module Parallel
     end
 
     def each(array, options={}, &block)
-      map(array, options.merge(:preserve_results => !!options[:finish]), &block)
+      map(array, options.merge(:preserve_results => false), &block)
       array
     end
 
@@ -116,6 +116,7 @@ module Parallel
       end
       size = [array.size, size].min
 
+      options[:return_results] = (options[:preserve_results] != false || !!options[:finish])
       add_progress_bar!(array, options)
 
       if size == 0
@@ -170,13 +171,13 @@ module Parallel
           index = Thread.exclusive { current += 1 }
           break if index >= items.size
 
-          with_instrumentation items[index], index, options do
-            begin
-              results[index] = call_with_index(items, index, options, &block)
-            rescue StandardError => e
-              exception = e
-              break
+          begin
+            results[index] = with_instrumentation items[index], index, options do
+              call_with_index(items, index, options, &block)
             end
+          rescue StandardError => e
+            exception = e
+            break
           end
         end
       end
@@ -357,11 +358,11 @@ module Parallel
     def call_with_index(array, index, options, &block)
       args = [array[index]]
       args << index if options[:with_index]
-      if options[:preserve_results] == false
+      if options[:return_results]
         block.call(*args)
-        nil # avoid GC overhead of passing large results around
       else
         block.call(*args)
+        nil # avoid GC overhead of passing large results around
       end
     end
 
@@ -370,6 +371,7 @@ module Parallel
       on_finish = options[:finish]
       options[:mutex].synchronize { on_start.call(item, index) } if on_start
       result = yield
+      result unless options[:preserve_results] == false
     ensure
       options[:mutex].synchronize { on_finish.call(item, index, result) } if on_finish
     end
