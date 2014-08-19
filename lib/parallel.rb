@@ -1,4 +1,3 @@
-require 'thread' # to get Thread.exclusive
 require 'rbconfig'
 require 'parallel/version'
 require 'parallel/processor_count'
@@ -14,6 +13,8 @@ module Parallel
 
   class Kill < StandardError
   end
+
+  StopIteration = Object.new
 
   INTERRUPT_SIGNAL = :SIGINT
 
@@ -62,6 +63,50 @@ module Parallel
     end
   end
 
+  class ItemWrapper
+    def initialize(array, mutex)
+      @lambda = array.respond_to?(:call)
+      @items = (@lambda ? array : array.to_a) # turn Range and other Enumerable-s into an Array
+      @mutex = mutex
+      @index = -1
+    end
+
+    def producer?
+      @lambda
+    end
+
+    def each_with_index(&block)
+      if producer?
+        loop do
+          item, index = self.next
+          break unless index
+          yield(item, index)
+        end
+      else
+        @items.each_with_index(&block)
+      end
+    end
+
+    def next
+      if producer?
+        item, index = @mutex.synchronize do
+          # must be the same mutex, or index and item can be out of order
+          [@items.call, @index += 1]
+        end
+        return if item == Parallel::StopIteration
+      else
+        index = @mutex.synchronize { @index += 1 }
+        return if index >= size
+        item = @items[index]
+      end
+      [item, index]
+    end
+
+    def size
+      @items.size
+    end
+  end
+
   class << self
     def in_threads(options={:count => 2})
       count, options = extract_count_from_options(options)
@@ -96,7 +141,6 @@ module Parallel
     end
 
     def map(array, options = {}, &block)
-      array = array.to_a # turn Range and other Enumerable-s into an Array
       options[:mutex] ||= Mutex.new
 
       if RUBY_PLATFORM =~ /java/ and not options[:in_processes]
@@ -114,26 +158,30 @@ module Parallel
           size = 0
         end
       end
-      size = [array.size, size].min
+
+      items = ItemWrapper.new(array, options[:mutex])
+
+      size = [items.producer? ? size : items.size, size].min
 
       options[:return_results] = (options[:preserve_results] != false || !!options[:finish])
-      add_progress_bar!(array, options)
+      add_progress_bar!(items, options)
 
       if size == 0
-        work_direct(array, options, &block)
+        work_direct(items, options, &block)
       elsif method == :in_threads
-        work_in_threads(array, options.merge(:count => size), &block)
+        work_in_threads(items, options.merge(:count => size), &block)
       else
-        work_in_processes(array, options.merge(:count => size), &block)
+        work_in_processes(items, options.merge(:count => size), &block)
       end
     end
 
-    def add_progress_bar!(array, options)
+    def add_progress_bar!(items, options)
       if title = options[:progress]
+        raise "Progressbar and producers don't mix" if items.producer?
         require 'ruby-progressbar'
         progress = ProgressBar.create(
           :title => title,
-          :total => array.size,
+          :total => items.size,
           :format => '%t |%E | %B | %a'
         )
         old_finish = options[:finish]
@@ -150,9 +198,9 @@ module Parallel
 
     private
 
-    def work_direct(array, options)
+    def work_direct(items, options)
       results = []
-      array.each_with_index do |e,i|
+      items.each_with_index do |e,i|
         results << (options[:with_index] ? yield(e,i) : yield(e))
       end
       results
@@ -160,20 +208,18 @@ module Parallel
 
     def work_in_threads(items, options, &block)
       results = []
-      current = -1
       exception = nil
 
       in_threads(options[:count]) do
         # as long as there are more items, work on one of them
         loop do
           break if exception
-
-          index = Thread.exclusive { current += 1 }
-          break if index >= items.size
+          item, index = items.next
+          break unless index
 
           begin
-            results[index] = with_instrumentation items[index], index, options do
-              call_with_index(items, index, options, &block)
+            results[index] = with_instrumentation item, index, options do
+              call_with_index(item, index, options, &block)
             end
           rescue StandardError => e
             exception = e
@@ -186,10 +232,10 @@ module Parallel
     end
 
     def work_in_processes(items, options, &blk)
-      workers = create_workers(items, options, &blk)
-      current_index = -1
+      workers = create_workers(items.instance_variable_get(:@items), options, &blk)
       results = []
       exception = nil
+
       kill_on_ctrl_c(workers.map(&:pid)) do
         in_threads(options[:count]) do |i|
           worker = workers[i]
@@ -198,10 +244,10 @@ module Parallel
           begin
             loop do
               break if exception
-              index = Thread.exclusive{ current_index += 1 }
-              break if index >= items.size
+              item, index = items.next
+              break unless index
 
-              output = with_instrumentation items[index], index, options do
+              output = with_instrumentation item, index, options do
                 worker.work(index)
               end
 
@@ -265,8 +311,9 @@ module Parallel
     def process_incoming_jobs(read, write, items, options, &block)
       while !read.eof?
         index = Marshal.load(read)
+        item = items[index]
         result = begin
-          call_with_index(items, index, options, &block)
+          call_with_index(item, index, options, &block)
         rescue StandardError => e
           ExceptionWrapper.new(e)
         end
@@ -355,8 +402,8 @@ module Parallel
       end
     end
 
-    def call_with_index(array, index, options, &block)
-      args = [array[index]]
+    def call_with_index(item, index, options, &block)
+      args = [item]
       args << index if options[:with_index]
       if options[:return_results]
         block.call(*args)
