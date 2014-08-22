@@ -48,9 +48,9 @@ module Parallel
       # process died
     end
 
-    def work(index)
+    def work(data)
       begin
-        Marshal.dump(index, write)
+        Marshal.dump(data, write)
       rescue Errno::EPIPE
         raise DeadWorker
       end
@@ -104,6 +104,14 @@ module Parallel
 
     def size
       @items.size
+    end
+
+    def pack(item, index)
+      producer? ? [item, index] : index
+    end
+
+    def unpack(data)
+      producer? ? data : [@items[data], data]
     end
   end
 
@@ -232,7 +240,7 @@ module Parallel
     end
 
     def work_in_processes(items, options, &blk)
-      workers = create_workers(items.instance_variable_get(:@items), options, &blk)
+      workers = create_workers(items, options, &blk)
       results = []
       exception = nil
 
@@ -248,7 +256,7 @@ module Parallel
               break unless index
 
               output = with_instrumentation item, index, options do
-                worker.work(index)
+                worker.work(items.pack(item, index))
               end
 
               if ExceptionWrapper === output
@@ -310,8 +318,8 @@ module Parallel
 
     def process_incoming_jobs(read, write, items, options, &block)
       while !read.eof?
-        index = Marshal.load(read)
-        item = items[index]
+        data = Marshal.load(read)
+        item, index = items.unpack(data)
         result = begin
           call_with_index(item, index, options, &block)
         rescue StandardError => e

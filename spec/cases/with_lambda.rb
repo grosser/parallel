@@ -1,7 +1,13 @@
 require File.expand_path('spec/spec_helper')
 
-options = (ARGV[0] == "PROCESSES" ? {:in_processes => 2} : {:in_threads => 2})
-options[:mutex] = Mutex.new
+type = case ARGV[0]
+when "PROCESSES" then :in_processes
+when "THREADS" then :in_threads
+else
+  raise "Use PROCESSES or THREADS"
+end
+options = {type => 2, :mutex => Mutex.new}
+
 all = ['too soon']
 produce = lambda { all.shift || Parallel::StopIteration }
 Thread.new do

@@ -359,13 +359,14 @@ describe Parallel do
   end
 
   describe "lambdas" do
+    let(:result) { "ITEM-1\nITEM-2\nITEM-3\n" }
+
     it "runs in threads" do
-      `ruby spec/cases/with_lambda.rb`.should == "ITEM-1\nITEM-2\nITEM-3\n"
+      `ruby spec/cases/with_lambda.rb THREADS`.should == result
     end
 
     it "runs in processs" do
-      pending
-      `ruby spec/cases/with_lambda.rb`.should == "Item-1-true\nItem-2-true\nItem-3-true\n"
+      `ruby spec/cases/with_lambda.rb PROCESSES`.should == result
     end
 
     it "refuses to use progress" do
