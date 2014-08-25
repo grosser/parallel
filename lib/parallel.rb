@@ -14,7 +14,7 @@ module Parallel
   class Kill < StandardError
   end
 
-  StopIteration = Object.new
+  Stop = Object.new
 
   INTERRUPT_SIGNAL = :SIGINT
 
@@ -93,7 +93,7 @@ module Parallel
           # must be the same mutex, or index and item can be out of order
           [@items.call, @index += 1]
         end
-        return if item == Parallel::StopIteration
+        return if item == Parallel::Stop
       else
         index = @mutex.synchronize { @index += 1 }
         return if index >= size
