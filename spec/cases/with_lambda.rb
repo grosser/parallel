@@ -9,7 +9,7 @@ end
 options = {type => 2, :mutex => Mutex.new}
 
 all = ['too soon']
-produce = lambda { all.shift || Parallel::StopIteration }
+produce = lambda { all.shift || Parallel::Stop }
 Thread.new do
   options[:mutex].synchronize do
     all.replace(['locked'])

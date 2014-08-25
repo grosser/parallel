@@ -183,6 +183,12 @@ module Parallel
       end
     end
 
+    def map_with_index(array, options={}, &block)
+      map(array, options.merge(:with_index => true), &block)
+    end
+
+    private
+
     def add_progress_bar!(items, options)
       if title = options[:progress]
         raise "Progressbar and producers don't mix" if items.producer?
@@ -200,11 +206,6 @@ module Parallel
       end
     end
 
-    def map_with_index(array, options={}, &block)
-      map(array, options.merge(:with_index => true), &block)
-    end
-
-    private
 
     def work_direct(items, options)
       results = []
