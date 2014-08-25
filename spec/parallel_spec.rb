@@ -358,6 +358,24 @@ describe Parallel do
     end
   end
 
+  describe "lambdas" do
+    let(:result) { "ITEM-1\nITEM-2\nITEM-3\n" }
+
+    it "runs in threads" do
+      `ruby spec/cases/with_lambda.rb THREADS`.should == result
+    end
+
+    it "runs in processs" do
+      `ruby spec/cases/with_lambda.rb PROCESSES`.should == result
+    end
+
+    it "refuses to use progress" do
+      expect {
+        Parallel.map(lambda{}, :progress => "xxx"){ raise "Ooops" }
+      }.to raise_error("Progressbar and producers don't mix")
+    end
+  end
+
   describe "GC" do
     def normalize(result)
       result.sub(/\{(.*)\}/, "\\1").split(", ").reject { |x| x =~ /^(Hash|Array|String)=>(1|-1)$/ }
