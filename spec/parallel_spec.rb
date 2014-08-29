@@ -132,8 +132,9 @@ describe Parallel do
     end
 
     it 'can handle to high fork rate' do
-      skip if RbConfig::CONFIG["target_os"] =~ /darwin1/
-      `ruby spec/cases/parallel_high_fork_rate.rb`.should == 'OK'
+      unless RbConfig::CONFIG["target_os"] =~ /darwin1/
+        `ruby spec/cases/parallel_high_fork_rate.rb`.should == 'OK'
+      end
     end
 
     it 'does not leave processes behind while running' do

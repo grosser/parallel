@@ -119,7 +119,7 @@ module Parallel
     end
 
     def queue_wrapper(array)
-      array.is_a?(Thread::Queue) && lambda { array.pop(false) }
+      array.is_a?(::Queue) && lambda { array.pop(false) }
     end
   end
 
