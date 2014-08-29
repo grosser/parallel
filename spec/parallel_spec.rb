@@ -359,21 +359,23 @@ describe Parallel do
     end
   end
 
-  describe "lambdas" do
-    let(:result) { "ITEM-1\nITEM-2\nITEM-3\n" }
+  ["lambda", "queue"].each do |thing|
+    describe "lambdas" do
+      let(:result) { "ITEM-1\nITEM-2\nITEM-3\n" }
 
-    it "runs in threads" do
-      `ruby spec/cases/with_lambda.rb THREADS`.should == result
-    end
+      it "runs in threads" do
+        `ruby spec/cases/with_#{thing}.rb THREADS`.should == result
+      end
 
-    it "runs in processs" do
-      `ruby spec/cases/with_lambda.rb PROCESSES`.should == result
-    end
+      it "runs in processs" do
+        `ruby spec/cases/with_#{thing}.rb PROCESSES`.should == result
+      end
 
-    it "refuses to use progress" do
-      expect {
-        Parallel.map(lambda{}, :progress => "xxx"){ raise "Ooops" }
-      }.to raise_error("Progressbar and producers don't mix")
+      it "refuses to use progress" do
+        expect {
+          Parallel.map(lambda{}, :progress => "xxx"){ raise "Ooops" }
+        }.to raise_error("Progressbar and producers don't mix")
+      end
     end
   end
 

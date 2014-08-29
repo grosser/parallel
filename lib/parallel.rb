@@ -65,8 +65,8 @@ module Parallel
 
   class ItemWrapper
     def initialize(array)
-      @lambda = array.respond_to?(:call)
-      @items = (@lambda ? array : array.to_a) # turn Range and other Enumerable-s into an Array
+      @lambda = (array.respond_to?(:call) && array) || queue_wrapper(array)
+      @items = array.to_a unless @lambda # turn Range and other Enumerable-s into an Array
       @mutex = Mutex.new
       @index = -1
     end
@@ -93,7 +93,7 @@ module Parallel
         # - do not call lambda after it has returned Stop
         item, index = @mutex.synchronize do
           return if @stopped
-          item = @items.call
+          item = @lambda.call
           @stopped = (item == Parallel::Stop)
           return if @stopped
           [item, @index += 1]
@@ -116,6 +116,10 @@ module Parallel
 
     def unpack(data)
       producer? ? data : [@items[data], data]
+    end
+
+    def queue_wrapper(array)
+      array.is_a?(Thread::Queue) && lambda { array.pop(false) }
     end
   end
 
