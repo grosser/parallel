@@ -6,18 +6,7 @@ when "THREADS" then :in_threads
 else
   raise "Use PROCESSES or THREADS"
 end
-options = {type => 2, :mutex => Mutex.new}
 
-all = ['too soon']
-produce = lambda { all.shift || Parallel::Stop }
-Thread.new do
-  options[:mutex].synchronize do
-    all.replace(['locked'])
-    sleep 1
-    all.replace([1,2,3])
-  end
-end
-
-sleep 0.1
-
-puts Parallel.map(produce, options) { |(i, id)| "ITEM-#{i}" }
+all = [3,2,1]
+produce = lambda { all.pop || Parallel::Stop }
+puts Parallel.map(produce, type => 2) { |(i, id)| "ITEM-#{i}" }

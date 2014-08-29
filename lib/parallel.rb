@@ -64,10 +64,10 @@ module Parallel
   end
 
   class ItemWrapper
-    def initialize(array, mutex)
+    def initialize(array)
       @lambda = array.respond_to?(:call)
       @items = (@lambda ? array : array.to_a) # turn Range and other Enumerable-s into an Array
-      @mutex = mutex
+      @mutex = Mutex.new
       @index = -1
     end
 
@@ -89,11 +89,15 @@ module Parallel
 
     def next
       if producer?
+        # - index and item stay in sync
+        # - do not call lambda after it has returned Stop
         item, index = @mutex.synchronize do
-          # must be the same mutex, or index and item can be out of order
-          [@items.call, @index += 1]
+          return if @stopped
+          item = @items.call
+          @stopped = (item == Parallel::Stop)
+          return if @stopped
+          [item, @index += 1]
         end
-        return if item == Parallel::Stop
       else
         index = @mutex.synchronize { @index += 1 }
         return if index >= size
@@ -149,7 +153,7 @@ module Parallel
     end
 
     def map(array, options = {}, &block)
-      options[:mutex] ||= Mutex.new
+      options[:mutex] = Mutex.new
 
       if RUBY_PLATFORM =~ /java/ and not options[:in_processes]
         method = :in_threads
@@ -167,7 +171,7 @@ module Parallel
         end
       end
 
-      items = ItemWrapper.new(array, options[:mutex])
+      items = ItemWrapper.new(array)
 
       size = [items.producer? ? size : items.size, size].min
 
