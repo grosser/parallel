@@ -64,10 +64,10 @@ module Parallel
   end
 
   class ItemWrapper
-    def initialize(array)
+    def initialize(array, mutex)
       @lambda = (array.respond_to?(:call) && array) || queue_wrapper(array)
       @items = array.to_a unless @lambda # turn Range and other Enumerable-s into an Array
-      @mutex = Mutex.new
+      @mutex = mutex
       @index = -1
     end
 
@@ -175,7 +175,7 @@ module Parallel
         end
       end
 
-      items = ItemWrapper.new(array)
+      items = ItemWrapper.new(array, options[:mutex])
 
       size = [items.producer? ? size : items.size, size].min
 
