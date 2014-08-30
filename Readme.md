@@ -30,7 +30,7 @@ Parallel.each(['a','b','c']){|one_letter| ... }
 ```
 or `each_with_index` or `map_with_index`
 
-You can also feed one item at a time with a lambda.
+Produce one item at a time with `lambda` (anything that responds to `.call`) or `Queue`.
 
 ```Ruby
 items = [1,2,3]
