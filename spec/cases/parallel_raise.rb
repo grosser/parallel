@@ -1,4 +1,4 @@
-require File.expand_path('spec/spec_helper')
+require './spec/cases/helper'
 
 begin
   Parallel.in_processes(2) do

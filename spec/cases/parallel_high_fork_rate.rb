@@ -1,4 +1,4 @@
-require File.expand_path('spec/spec_helper')
+require './spec/cases/helper'
 
 Parallel.each((0..200).to_a, :in_processes=>200) do |x|
   sleep 1

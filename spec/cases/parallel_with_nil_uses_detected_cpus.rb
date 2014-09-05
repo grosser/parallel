@@ -1,4 +1,4 @@
-require File.expand_path('spec/spec_helper')
+require './spec/cases/helper'
 
 x = Parallel.in_processes(nil) do
   "HELLO"

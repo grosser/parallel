@@ -1,4 +1,4 @@
-require File.expand_path('spec/spec_helper')
+require './spec/cases/helper'
 
 object = ["\nasd#{File.read('Gemfile')}--#{File.read('Rakefile')}"*100, 12345, {:b=>:a}]
 

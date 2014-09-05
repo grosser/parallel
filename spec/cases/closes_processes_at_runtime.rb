@@ -1,4 +1,4 @@
-require File.expand_path('spec/spec_helper')
+require './spec/cases/helper'
 cmd = "ps uaxw|grep ruby|wc -l"
 
 processes_before = `#{cmd}`.to_i

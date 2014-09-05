@@ -1,4 +1,4 @@
-require File.expand_path('spec/spec_helper')
+require './spec/cases/helper'
 
 begin
   Parallel.map(1..100, :in_threads => 4) do |x|

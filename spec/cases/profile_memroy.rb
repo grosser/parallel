@@ -10,7 +10,7 @@ def count_objects
   Hash[cur.map{|k,v| [k, v - old[k]] }].reject{|k,v|v==0}
 end
 
-require File.expand_path('spec/spec_helper')
+require './spec/cases/helper'
 
 items = Array.new(1000)
 options = {"in_#{ARGV[0]}".to_sym => 2}

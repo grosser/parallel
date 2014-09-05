@@ -1,4 +1,4 @@
-require File.expand_path('spec/spec_helper')
+require './spec/cases/helper'
 
 result = Parallel.map(['a','b','c','d']) do |x|
   "-#{x}-"

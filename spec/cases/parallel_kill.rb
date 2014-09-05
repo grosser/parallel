@@ -1,4 +1,4 @@
-require File.expand_path('spec/spec_helper')
+require './spec/cases/helper'
 
 results = Parallel.map([1,2,3]) do |x|
   if x == 1 # -> stop all sub-processes, killing them instantly

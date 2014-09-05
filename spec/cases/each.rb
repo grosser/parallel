@@ -1,4 +1,4 @@
-require File.expand_path('spec/spec_helper')
+require './spec/cases/helper'
 STDOUT.sync = true # otherwise results can go weird...
 
 x = ['a','b','c','d']

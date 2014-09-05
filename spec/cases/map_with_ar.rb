@@ -1,4 +1,4 @@
-require File.expand_path('spec/spec_helper')
+require './spec/cases/helper'
 require "active_record"
 
 Tempfile.open("xxx") do |f|

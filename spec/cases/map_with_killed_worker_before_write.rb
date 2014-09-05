@@ -1,4 +1,4 @@
-require File.expand_path('spec/spec_helper')
+require './spec/cases/helper'
 
 Parallel::Worker.class_eval do
   alias_method :work_without_kill, :work

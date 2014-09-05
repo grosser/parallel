@@ -1,4 +1,4 @@
-require File.expand_path('spec/spec_helper')
+require './spec/cases/helper'
 
 method = case ARGV[0]
 when "PROCESS" then :in_processes

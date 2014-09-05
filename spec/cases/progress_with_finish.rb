@@ -1,4 +1,4 @@
-require File.expand_path('spec/spec_helper')
+require './spec/cases/helper'
 
 sum = 0
 finish = lambda { |item, index, result| sum += result }

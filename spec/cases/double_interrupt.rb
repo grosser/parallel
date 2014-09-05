@@ -1,4 +1,4 @@
-require File.expand_path('spec/spec_helper')
+require './spec/cases/helper'
 
 Signal.trap :SIGINT do
   sleep 0.5
