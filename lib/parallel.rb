@@ -371,9 +371,10 @@ module Parallel
     def kill_on_ctrl_c(things, options)
       @to_be_killed ||= []
       old_interrupt = nil
+      signal = options.fetch(:interrupt_signal, INTERRUPT_SIGNAL)
 
       if @to_be_killed.empty?
-        old_interrupt = trap_interrupt(options) do
+        old_interrupt = trap_interrupt(signal) do
           $stderr.puts 'Parallel execution interrupted, exiting ...'
           @to_be_killed.flatten.compact.each { |thing| kill_that_thing!(thing) }
         end
@@ -384,11 +385,10 @@ module Parallel
       yield
     ensure
       @to_be_killed.pop # free threads for GC and do not kill pids that could be used for new processes
-      restore_interrupt(old_interrupt, options) if @to_be_killed.empty?
+      restore_interrupt(old_interrupt, signal) if @to_be_killed.empty?
     end
 
-    def trap_interrupt(options)
-      signal = options.fetch(:interrupt_signal, INTERRUPT_SIGNAL)
+    def trap_interrupt(signal)
       old = Signal.trap signal, 'IGNORE'
 
       Signal.trap signal do
@@ -403,8 +403,8 @@ module Parallel
       old
     end
 
-    def restore_interrupt(old, options)
-      Signal.trap options.fetch(:interrupt_signal, INTERRUPT_SIGNAL), old
+    def restore_interrupt(old, signal)
+      Signal.trap signal, old
     end
 
     def kill_that_thing!(thing)
