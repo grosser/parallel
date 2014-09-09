@@ -7,11 +7,12 @@ describe Parallel do
     Time.now.to_f - t
   end
 
-  def kill_process_with_name(file)
+  def kill_process_with_name(file, signal=nil)
     running_processes = `ps -f`.split("\n").map{ |line| line.split(/\s+/) }
     pid_index = running_processes.detect { |p| p.include?("UID") }.index("UID") + 1
     parent_pid = running_processes.detect { |p| p.include?(file) and not p.include?("sh") }[pid_index]
-    `kill -2 #{parent_pid}`
+    kill_option = signal.nil? ? '-2' : "-s #{signal}"
+    `kill #{kill_option} #{parent_pid}`
   end
 
   describe ".processor_count" do
@@ -68,27 +69,79 @@ describe Parallel do
     end
 
     it "kills the processes when the main process gets killed through ctrl+c" do
+      result = nil
       time_taken{
         lambda{
-          t = Thread.new { `ruby spec/cases/parallel_start_and_kill.rb PROCESS 2>&1` }
+          Thread.new { result = `ruby spec/cases/parallel_start_and_kill.rb PROCESS 2>&1` }
           sleep 1
-          kill_process_with_name("spec/cases/parallel_start_and_kill.rb") #simulates Ctrl+c
+          kill_process_with_name('spec/cases/parallel_start_and_kill.rb') #simulates Ctrl+c
           sleep 1
         }.should_not change{`ps`.split("\n").size}
-      }.should <= 3
+      }.should be <= 3
+    end
+
+    it "kills the processes when the main process gets killed through a custom interrupt" do
+      result = nil
+      time_taken{
+        lambda{
+          Thread.new { result = `ruby spec/cases/parallel_start_and_kill.rb PROCESS SIGTERM 2>&1` }
+          sleep 1
+          kill_process_with_name('spec/cases/parallel_start_and_kill.rb', 'TERM')
+          sleep 1
+        }.should_not change{`ps`.split("\n").size}
+      }.should be <= 3
     end
 
     it "kills the threads when the main process gets killed through ctrl+c" do
       result = nil
       time_taken{
         lambda{
-          Thread.new { result = `ruby spec/cases/parallel_start_and_kill.rb THREAD 2>&1 && echo FAILED` }
+          Thread.new { result = `ruby spec/cases/parallel_start_and_kill.rb THREAD 2>&1 && echo "FAILED"` }
           sleep 1
-          kill_process_with_name("spec/cases/parallel_start_and_kill.rb") #simulates Ctrl+c
+          kill_process_with_name('spec/cases/parallel_start_and_kill.rb') #simulates Ctrl+c
           sleep 1
         }.should_not change{`ps`.split("\n").size}
-      }.should <= 3
+      }.should be <= 3
       result.should_not include "FAILED"
+    end
+
+    it "kills the threads when the main process gets killed through a custom interrupt" do
+      result = nil
+      time_taken{
+        lambda{
+          Thread.new { result = `ruby spec/cases/parallel_start_and_kill.rb THREAD SIGTERM 2>&1 && echo "FAILED"` }
+          sleep 1
+          kill_process_with_name('spec/cases/parallel_start_and_kill.rb', 'TERM')
+          sleep 1
+        }.should_not change{`ps`.split("\n").size}
+      }.should be <= 3
+      result.should_not include "FAILED"
+    end
+
+    it "does not kill processes when the main process gets sent an interrupt besides the custom interrupt" do
+      result = nil
+      lambda{
+        Thread.new { result = `ruby spec/cases/parallel_start_and_kill.rb PROCESS SIGTERM 2>&1 && echo "FINISHED"` }
+        sleep 1
+        kill_process_with_name('spec/cases/parallel_start_and_kill.rb')
+        sleep 1
+      }.should change{`ps`.split("\n").size}.by(4)
+      sleep 10
+      result.should include 'FINISHED'
+      result.should include 'Wrapper caught SIGINT'
+    end
+
+    it "does not kill threads when the main process gets sent an interrupt besides the custom interrupt" do
+      result = nil
+      lambda{
+        Thread.new { result = `ruby spec/cases/parallel_start_and_kill.rb THREAD SIGTERM 2>&1 && echo "FINISHED"` }
+        sleep 1
+        kill_process_with_name('spec/cases/parallel_start_and_kill.rb')
+        sleep 1
+      }.should change{`ps`.split("\n").size}.by(2)
+      sleep 10
+      result.should include 'FINISHED'
+      result.should include 'Wrapper caught SIGINT'
     end
 
     it "does not kill anything on ctrl+c when everything has finished" do
