@@ -227,7 +227,7 @@ module Parallel
       results = []
       exception = nil
 
-      in_threads(options[:count]) do
+      in_threads(options) do
         # as long as there are more items, work on one of them
         loop do
           break if exception
@@ -254,7 +254,7 @@ module Parallel
       exception = nil
 
       kill_on_ctrl_c(workers.map(&:pid), options) do
-        in_threads(options[:count]) do |i|
+        in_threads(options) do |i|
           worker = workers[i]
           worker.thread = Thread.current
 
