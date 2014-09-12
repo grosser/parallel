@@ -8,8 +8,10 @@ end
 
 options = {}
 options[:count] = 2
-options[:interrupt_signal] = ARGV[1].to_s if ARGV.length > 1
-trap('SIGINT') { puts 'Wrapper caught SIGINT' } if ARGV.length > 1 && ARGV[1] != 'SIGINT'
+if ARGV.length > 1
+  options[:interrupt_signal] = ARGV[1].to_s
+  trap('SIGINT') { puts 'Wrapper caught SIGINT' } if ARGV[1] != 'SIGINT'
+end
 
 Parallel.send(method, options) do
   sleep 10

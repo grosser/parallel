@@ -7,12 +7,11 @@ describe Parallel do
     Time.now.to_f - t
   end
 
-  def kill_process_with_name(file, signal=nil)
+  def kill_process_with_name(file, signal='INT')
     running_processes = `ps -f`.split("\n").map{ |line| line.split(/\s+/) }
     pid_index = running_processes.detect { |p| p.include?("UID") }.index("UID") + 1
     parent_pid = running_processes.detect { |p| p.include?(file) and not p.include?("sh") }[pid_index]
-    kill_option = signal.nil? ? '-2' : "-s #{signal}"
-    `kill #{kill_option} #{parent_pid}`
+    `kill -s #{signal} #{parent_pid}`
   end
 
   describe ".processor_count" do
