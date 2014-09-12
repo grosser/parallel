@@ -136,7 +136,7 @@ module Parallel
         end
       end
 
-      kill_on_ctrl_c(threads) { wait_for_threads(threads) }
+      kill_on_ctrl_c(threads, options) { wait_for_threads(threads) }
 
       out
     end
@@ -227,7 +227,7 @@ module Parallel
       results = []
       exception = nil
 
-      in_threads(options[:count]) do
+      in_threads(options) do
         # as long as there are more items, work on one of them
         loop do
           break if exception
@@ -253,8 +253,8 @@ module Parallel
       results = []
       exception = nil
 
-      kill_on_ctrl_c(workers.map(&:pid)) do
-        in_threads(options[:count]) do |i|
+      kill_on_ctrl_c(workers.map(&:pid), options) do
+        in_threads(options) do |i|
           worker = workers[i]
           worker.thread = Thread.current
 
@@ -368,12 +368,13 @@ module Parallel
     end
 
     # kill all these pids or threads if user presses Ctrl+c
-    def kill_on_ctrl_c(things)
+    def kill_on_ctrl_c(things, options)
       @to_be_killed ||= []
       old_interrupt = nil
+      signal = options.fetch(:interrupt_signal, INTERRUPT_SIGNAL)
 
       if @to_be_killed.empty?
-        old_interrupt = trap_interrupt do
+        old_interrupt = trap_interrupt(signal) do
           $stderr.puts 'Parallel execution interrupted, exiting ...'
           @to_be_killed.flatten.compact.each { |thing| kill_that_thing!(thing) }
         end
@@ -384,13 +385,13 @@ module Parallel
       yield
     ensure
       @to_be_killed.pop # free threads for GC and do not kill pids that could be used for new processes
-      restore_interrupt(old_interrupt) if @to_be_killed.empty?
+      restore_interrupt(old_interrupt, signal) if @to_be_killed.empty?
     end
 
-    def trap_interrupt
-      old = Signal.trap INTERRUPT_SIGNAL, 'IGNORE'
+    def trap_interrupt(signal)
+      old = Signal.trap signal, 'IGNORE'
 
-      Signal.trap INTERRUPT_SIGNAL do
+      Signal.trap signal do
         yield
         if old == "DEFAULT"
           raise Interrupt
@@ -402,8 +403,8 @@ module Parallel
       old
     end
 
-    def restore_interrupt(old)
-      Signal.trap INTERRUPT_SIGNAL, old
+    def restore_interrupt(old, signal)
+      Signal.trap signal, old
     end
 
     def kill_that_thing!(thing)
