@@ -150,6 +150,7 @@ Authors
  - [yaoguai](https://github.com/yaoguai)
  - [Guillaume Hain](https://github.com/zedtux)
  - [Adam Wróbel](https://github.com/amw)
+ - [Matthew Brennan](https://github.com/mattyb)
 
 [Michael Grosser](http://grosser.it)<br/>
 michael@grosser.it<br/>
