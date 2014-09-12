@@ -14,6 +14,17 @@ describe Parallel do
     `kill -s #{signal} #{parent_pid}`
   end
 
+  def execute_start_and_kill(command, amount, signal='INT')
+    t = nil
+    lambda {
+      t = Thread.new { `ruby spec/cases/parallel_start_and_kill.rb #{command} 2>&1 && echo "FINISHED"` }
+      sleep 1.5
+      kill_process_with_name('spec/cases/parallel_start_and_kill.rb', signal)
+      sleep 1
+    }.should change { `ps`.split("\n").size }.by amount
+    t.value
+  end
+
   describe ".processor_count" do
     before do
       Parallel.instance_variable_set(:@processor_count, nil)
@@ -69,76 +80,39 @@ describe Parallel do
 
     it "kills the processes when the main process gets killed through ctrl+c" do
       result = nil
-      time_taken{
-        lambda{
-          Thread.new { result = `ruby spec/cases/parallel_start_and_kill.rb PROCESS 2>&1` }
-          sleep 1
-          kill_process_with_name('spec/cases/parallel_start_and_kill.rb') #simulates Ctrl+c
-          sleep 1
-        }.should_not change{`ps`.split("\n").size}
+      time_taken {
+        result = execute_start_and_kill "PROCESS", 0
       }.should be <= 3
     end
 
     it "kills the processes when the main process gets killed through a custom interrupt" do
-      result = nil
-      time_taken{
-        lambda{
-          Thread.new { result = `ruby spec/cases/parallel_start_and_kill.rb PROCESS SIGTERM 2>&1` }
-          sleep 1
-          kill_process_with_name('spec/cases/parallel_start_and_kill.rb', 'TERM')
-          sleep 1
-        }.should_not change{`ps`.split("\n").size}
+      time_taken {
+        execute_start_and_kill "PROCESS SIGTERM", 0, "TERM"
       }.should be <= 3
     end
 
     it "kills the threads when the main process gets killed through ctrl+c" do
-      result = nil
-      time_taken{
-        lambda{
-          Thread.new { result = `ruby spec/cases/parallel_start_and_kill.rb THREAD 2>&1 && echo "FAILED"` }
-          sleep 1
-          kill_process_with_name('spec/cases/parallel_start_and_kill.rb') #simulates Ctrl+c
-          sleep 1
-        }.should_not change{`ps`.split("\n").size}
+      time_taken {
+        result = execute_start_and_kill "THREAD", 0
+        result.should_not include "FINISHED"
       }.should be <= 3
-      result.should_not include "FAILED"
     end
 
     it "kills the threads when the main process gets killed through a custom interrupt" do
-      result = nil
-      time_taken{
-        lambda{
-          Thread.new { result = `ruby spec/cases/parallel_start_and_kill.rb THREAD SIGTERM 2>&1 && echo "FAILED"` }
-          sleep 1
-          kill_process_with_name('spec/cases/parallel_start_and_kill.rb', 'TERM')
-          sleep 1
-        }.should_not change{`ps`.split("\n").size}
+      time_taken {
+        result = execute_start_and_kill "THREAD SIGTERM", 0, "TERM"
+        result.should_not include "FINISHED"
       }.should be <= 3
-      result.should_not include "FAILED"
     end
 
     it "does not kill processes when the main process gets sent an interrupt besides the custom interrupt" do
-      result = nil
-      lambda{
-        Thread.new { result = `ruby spec/cases/parallel_start_and_kill.rb PROCESS SIGTERM 2>&1 && echo "FINISHED"` }
-        sleep 1
-        kill_process_with_name('spec/cases/parallel_start_and_kill.rb')
-        sleep 1
-      }.should change{`ps`.split("\n").size}.by(4)
-      sleep 10
+      result = execute_start_and_kill "PROCESS SIGTERM", 4 # TODO this is baaad
       result.should include 'FINISHED'
       result.should include 'Wrapper caught SIGINT'
     end
 
     it "does not kill threads when the main process gets sent an interrupt besides the custom interrupt" do
-      result = nil
-      lambda{
-        Thread.new { result = `ruby spec/cases/parallel_start_and_kill.rb THREAD SIGTERM 2>&1 && echo "FINISHED"` }
-        sleep 1
-        kill_process_with_name('spec/cases/parallel_start_and_kill.rb')
-        sleep 1
-      }.should change{`ps`.split("\n").size}.by(2)
-      sleep 10
+      result = execute_start_and_kill "THREAD SIGTERM", 2 # TODO this is baad
       result.should include 'FINISHED'
       result.should include 'Wrapper caught SIGINT'
     end
