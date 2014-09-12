@@ -79,9 +79,9 @@ describe Parallel do
     end
 
     it "kills the processes when the main process gets killed through ctrl+c" do
-      result = nil
       time_taken {
         result = execute_start_and_kill "PROCESS", 0
+        result.should_not include "FINISHED"
       }.should be <= 3
     end
 
@@ -106,15 +106,21 @@ describe Parallel do
     end
 
     it "does not kill processes when the main process gets sent an interrupt besides the custom interrupt" do
-      result = execute_start_and_kill "PROCESS SIGTERM", 4 # TODO this is baaad
-      result.should include 'FINISHED'
-      result.should include 'Wrapper caught SIGINT'
+      time_taken {
+        result = execute_start_and_kill "PROCESS SIGTERM", 4
+        result.should include 'FINISHED'
+        result.should include 'Wrapper caught SIGINT'
+        result.should include 'I should have been killed earlier'
+      }.should be <= 7
     end
 
     it "does not kill threads when the main process gets sent an interrupt besides the custom interrupt" do
-      result = execute_start_and_kill "THREAD SIGTERM", 2 # TODO this is baad
-      result.should include 'FINISHED'
-      result.should include 'Wrapper caught SIGINT'
+      time_taken {
+        result = execute_start_and_kill "THREAD SIGTERM", 2
+        result.should include 'FINISHED'
+        result.should include 'Wrapper caught SIGINT'
+        result.should include 'I should have been killed earlier'
+      }.should be <= 7
     end
 
     it "does not kill anything on ctrl+c when everything has finished" do

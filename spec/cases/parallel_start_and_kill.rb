@@ -14,6 +14,6 @@ if ARGV.length > 1
 end
 
 Parallel.send(method, options) do
-  sleep 10
+  sleep 5
   puts "I should have been killed earlier..."
 end
