@@ -69,6 +69,7 @@ module Parallel
       @items = array.to_a unless @lambda # turn Range and other Enumerable-s into an Array
       @mutex = mutex
       @index = -1
+      @stopped = false
     end
 
     def producer?
