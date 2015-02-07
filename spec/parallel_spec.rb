@@ -271,12 +271,28 @@ describe Parallel do
       Parallel.map([:first, :second, :third], :start => monitor, :in_processes => 3) {}
     end
 
+    it "notifies when an item of work is dispatched with 0 processes" do
+      monitor = double('monitor', :call => nil)
+      monitor.should_receive(:call).once.with(:first, 0)
+      monitor.should_receive(:call).once.with(:second, 1)
+      monitor.should_receive(:call).once.with(:third, 2)
+      Parallel.map([:first, :second, :third], :start => monitor, :in_processes => 0) {}
+    end
+
     it "notifies when an item of work is completed by a worker process" do
       monitor = double('monitor', :call => nil)
       monitor.should_receive(:call).once.with(:first, 0, 123)
       monitor.should_receive(:call).once.with(:second, 1, 123)
       monitor.should_receive(:call).once.with(:third, 2, 123)
       Parallel.map([:first, :second, :third], :finish => monitor, :in_processes => 3) { 123 }
+    end
+
+    it "notifies when an item of work is completed with 0 processes" do
+      monitor = double('monitor', :call => nil)
+      monitor.should_receive(:call).once.with(:first, 0, 123)
+      monitor.should_receive(:call).once.with(:second, 1, 123)
+      monitor.should_receive(:call).once.with(:third, 2, 123)
+      Parallel.map([:first, :second, :third], :finish => monitor, :in_processes => 0) { 123 }
     end
 
     it "notifies when an item of work is dispatched to a threaded worker" do
@@ -287,12 +303,28 @@ describe Parallel do
       Parallel.map([:first, :second, :third], :start => monitor, :in_threads => 3) {}
     end
 
+    it "notifies when an item of work is dispatched with 0 threads" do
+      monitor = double('monitor', :call => nil)
+      monitor.should_receive(:call).once.with(:first, 0)
+      monitor.should_receive(:call).once.with(:second, 1)
+      monitor.should_receive(:call).once.with(:third, 2)
+      Parallel.map([:first, :second, :third], :start => monitor, :in_threads => 0) {}
+    end
+
     it "notifies when an item of work is completed by a threaded worker" do
       monitor = double('monitor', :call => nil)
       monitor.should_receive(:call).once.with(:first, 0, 123)
       monitor.should_receive(:call).once.with(:second, 1, 123)
       monitor.should_receive(:call).once.with(:third, 2, 123)
       Parallel.map([:first, :second, :third], :finish => monitor, :in_threads => 3) { 123 }
+    end
+
+    it "notifies when an item of work is completed with 0 threads" do
+      monitor = double('monitor', :call => nil)
+      monitor.should_receive(:call).once.with(:first, 0, 123)
+      monitor.should_receive(:call).once.with(:second, 1, 123)
+      monitor.should_receive(:call).once.with(:third, 2, 123)
+      Parallel.map([:first, :second, :third], :finish => monitor, :in_threads => 0) { 123 }
     end
 
     it "spits out a useful error when a worker dies before read" do

@@ -216,10 +216,12 @@ module Parallel
     end
 
 
-    def work_direct(items, options)
+    def work_direct(items, options, &block)
       results = []
-      items.each_with_index do |e,i|
-        results << (options[:with_index] ? yield(e,i) : yield(e))
+      items.each_with_index do |item, index|
+        results << with_instrumentation(item, index, options) do
+          call_with_index(item, index, options, &block)
+        end
       end
       results
     end
