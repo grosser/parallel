@@ -1,7 +1,7 @@
 require './spec/cases/helper'
 
 begin
-  Parallel.map(1..100, :in_threads => 4) do |x|
+  Parallel.each(1..100, :in_threads => 4) do |x|
     sleep 0.1 # so all processes get started
     print x
     raise 'foo' if x == 1

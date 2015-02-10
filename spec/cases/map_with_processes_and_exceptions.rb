@@ -5,7 +5,7 @@ begin
     sleep 0.1 # so all processes get started
     print x
     raise 'foo' if x == 1
-    sleep 0.1 # so no now work gets queued before exception is raised
+    sleep 0.1 # so now no work gets queued before exception is raised
     x
   end
 rescue

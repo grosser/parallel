@@ -253,6 +253,22 @@ describe Parallel do
       `ruby spec/cases/map_with_threads_and_break.rb 2>&1`.should =~ /^\d{4} Parallel::Break raised - result nil$/
     end
 
+    it 'stops all workers when a start hook fails with processes' do
+      `ruby spec/cases/map_with_processes_and_exception_in_start.rb 2>&1`.should =~ /^\d{3} raised$/
+    end
+
+    it 'stops all workers when a start hook fails with threads' do
+      `ruby spec/cases/map_with_threads_and_exception_in_start.rb 2>&1`.should =~ /^\d{0,3} raised$/
+    end
+
+    it 'stops all workers when a finish hook fails with processes' do
+      `ruby spec/cases/map_with_processes_and_exception_in_finish.rb 2>&1`.should =~ /^\d{4} raised$/
+    end
+
+    it 'stops all workers when a finish hook fails with threads' do
+      `ruby spec/cases/map_with_threads_and_exception_in_finish.rb 2>&1`.should =~ /^\d{0,4} raised$/
+    end
+
     it "can run with 0 threads" do
       Thread.should_not_receive(:exclusive)
       Parallel.map([1,2,3,4,5,6,7,8,9], :in_threads => 0){|x| x+2 }.should == [3,4,5,6,7,8,9,10,11]
@@ -405,6 +421,22 @@ describe Parallel do
 
     it "can modify in-place" do
       `ruby spec/cases/each_in_place.rb`.should == 'ab'
+    end
+
+    it 'stops all workers when one fails in process' do
+      `ruby spec/cases/each_with_processes_and_exceptions.rb 2>&1`.should =~ /^\d{4} raised$/
+    end
+
+    it 'stops all workers when one fails in thread' do
+      `ruby spec/cases/each_with_threads_and_exceptions.rb 2>&1`.should =~ /^\d{0,4} raised$/
+    end
+
+    it 'stops all workers when one raises Break in process' do
+      `ruby spec/cases/each_with_processes_and_break.rb 2>&1`.should =~ /^\d{4} Parallel::Break raised - result 1\.\.100$/
+    end
+
+    it 'stops all workers when one raises Break in thread' do
+      `ruby spec/cases/each_with_threads_and_break.rb 2>&1`.should =~ /^\d{4} Parallel::Break raised - result 1\.\.100$/
     end
   end
 
