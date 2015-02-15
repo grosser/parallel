@@ -55,15 +55,13 @@ module Parallel
         raise DeadWorker
       end
 
-      begin
-        result = Marshal.load(read)
-        if ExceptionWrapper === result
-          raise result.exception
-        end
-        result
+      result = begin
+        Marshal.load(read)
       rescue EOFError
         raise DeadWorker
       end
+      raise result.exception if ExceptionWrapper === result
+      result
     end
   end
 

@@ -355,6 +355,10 @@ describe Parallel do
       `ruby spec/cases/exit_in_process.rb 2>&1`.should include "Yep, DEAD"
     end
 
+    it 'raises EOF (not DeadWorker) when a worker raises EOF in process' do
+      `ruby spec/cases/eof_in_process.rb 2>&1`.should include 'Yep, EOF'
+    end
+
     it "can be killed instantly" do
       result = `ruby spec/cases/parallel_kill.rb 2>&1`
       result.should == "DEAD\nWorks nil\n"
