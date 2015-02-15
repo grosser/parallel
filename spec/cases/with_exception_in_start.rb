@@ -1,7 +1,7 @@
 require './spec/cases/helper'
 
-method = ENV['METHOD']
-in_worker_type = "in_#{ENV['WORKER_TYPE']}".to_sym
+method = ENV.fetch('METHOD')
+in_worker_type = "in_#{ENV.fetch('WORKER_TYPE')}".to_sym
 
 begin
   start = lambda do |_item, _index|
