@@ -8,7 +8,7 @@ begin
     sleep 0.1 # so all workers get started
     print x
     raise 'foo' if x == 1
-    sleep 0.1 # so now no work gets queued before exception is raised
+    sleep 0.2 # so now no work gets queued before exception is raised
     x
   end
 rescue

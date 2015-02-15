@@ -11,7 +11,7 @@ begin
   Parallel.public_send(method, 1..100, in_worker_type => 4, finish: finish) do |x|
     sleep 0.1 # so all workers get started
     print x
-    sleep 0.1 unless x == 1 # so now no work gets queued before exception is raised
+    sleep 0.2 unless x == 1 # so now no work gets queued before exception is raised
     x
   end
 rescue
