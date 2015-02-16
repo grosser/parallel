@@ -55,11 +55,13 @@ module Parallel
         raise DeadWorker
       end
 
-      begin
+      result = begin
         Marshal.load(read)
       rescue EOFError
         raise DeadWorker
       end
+      raise result.exception if ExceptionWrapper === result
+      result
     end
   end
 
@@ -267,20 +269,18 @@ module Parallel
               item, index = items.next
               break unless index
 
-              output = with_instrumentation item, index, options do
-                worker.work(items.pack(item, index))
-              end
-
-              if ExceptionWrapper === output
-                exception = output.exception
+              begin
+                results[index] = with_instrumentation item, index, options do
+                  worker.work(items.pack(item, index))
+                end
+              rescue StandardError => e
+                exception = e
                 if Parallel::Kill === exception
                   (workers - [worker]).each do |w|
                     kill_that_thing!(w.thread)
                     kill_that_thing!(w.pid)
                   end
                 end
-              else
-                results[index] = output
               end
             end
           ensure

@@ -238,19 +238,35 @@ describe Parallel do
     end
 
     it 'stops all workers when one fails in process' do
-      `ruby spec/cases/map_with_processes_and_exceptions.rb 2>&1`.should =~ /^\d{4} raised$/
+      `METHOD=map WORKER_TYPE=processes ruby spec/cases/with_exception.rb 2>&1`.should =~ /^\d{4} raised$/
     end
 
     it 'stops all workers when one fails in thread' do
-      `ruby spec/cases/map_with_threads_and_exceptions.rb 2>&1`.should =~ /^\d{0,4} raised$/
+      `METHOD=map WORKER_TYPE=threads ruby spec/cases/with_exception.rb 2>&1`.should =~ /^\d{0,4} raised$/
     end
 
     it 'stops all workers when one raises Break in process' do
-      `ruby spec/cases/map_with_processes_and_break.rb 2>&1`.should =~ /^\d{4} Parallel::Break raised - result nil$/
+      `METHOD=map WORKER_TYPE=processes ruby spec/cases/with_break.rb 2>&1`.should =~ /^\d{4} Parallel::Break raised - result nil$/
     end
 
     it 'stops all workers when one raises Break in thread' do
-      `ruby spec/cases/map_with_threads_and_break.rb 2>&1`.should =~ /^\d{4} Parallel::Break raised - result nil$/
+      `METHOD=map WORKER_TYPE=threads ruby spec/cases/with_break.rb 2>&1`.should =~ /^\d{4} Parallel::Break raised - result nil$/
+    end
+
+    it 'stops all workers when a start hook fails with processes' do
+      `METHOD=map WORKER_TYPE=processes ruby spec/cases/with_exception_in_start.rb 2>&1`.should =~ /^\d{3} raised$/
+    end
+
+    it 'stops all workers when a start hook fails with threads' do
+      `METHOD=map WORKER_TYPE=threads ruby spec/cases/with_exception_in_start.rb 2>&1`.should =~ /^\d{0,3} raised$/
+    end
+
+    it 'stops all workers when a finish hook fails with processes' do
+      `METHOD=map WORKER_TYPE=processes ruby spec/cases/with_exception_in_finish.rb 2>&1`.should =~ /^\d{4} raised$/
+    end
+
+    it 'stops all workers when a finish hook fails with threads' do
+      `METHOD=map WORKER_TYPE=threads ruby spec/cases/with_exception_in_finish.rb 2>&1`.should =~ /^\d{0,4} raised$/
     end
 
     it "can run with 0 threads" do
@@ -339,6 +355,10 @@ describe Parallel do
       `ruby spec/cases/exit_in_process.rb 2>&1`.should include "Yep, DEAD"
     end
 
+    it 'raises EOF (not DeadWorker) when a worker raises EOF in process' do
+      `ruby spec/cases/eof_in_process.rb 2>&1`.should include 'Yep, EOF'
+    end
+
     it "can be killed instantly" do
       result = `ruby spec/cases/parallel_kill.rb 2>&1`
       result.should == "DEAD\nWorks nil\n"
@@ -405,6 +425,38 @@ describe Parallel do
 
     it "can modify in-place" do
       `ruby spec/cases/each_in_place.rb`.should == 'ab'
+    end
+
+    it 'stops all workers when one fails in process' do
+      `METHOD=each WORKER_TYPE=processes ruby spec/cases/with_exception.rb 2>&1`.should =~ /^\d{4} raised$/
+    end
+
+    it 'stops all workers when one fails in thread' do
+      `METHOD=each WORKER_TYPE=threads ruby spec/cases/with_exception.rb 2>&1`.should =~ /^\d{0,4} raised$/
+    end
+
+    it 'stops all workers when one raises Break in process' do
+      `METHOD=each WORKER_TYPE=processes ruby spec/cases/with_break.rb 2>&1`.should =~ /^\d{4} Parallel::Break raised - result 1\.\.100$/
+    end
+
+    it 'stops all workers when one raises Break in thread' do
+      `METHOD=each WORKER_TYPE=threads ruby spec/cases/with_break.rb 2>&1`.should =~ /^\d{4} Parallel::Break raised - result 1\.\.100$/
+    end
+
+    it 'stops all workers when a start hook fails with processes' do
+      `METHOD=each WORKER_TYPE=processes ruby spec/cases/with_exception_in_start.rb 2>&1`.should =~ /^\d{3} raised$/
+    end
+
+    it 'stops all workers when a start hook fails with threads' do
+      `METHOD=each WORKER_TYPE=threads ruby spec/cases/with_exception_in_start.rb 2>&1`.should =~ /^\d{0,3} raised$/
+    end
+
+    it 'stops all workers when a finish hook fails with processes' do
+      `METHOD=each WORKER_TYPE=processes ruby spec/cases/with_exception_in_finish.rb 2>&1`.should =~ /^\d{4} raised$/
+    end
+
+    it 'stops all workers when a finish hook fails with threads' do
+      `METHOD=each WORKER_TYPE=threads ruby spec/cases/with_exception_in_finish.rb 2>&1`.should =~ /^\d{0,4} raised$/
     end
   end
 
