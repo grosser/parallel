@@ -201,14 +201,20 @@ module Parallel
     private
 
     def add_progress_bar!(items, options)
-      if title = options[:progress]
+      if progress_options = options[:progress]
         raise "Progressbar and producers don't mix" if items.producer?
         require 'ruby-progressbar'
-        progress = ProgressBar.create(
-          :title => title,
-          :total => items.size,
-          :format => '%t |%E | %B | %a'
-        )
+
+        if progress_options.respond_to? :to_str
+          progress_options = { title: progress_options.to_str }
+        end
+
+        progress_options = {
+          total: items.size,
+          format: '%t |%E | %B | %a'
+        }.merge(progress_options)
+
+        progress = ProgressBar.create(progress_options)
         old_finish = options[:finish]
         options[:finish] = lambda do |item, i, result|
           old_finish.call(item, i, result) if old_finish
