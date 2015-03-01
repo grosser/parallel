@@ -467,12 +467,16 @@ describe Parallel do
   end
 
   describe "progress" do
-    it "shows" do
+    it "takes the title from :progress" do
       `ruby spec/cases/progress.rb`.sub(/=+/, '==').strip.should == "Doing stuff: |==|"
     end
 
     it "works with :finish" do
       `ruby spec/cases/progress_with_finish.rb`.strip.sub(/=+/, '==').gsub(/\n+/,"\n").should == "Doing stuff: |==|\n100"
+    end
+
+    it "takes the title from :progress[:title] and passes options along" do
+      `ruby spec/cases/progress_with_options.rb`.should =~ /Reticulating Splines ;+ \d+ ;+/
     end
   end
 
