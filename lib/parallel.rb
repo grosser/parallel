@@ -226,12 +226,19 @@ module Parallel
 
     def work_direct(items, options, &block)
       results = []
-      items.each_with_index do |item, index|
-        results << with_instrumentation(item, index, options) do
-          call_with_index(item, index, options, &block)
+      exception = nil
+	  
+      begin
+        items.each_with_index do |item, index|
+          results << with_instrumentation(item, index, options) do
+            call_with_index(item, index, options, &block)
+          end
         end
+      rescue StandardError => e
+        exception = e
       end
-      results
+		
+      handle_exception(exception, results)
     end
 
     def work_in_threads(items, options, &block)
