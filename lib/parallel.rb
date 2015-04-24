@@ -90,13 +90,13 @@ module Parallel
       end
     end
 
-    def next
+    def next(i)
       if producer?
         # - index and item stay in sync
         # - do not call lambda after it has returned Stop
         item, index = @mutex.synchronize do
           return if @stopped
-          item = @lambda.call
+          item = @lambda.call(i)
           @stopped = (item == Parallel::Stop)
           return if @stopped
           [item, @index += 1]
@@ -238,11 +238,11 @@ module Parallel
       results = []
       exception = nil
 
-      in_threads(options) do
+      in_threads(options) do |i|
         # as long as there are more items, work on one of them
         loop do
           break if exception
-          item, index = items.next
+          item, index = items.next(i)
           break unless index
 
           begin
@@ -272,7 +272,7 @@ module Parallel
           begin
             loop do
               break if exception
-              item, index = items.next
+              item, index = items.next(i)
               break unless index
 
               begin
