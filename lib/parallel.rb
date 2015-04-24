@@ -96,7 +96,7 @@ module Parallel
         # - do not call lambda after it has returned Stop
         item, index = @mutex.synchronize do
           return if @stopped
-          item = @lambda.call(i)
+          item = @lambda.call(*(@lambda.parameters.empty? ? [] : [i]))
           @stopped = (item == Parallel::Stop)
           return if @stopped
           [item, @index += 1]
