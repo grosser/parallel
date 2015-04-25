@@ -37,6 +37,7 @@ items = [1,2,3]
 Parallel.each(lambda{ items.pop || Parallel::Stop }){|number| ... }
 ```
 
+The lambda receives a single argument, the index of the process/thread (0, 1, ...), in case you want to produce items differently for different processes/threads.
 
 Processes/Threads are workers, they grab the next piece of work when they finish.
 
