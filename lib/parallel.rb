@@ -223,15 +223,12 @@ module Parallel
       end
     end
 
-
     def work_direct(items, options, &block)
-      results = []
-      items.each_with_index do |item, index|
-        results << with_instrumentation(item, index, options) do
+      items.each_with_index.map do |item, index|
+        with_instrumentation(item, index, options) do
           call_with_index(item, index, options, &block)
         end
       end
-      results
     end
 
     def work_in_threads(items, options, &block)
@@ -308,9 +305,6 @@ module Parallel
     end
 
     def worker(items, options, &block)
-      # use less memory on REE
-      GC.copy_on_write_friendly = true if GC.respond_to?(:copy_on_write_friendly=)
-
       child_read, parent_write = IO.pipe
       parent_read, child_write = IO.pipe
 
@@ -335,7 +329,7 @@ module Parallel
     end
 
     def process_incoming_jobs(read, write, items, options, &block)
-      while !read.eof?
+      until read.eof?
         data = Marshal.load(read)
         item, index = items.unpack(data)
         result = begin
