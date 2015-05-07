@@ -52,7 +52,6 @@ describe Parallel do
     end
 
     it "is even factor of logical cpus" do
-      pending if ENV["TRAVIS"]
       (Parallel.processor_count % Parallel.physical_processor_count).should == 0
     end
   end
