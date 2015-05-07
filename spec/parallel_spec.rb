@@ -494,7 +494,7 @@ describe Parallel do
       it "refuses to use progress" do
         lambda {
           Parallel.map(lambda{}, :progress => "xxx"){ raise "Ooops" }
-        }.should raise_error("Progressbar and producers don't mix")
+        }.should raise_error("Progressbar can only be used with array like items")
       end
     end
   end

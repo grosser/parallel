@@ -65,29 +65,13 @@ module Parallel
     end
   end
 
-  class ItemWrapper
-    def initialize(array, mutex)
-      @lambda = (array.respond_to?(:call) && array) || queue_wrapper(array)
-      @items = array.to_a unless @lambda # turn Range and other Enumerable-s into an Array
+  class JobFactory
+    def initialize(source, mutex)
+      @lambda = (source.respond_to?(:call) && source) || queue_wrapper(source)
+      @source = source.to_a unless @lambda # turn Range and other Enumerable-s into an Array
       @mutex = mutex
       @index = -1
       @stopped = false
-    end
-
-    def producer?
-      @lambda
-    end
-
-    def each_with_index(&block)
-      if producer?
-        loop do
-          item, index = self.next
-          break unless index
-          yield(item, index)
-        end
-      else
-        @items.each_with_index(&block)
-      end
     end
 
     def next
@@ -104,13 +88,17 @@ module Parallel
       else
         index = @mutex.synchronize { @index += 1 }
         return if index >= size
-        item = @items[index]
+        item = @source[index]
       end
       [item, index]
     end
 
     def size
-      @items.size
+      if producer?
+        Float::INFINITY
+      else
+        @source.size
+      end
     end
 
     def pack(item, index)
@@ -118,7 +106,13 @@ module Parallel
     end
 
     def unpack(data)
-      producer? ? data : [@items[data], data]
+      producer? ? data : [@source[data], data]
+    end
+
+    private
+
+    def producer?
+      @lambda
     end
 
     def queue_wrapper(array)
@@ -159,7 +153,7 @@ module Parallel
       each(array, options.merge(:with_index => true), &block)
     end
 
-    def map(array, options = {}, &block)
+    def map(source, options = {}, &block)
       options[:mutex] = Mutex.new
 
       if RUBY_PLATFORM =~ /java/ and not options[:in_processes]
@@ -178,19 +172,18 @@ module Parallel
         end
       end
 
-      items = ItemWrapper.new(array, options[:mutex])
-
-      size = [items.producer? ? size : items.size, size].min
+      job_factory = JobFactory.new(source, options[:mutex])
+      size = [job_factory.size, size].min
 
       options[:return_results] = (options[:preserve_results] != false || !!options[:finish])
-      add_progress_bar!(items, options)
+      add_progress_bar!(job_factory, options)
 
       if size == 0
-        work_direct(items, options, &block)
+        work_direct(job_factory, options, &block)
       elsif method == :in_threads
-        work_in_threads(items, options.merge(:count => size), &block)
+        work_in_threads(job_factory, options.merge(:count => size), &block)
       else
-        work_in_processes(items, options.merge(:count => size), &block)
+        work_in_processes(job_factory, options.merge(:count => size), &block)
       end
     end
 
@@ -200,9 +193,9 @@ module Parallel
 
     private
 
-    def add_progress_bar!(items, options)
+    def add_progress_bar!(job_factory, options)
       if progress_options = options[:progress]
-        raise "Progressbar and producers don't mix" if items.producer?
+        raise "Progressbar can only be used with array like items" if job_factory.size == Float::INFINITY
         require 'ruby-progressbar'
 
         if progress_options.respond_to? :to_str
@@ -210,7 +203,7 @@ module Parallel
         end
 
         progress_options = {
-          total: items.size,
+          total: job_factory.size,
           format: '%t |%E | %B | %a'
         }.merge(progress_options)
 
@@ -223,32 +216,31 @@ module Parallel
       end
     end
 
-    def work_direct(items, options, &block)
-      items.each_with_index.map do |item, index|
-        with_instrumentation(item, index, options) do
+    def work_direct(job_factory, options, &block)
+      results = []
+      while set = job_factory.next
+        item, index = set
+        results << with_instrumentation(item, index, options) do
           call_with_index(item, index, options, &block)
         end
       end
+      results
     end
 
-    def work_in_threads(items, options, &block)
+    def work_in_threads(job_factory, options, &block)
       results = []
       exception = nil
 
       in_threads(options) do
-        # as long as there are more items, work on one of them
-        loop do
-          break if exception
-          item, index = items.next
-          break unless index
-
+        # as long as there are more jobs, work on one of them
+        while !exception && set = job_factory.next
           begin
+            item, index = set
             results[index] = with_instrumentation item, index, options do
               call_with_index(item, index, options, &block)
             end
           rescue StandardError => e
             exception = e
-            break
           end
         end
       end
@@ -256,8 +248,8 @@ module Parallel
       handle_exception(exception, results)
     end
 
-    def work_in_processes(items, options, &blk)
-      workers = create_workers(items, options, &blk)
+    def work_in_processes(job_factory, options, &blk)
+      workers = create_workers(job_factory, options, &blk)
       results = []
       exception = nil
 
@@ -269,12 +261,12 @@ module Parallel
           begin
             loop do
               break if exception
-              item, index = items.next
+              item, index = job_factory.next
               break unless index
 
               begin
                 results[index] = with_instrumentation item, index, options do
-                  worker.work(items.pack(item, index))
+                  worker.work(job_factory.pack(item, index))
                 end
               rescue StandardError => e
                 exception = e
@@ -296,15 +288,15 @@ module Parallel
       handle_exception(exception, results)
     end
 
-    def create_workers(items, options, &block)
+    def create_workers(job_factory, options, &block)
       workers = []
       Array.new(options[:count]).each do
-        workers << worker(items, options.merge(:started_workers => workers), &block)
+        workers << worker(job_factory, options.merge(:started_workers => workers), &block)
       end
       workers
     end
 
-    def worker(items, options, &block)
+    def worker(job_factory, options, &block)
       child_read, parent_write = IO.pipe
       parent_read, child_write = IO.pipe
 
@@ -315,7 +307,7 @@ module Parallel
           parent_write.close
           parent_read.close
 
-          process_incoming_jobs(child_read, child_write, items, options, &block)
+          process_incoming_jobs(child_read, child_write, job_factory, options, &block)
         ensure
           child_read.close
           child_write.close
@@ -328,10 +320,10 @@ module Parallel
       Worker.new(parent_read, parent_write, pid)
     end
 
-    def process_incoming_jobs(read, write, items, options, &block)
+    def process_incoming_jobs(read, write, job_factory, options, &block)
       until read.eof?
         data = Marshal.load(read)
-        item, index = items.unpack(data)
+        item, index = job_factory.unpack(data)
         result = begin
           call_with_index(item, index, options, &block)
         rescue StandardError => e
