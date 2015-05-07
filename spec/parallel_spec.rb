@@ -493,9 +493,9 @@ describe Parallel do
       end
 
       it "refuses to use progress" do
-        expect {
+        lambda {
           Parallel.map(lambda{}, :progress => "xxx"){ raise "Ooops" }
-        }.to raise_error("Progressbar and producers don't mix")
+        }.should raise_error("Progressbar and producers don't mix")
       end
     end
   end
