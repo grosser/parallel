@@ -16,8 +16,6 @@ module Parallel
 
   Stop = Object.new
 
-  INTERRUPT_SIGNAL = :SIGINT
-
   class ExceptionWrapper
     attr_reader :exception
     def initialize(exception)
@@ -120,6 +118,67 @@ module Parallel
     end
   end
 
+  class UserInterruptHandler
+    INTERRUPT_SIGNAL = :SIGINT
+
+    class << self
+      # kill all these pids or threads if user presses Ctrl+c
+      def kill_on_ctrl_c(things, options)
+        @to_be_killed ||= []
+        old_interrupt = nil
+        signal = options.fetch(:interrupt_signal, INTERRUPT_SIGNAL)
+
+        if @to_be_killed.empty?
+          old_interrupt = trap_interrupt(signal) do
+            $stderr.puts 'Parallel execution interrupted, exiting ...'
+            @to_be_killed.flatten.compact.each { |thing| kill(thing) }
+          end
+        end
+
+        @to_be_killed << things
+
+        yield
+      ensure
+        @to_be_killed.pop # free threads for GC and do not kill pids that could be used for new processes
+        restore_interrupt(old_interrupt, signal) if @to_be_killed.empty?
+      end
+
+      def kill(thing)
+        if thing.is_a?(Thread)
+          thing.kill
+        else
+          begin
+            Process.kill(:KILL, thing)
+          rescue Errno::ESRCH
+            # some linux systems already automatically killed the children at this point
+            # so we just ignore them not being there
+          end
+        end
+      end
+
+      private
+
+      def trap_interrupt(signal)
+        old = Signal.trap signal, 'IGNORE'
+
+        Signal.trap signal do
+          yield
+          if old == "DEFAULT"
+            raise Interrupt
+          else
+            old.call
+          end
+        end
+
+        old
+      end
+
+      def restore_interrupt(old, signal)
+        Signal.trap signal, old
+      end
+    end
+  end
+
   class << self
     def in_threads(options={:count => 2})
       count, options = extract_count_from_options(options)
@@ -133,7 +192,7 @@ module Parallel
         end
       end
 
-      kill_on_ctrl_c(threads, options) { wait_for_threads(threads) }
+      UserInterruptHandler.kill_on_ctrl_c(threads, options) { wait_for_threads(threads) }
 
       out
     end
@@ -253,7 +312,7 @@ module Parallel
       results = []
       exception = nil
 
-      kill_on_ctrl_c(workers.map(&:pid), options) do
+      UserInterruptHandler.kill_on_ctrl_c(workers.map(&:pid), options) do
         in_threads(options) do |i|
           worker = workers[i]
           worker.thread = Thread.current
@@ -272,8 +331,8 @@ module Parallel
                 exception = e
                 if Parallel::Kill === exception
                   (workers - [worker]).each do |w|
-                    kill_that_thing!(w.thread)
-                    kill_that_thing!(w.pid)
+                    UserInterruptHandler.kill(w.thread)
+                    UserInterruptHandler.kill(w.pid)
                   end
                 end
               end
@@ -360,59 +419,6 @@ module Parallel
         options = {}
       end
       [count, options]
-    end
-
-    # kill all these pids or threads if user presses Ctrl+c
-    def kill_on_ctrl_c(things, options)
-      @to_be_killed ||= []
-      old_interrupt = nil
-      signal = options.fetch(:interrupt_signal, INTERRUPT_SIGNAL)
-
-      if @to_be_killed.empty?
-        old_interrupt = trap_interrupt(signal) do
-          $stderr.puts 'Parallel execution interrupted, exiting ...'
-          @to_be_killed.flatten.compact.each { |thing| kill_that_thing!(thing) }
-        end
-      end
-
-      @to_be_killed << things
-
-      yield
-    ensure
-      @to_be_killed.pop # free threads for GC and do not kill pids that could be used for new processes
-      restore_interrupt(old_interrupt, signal) if @to_be_killed.empty?
-    end
-
-    def trap_interrupt(signal)
-      old = Signal.trap signal, 'IGNORE'
-
-      Signal.trap signal do
-        yield
-        if old == "DEFAULT"
-          raise Interrupt
-        else
-          old.call
-        end
-      end
-
-      old
-    end
-
-    def restore_interrupt(old, signal)
-      Signal.trap signal, old
-    end
-
-    def kill_that_thing!(thing)
-      if thing.is_a?(Thread)
-        thing.kill
-      else
-        begin
-          Process.kill(:KILL, thing)
-        rescue Errno::ESRCH
-          # some linux systems already automatically killed the children at this point
-          # so we just ignore them not being there
-        end
-      end
     end
 
     def call_with_index(item, index, options, &block)
