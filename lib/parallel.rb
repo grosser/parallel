@@ -125,23 +125,26 @@ module Parallel
       # kill all these pids or threads if user presses Ctrl+c
       def kill_on_ctrl_c(things, options)
         return yield if RUBY_ENGINE == "jruby"
-        @to_be_killed ||= []
-        old_interrupt = nil
-        signal = options.fetch(:interrupt_signal, INTERRUPT_SIGNAL)
 
-        if @to_be_killed.empty?
-          old_interrupt = trap_interrupt(signal) do
-            $stderr.puts 'Parallel execution interrupted, exiting ...'
-            @to_be_killed.flatten.compact.each { |thing| kill(thing) }
+        begin
+          @to_be_killed ||= []
+          old_interrupt = nil
+          signal = options.fetch(:interrupt_signal, INTERRUPT_SIGNAL)
+
+          if @to_be_killed.empty?
+            old_interrupt = trap_interrupt(signal) do
+              $stderr.puts 'Parallel execution interrupted, exiting ...'
+              @to_be_killed.flatten.compact.each { |thing| kill(thing) }
+            end
           end
+
+          @to_be_killed << things
+
+          yield
+        ensure
+          @to_be_killed.pop # free threads for GC and do not kill pids that could be used for new processes
+          restore_interrupt(old_interrupt, signal) if @to_be_killed.empty?
         end
-
-        @to_be_killed << things
-
-        yield
-      ensure
-        @to_be_killed.pop # free threads for GC and do not kill pids that could be used for new processes
-        restore_interrupt(old_interrupt, signal) if @to_be_killed.empty?
       end
 
       def kill(thing)
