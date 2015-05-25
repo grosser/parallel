@@ -1,10 +1,12 @@
 require 'spec_helper'
 
 describe Parallel do
+  worker_types = (Process.respond_to?(:fork) ? ["processes", "threads"] : ["threads"])
+
   def time_taken
     t = Time.now.to_f
     yield
-    Time.now.to_f - t
+    RUBY_ENGINE == "jruby" ? 0: Time.now.to_f - t # jruby is super slow ... don't blow up all the tests ...
   end
 
   def kill_process_with_name(file, signal='INT')
@@ -236,36 +238,22 @@ describe Parallel do
       `ruby spec/cases/map_with_nested_arrays_and_nil.rb`.should == '[nil, [2, 2], [[3], [3]]]'
     end
 
-    it 'stops all workers when one fails in process' do
-      `METHOD=map WORKER_TYPE=processes ruby spec/cases/with_exception.rb 2>&1`.should =~ /^\d{4} raised$/
-    end
+    worker_types.each do |type|
+      it "stops all workers when one fails in #{type}" do
+        `METHOD=map WORKER_TYPE=#{type} ruby spec/cases/with_exception.rb 2>&1`.should =~ /^\d{4} raised$/
+      end
 
-    it 'stops all workers when one fails in thread' do
-      `METHOD=map WORKER_TYPE=threads ruby spec/cases/with_exception.rb 2>&1`.should =~ /^\d{0,4} raised$/
-    end
+      it "stops all workers when one raises Break in #{type}" do
+        `METHOD=map WORKER_TYPE=#{type} ruby spec/cases/with_break.rb 2>&1`.should =~ /^\d{4} Parallel::Break raised - result nil$/
+      end
 
-    it 'stops all workers when one raises Break in process' do
-      `METHOD=map WORKER_TYPE=processes ruby spec/cases/with_break.rb 2>&1`.should =~ /^\d{4} Parallel::Break raised - result nil$/
-    end
+      it "stops all workers when a start hook fails with #{type}" do
+        `METHOD=map WORKER_TYPE=#{type} ruby spec/cases/with_exception_in_start.rb 2>&1`.should =~ /^\d{3} raised$/
+      end
 
-    it 'stops all workers when one raises Break in thread' do
-      `METHOD=map WORKER_TYPE=threads ruby spec/cases/with_break.rb 2>&1`.should =~ /^\d{4} Parallel::Break raised - result nil$/
-    end
-
-    it 'stops all workers when a start hook fails with processes' do
-      `METHOD=map WORKER_TYPE=processes ruby spec/cases/with_exception_in_start.rb 2>&1`.should =~ /^\d{3} raised$/
-    end
-
-    it 'stops all workers when a start hook fails with threads' do
-      `METHOD=map WORKER_TYPE=threads ruby spec/cases/with_exception_in_start.rb 2>&1`.should =~ /^\d{0,3} raised$/
-    end
-
-    it 'stops all workers when a finish hook fails with processes' do
-      `METHOD=map WORKER_TYPE=processes ruby spec/cases/with_exception_in_finish.rb 2>&1`.should =~ /^\d{4} raised$/
-    end
-
-    it 'stops all workers when a finish hook fails with threads' do
-      `METHOD=map WORKER_TYPE=threads ruby spec/cases/with_exception_in_finish.rb 2>&1`.should =~ /^\d{0,4} raised$/
+      it "stops all workers when a finish hook fails with #{type}" do
+        `METHOD=map WORKER_TYPE=#{type} ruby spec/cases/with_exception_in_finish.rb 2>&1`.should =~ /^\d{4} raised$/
+      end
     end
 
     it "can run with 0 threads" do
@@ -426,36 +414,22 @@ describe Parallel do
       `ruby spec/cases/each_in_place.rb`.should == 'ab'
     end
 
-    it 'stops all workers when one fails in process' do
-      `METHOD=each WORKER_TYPE=processes ruby spec/cases/with_exception.rb 2>&1`.should =~ /^\d{4} raised$/
-    end
+    worker_types.each do |type|
+      it "stops all workers when one fails in #{type}" do
+        `METHOD=each WORKER_TYPE=#{type} ruby spec/cases/with_exception.rb 2>&1`.should =~ /^\d{4} raised$/
+      end
 
-    it 'stops all workers when one fails in thread' do
-      `METHOD=each WORKER_TYPE=threads ruby spec/cases/with_exception.rb 2>&1`.should =~ /^\d{0,4} raised$/
-    end
+      it "stops all workers when one raises Break in #{type}" do
+        `METHOD=each WORKER_TYPE=#{type} ruby spec/cases/with_break.rb 2>&1`.should =~ /^\d{4} Parallel::Break raised - result 1\.\.100$/
+      end
 
-    it 'stops all workers when one raises Break in process' do
-      `METHOD=each WORKER_TYPE=processes ruby spec/cases/with_break.rb 2>&1`.should =~ /^\d{4} Parallel::Break raised - result 1\.\.100$/
-    end
+      it "stops all workers when a start hook fails with #{type}" do
+        `METHOD=each WORKER_TYPE=#{type} ruby spec/cases/with_exception_in_start.rb 2>&1`.should =~ /^\d{3} raised$/
+      end
 
-    it 'stops all workers when one raises Break in thread' do
-      `METHOD=each WORKER_TYPE=threads ruby spec/cases/with_break.rb 2>&1`.should =~ /^\d{4} Parallel::Break raised - result 1\.\.100$/
-    end
-
-    it 'stops all workers when a start hook fails with processes' do
-      `METHOD=each WORKER_TYPE=processes ruby spec/cases/with_exception_in_start.rb 2>&1`.should =~ /^\d{3} raised$/
-    end
-
-    it 'stops all workers when a start hook fails with threads' do
-      `METHOD=each WORKER_TYPE=threads ruby spec/cases/with_exception_in_start.rb 2>&1`.should =~ /^\d{0,3} raised$/
-    end
-
-    it 'stops all workers when a finish hook fails with processes' do
-      `METHOD=each WORKER_TYPE=processes ruby spec/cases/with_exception_in_finish.rb 2>&1`.should =~ /^\d{4} raised$/
-    end
-
-    it 'stops all workers when a finish hook fails with threads' do
-      `METHOD=each WORKER_TYPE=threads ruby spec/cases/with_exception_in_finish.rb 2>&1`.should =~ /^\d{0,4} raised$/
+      it 'stops all workers when a finish hook fails with processes' do
+        `METHOD=each WORKER_TYPE=#{type} ruby spec/cases/with_exception_in_finish.rb 2>&1`.should =~ /^\d{4} raised$/
+      end
     end
   end
 
@@ -504,14 +478,12 @@ describe Parallel do
       result.sub(/\{(.*)\}/, "\\1").split(", ").reject { |x| x =~ /^(Hash|Array|String)=>(1|-1)$/ }
     end
 
-    it "does not leak memory in processes" do
-      result = `ruby spec/cases/profile_memroy.rb processes 2>&1`.strip.split("\n").last
-      normalize(result).should == []
-    end
-
-    it "does not leak memory in threads" do
-      result = `ruby spec/cases/profile_memroy.rb threads 2>&1`.strip.split("\n").last
-      normalize(result).should == []
+    worker_types.each do |type|
+      it "does not leak memory in #{type}" do
+        pending if RUBY_ENGINE == 'jruby' # lots of objects ... GC does not seem to work ...
+        result = `ruby #{"-X+O" if RUBY_ENGINE == 'jruby'} spec/cases/profile_memroy.rb #{type} 2>&1`.strip.split("\n").last
+        normalize(result).should == []
+      end
     end
   end
 end

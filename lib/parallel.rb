@@ -226,7 +226,7 @@ module Parallel
         if Process.respond_to?(:fork)
           size = options[method] || processor_count
         else
-          $stderr.puts "Warning: Process.fork is not supported by this Ruby"
+          warn "Process.fork is not supported by this Ruby"
           size = 0
         end
       end
