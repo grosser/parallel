@@ -124,6 +124,7 @@ module Parallel
     class << self
       # kill all these pids or threads if user presses Ctrl+c
       def kill_on_ctrl_c(things, options)
+        return yield if RUBY_ENGINE == "jruby"
         @to_be_killed ||= []
         old_interrupt = nil
         signal = options.fetch(:interrupt_signal, INTERRUPT_SIGNAL)
