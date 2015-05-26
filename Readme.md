@@ -44,7 +44,7 @@ Processes/Threads are workers, they grab the next piece of work when they finish
  - Speedup through multiple CPUs
  - Speedup for blocking operations
  - Protects global data
- - Extra memory used ( very low on [REE](http://www.rubyenterpriseedition.com/faq.html) through `copy_on_write_friendly` )
+ - Extra memory used
  - Child processes are killed when your main process is killed through Ctrl+c or kill -2
 
 ### Threads
