@@ -99,13 +99,6 @@ describe Parallel do
       }.should be <= 3
     end
 
-    it "kills the threads when the main process gets killed through a custom interrupt" do
-      time_taken {
-        result = execute_start_and_kill "THREAD SIGTERM", 0, "TERM"
-        result.should_not include "FINISHED"
-      }.should be <= 3
-    end
-
     it "does not kill processes when the main process gets sent an interrupt besides the custom interrupt" do
       time_taken {
         result = execute_start_and_kill "PROCESS SIGTERM", 4

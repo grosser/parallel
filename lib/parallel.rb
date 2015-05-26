@@ -123,41 +123,31 @@ module Parallel
 
     class << self
       # kill all these pids or threads if user presses Ctrl+c
-      def kill_on_ctrl_c(things, options)
-        return yield if RUBY_ENGINE == "jruby"
+      def kill_on_ctrl_c(pids, options)
+        @to_be_killed ||= []
+        old_interrupt = nil
+        signal = options.fetch(:interrupt_signal, INTERRUPT_SIGNAL)
 
-        begin
-          @to_be_killed ||= []
-          old_interrupt = nil
-          signal = options.fetch(:interrupt_signal, INTERRUPT_SIGNAL)
-
-          if @to_be_killed.empty?
-            old_interrupt = trap_interrupt(signal) do
-              $stderr.puts 'Parallel execution interrupted, exiting ...'
-              @to_be_killed.flatten.compact.each { |thing| kill(thing) }
-            end
+        if @to_be_killed.empty?
+          old_interrupt = trap_interrupt(signal) do
+            $stderr.puts 'Parallel execution interrupted, exiting ...'
+            @to_be_killed.flatten.each { |pid| kill(pid) }
           end
-
-          @to_be_killed << things
-
-          yield
-        ensure
-          @to_be_killed.pop # free threads for GC and do not kill pids that could be used for new processes
-          restore_interrupt(old_interrupt, signal) if @to_be_killed.empty?
         end
+
+        @to_be_killed << pids
+
+        yield
+      ensure
+        @to_be_killed.pop # do not kill pids that could be used for new processes
+        restore_interrupt(old_interrupt, signal) if @to_be_killed.empty?
       end
 
       def kill(thing)
-        if thing.is_a?(Thread)
-          thing.kill
-        else
-          begin
-            Process.kill(:KILL, thing)
-          rescue Errno::ESRCH
-            # some linux systems already automatically killed the children at this point
-            # so we just ignore them not being there
-          end
-        end
+        Process.kill(:KILL, thing)
+      rescue Errno::ESRCH
+        # some linux systems already automatically killed the children at this point
+        # so we just ignore them not being there
       end
 
       private
@@ -185,20 +175,10 @@ module Parallel
 
   class << self
     def in_threads(options={:count => 2})
-      count, options = extract_count_from_options(options)
-
-      out = []
-      threads = []
-
-      count.times do |i|
-        threads[i] = Thread.new do
-          out[i] = yield(i)
-        end
-      end
-
-      UserInterruptHandler.kill_on_ctrl_c(threads, options) { wait_for_threads(threads) }
-
-      out
+      count, _ = extract_count_from_options(options)
+      Array.new(count).each_with_index.map do |_, i|
+        Thread.new { yield(i) }
+      end.map!(&:value)
     end
 
     def in_processes(options = {}, &block)
@@ -291,6 +271,7 @@ module Parallel
     end
 
     def work_in_threads(job_factory, options, &block)
+      raise "interrupt_signal is no longer supported for threads" if options[:interrupt_signal]
       results = []
       exception = nil
 
@@ -335,7 +316,7 @@ module Parallel
                 exception = e
                 if Parallel::Kill === exception
                   (workers - [worker]).each do |w|
-                    UserInterruptHandler.kill(w.thread)
+                    w.thread.kill
                     UserInterruptHandler.kill(w.pid)
                   end
                 end
@@ -394,18 +375,6 @@ module Parallel
         end
         Marshal.dump(result, write)
       end
-    end
-
-    def wait_for_threads(threads)
-      interrupted = threads.compact.map do |t|
-        begin
-          t.join
-          nil
-        rescue Interrupt => e
-          e # thread died, do not stop other threads
-        end
-      end.compact
-      raise interrupted.first if interrupted.first
     end
 
     def handle_exception(exception, results)
