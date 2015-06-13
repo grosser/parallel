@@ -99,10 +99,13 @@ module Parallel
       end
     end
 
+    # generate item that is sent to workers
+    # just index is faster + less likely to blow up with unserializable errors
     def pack(item, index)
       producer? ? [item, index] : index
     end
 
+    # unpack item that is sent to workers
     def unpack(data)
       producer? ? data : [@source[data], data]
     end
