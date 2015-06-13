@@ -354,6 +354,8 @@ module Parallel
           parent_write.close
           parent_read.close
 
+          active_record_reconnect(options[:active_record])
+
           process_incoming_jobs(child_read, child_write, job_factory, options, &block)
         ensure
           child_read.close
@@ -365,6 +367,17 @@ module Parallel
       child_write.close
 
       Worker.new(parent_read, parent_write, pid)
+    end
+
+    def active_record_reconnect(option)
+      case option
+      when nil then nil
+      when :reconnect
+        ActiveRecord::Base.connection.disconnect!
+        ActiveRecord::Base.establish_connection
+      else
+        raise "unuspported option #{option.inspect}"
+      end
     end
 
     def process_incoming_jobs(read, write, job_factory, options, &block)
