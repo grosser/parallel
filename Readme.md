@@ -89,7 +89,7 @@ end
 
 Only use if whatever is executing in the sub-command is safe to kill at any point
 
-```
+```Ruby
 Parallel.map([1,2,3]) do |x|
   raise Parallel::Kill if x == 1# -> stop all sub-processes, killing them instantly
   sleep 100
