@@ -276,6 +276,7 @@ module Parallel
     def work_in_threads(job_factory, options, &block)
       raise "interrupt_signal is no longer supported for threads" if options[:interrupt_signal]
       results = []
+      results_mutex = Mutex.new # arrays are not thread-safe
       exception = nil
 
       in_threads(options) do
@@ -283,9 +284,10 @@ module Parallel
         while !exception && set = job_factory.next
           begin
             item, index = set
-            results[index] = with_instrumentation item, index, options do
-              call_with_index(item, index, options, &block)
-            end
+            result = with_instrumentation item, index, options do
+                call_with_index(item, index, options, &block)
+              end
+            results_mutex.synchronize { results[index] = result }
           rescue StandardError => e
             exception = e
           end
@@ -298,6 +300,7 @@ module Parallel
     def work_in_processes(job_factory, options, &blk)
       workers = create_workers(job_factory, options, &blk)
       results = []
+      results_mutex = Mutex.new # arrays are not thread-safe
       exception = nil
 
       UserInterruptHandler.kill_on_ctrl_c(workers.map(&:pid), options) do
@@ -312,9 +315,10 @@ module Parallel
               break unless index
 
               begin
-                results[index] = with_instrumentation item, index, options do
+                result = with_instrumentation item, index, options do
                   worker.work(job_factory.pack(item, index))
                 end
+                results_mutex.synchronize { results[index] = result }
               rescue StandardError => e
                 exception = e
                 if Parallel::Kill === exception
