@@ -352,6 +352,11 @@ describe Parallel do
       }
       out.should == "OK\n" * 6
     end
+
+    it 'is equivalent to serial map' do
+      l = Array.new(10_000){|i| i}
+      Parallel.map(l, {in_threads: 4}){|x| x+1}.should == l.map{|x| x+1}
+    end
   end
 
   describe ".map_with_index" do
