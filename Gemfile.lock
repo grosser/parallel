@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    parallel (1.6.0)
+    parallel (1.6.1)
 
 GEM
   remote: https://rubygems.org/
@@ -67,3 +67,6 @@ DEPENDENCIES
   rspec-legacy_formatters
   rspec-rerun
   ruby-progressbar
+
+BUNDLED WITH
+   1.10.5
