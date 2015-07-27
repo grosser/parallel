@@ -17,22 +17,12 @@ matrix:
   exclude:
     - rvm: 1.9.3
       jdk: oraclejdk8
-    - rvm: 1.9.3
-      jdk: openjdk7
     - rvm: 2.0.0
       jdk: oraclejdk8
-    - rvm: 2.0.0
-      jdk: openjdk7
     - rvm: 2.1.6
       jdk: oraclejdk8
-    - rvm: 2.1.6
-      jdk: openjdk7
     - rvm: 2.2.2
       jdk: oraclejdk8
-    - rvm: 2.2.2
-      jdk: openjdk7
-    - rvm: rbx-2
-      jdk: openjdk7
     - rvm: rbx-2
       jdk: openjdk8
   allow_failures:
