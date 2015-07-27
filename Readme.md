@@ -1,4 +1,6 @@
-Run any code in parallel Processes(> use all CPUs) or Threads(> speedup blocking operations).<br/>
+*It appears that parallel does not currently run on Rubinius.*
+
+Run any code in parallel Processes(> use all CPUas) or Threads(> speedup blocking operations).<br/>
 Best suited for map-reduce or e.g. parallel downloads/uploads.
 
 Install

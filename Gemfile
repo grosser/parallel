@@ -9,4 +9,6 @@ gem 'ruby-progressbar'
 gem 'rspec-rerun'
 gem 'rspec-legacy_formatters'
 
-gem 'mysql2', :group => :mysql
+gem 'mysql2', :group => :mysql, :platform => :ruby
+gem 'jdbc-mysql', :platform => :jruby
+gem 'activerecord-jdbc-adapter', :platform => :jruby

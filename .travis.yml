@@ -1,5 +1,6 @@
 language: ruby
 bundler_args: ""
+sudo: false
 
 rvm:
   - 1.9.3
@@ -11,23 +12,28 @@ rvm:
   - rbx-2
 jdk:
   - openjdk7
-  - oraclejdk7
   - oraclejdk8
 matrix:
   exclude:
     - rvm: 1.9.3
       jdk: oraclejdk8
     - rvm: 1.9.3
-      jdk: oraclejdk7
+      jdk: openjdk7
     - rvm: 2.0.0
       jdk: oraclejdk8
     - rvm: 2.0.0
-      jdk: oraclejdk7
+      jdk: openjdk7
     - rvm: 2.1.6
       jdk: oraclejdk8
     - rvm: 2.1.6
-      jdk: oraclejdk7
+      jdk: openjdk7
     - rvm: 2.2.2
       jdk: oraclejdk8
     - rvm: 2.2.2
-      jdk: oraclejdk7
+      jdk: openjdk7
+    - rvm: rbx-2
+      jdk: openjdk7
+    - rvm: rbx-2
+      jdk: openjdk8
+  allow_failures:
+    - rvm: rbx-2
