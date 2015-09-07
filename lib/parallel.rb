@@ -1,3 +1,4 @@
+require 'thread'
 require 'rbconfig'
 require 'parallel/version'
 require 'parallel/processor_count'
