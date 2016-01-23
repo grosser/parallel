@@ -222,6 +222,7 @@ module Parallel
       size = [job_factory.size, size].min
 
       options[:return_results] = (options[:preserve_results] != false || !!options[:finish])
+      add_progress_bar!(job_factory, options)
 
       if size == 0
         work_direct(job_factory, options, &block)
@@ -263,7 +264,6 @@ module Parallel
 
     def work_direct(job_factory, options, &block)
       results = []
-      add_progress_bar!(job_factory, options)
       while set = job_factory.next
         item, index = set
         results << with_instrumentation(item, index, options) do
@@ -279,7 +279,6 @@ module Parallel
       results_mutex = Mutex.new # arrays are not thread-safe on jRuby
       exception = nil
 
-      add_progress_bar!(job_factory, options)
       in_threads(options) do
         # as long as there are more jobs, work on one of them
         while !exception && set = job_factory.next
@@ -304,7 +303,6 @@ module Parallel
       results_mutex = Mutex.new # arrays are not thread-safe
       exception = nil
 
-      add_progress_bar!(job_factory, options)
       UserInterruptHandler.kill_on_ctrl_c(workers.map(&:pid), options) do
         in_threads(options) do |i|
           worker = workers[i]
@@ -343,13 +341,9 @@ module Parallel
 
     def create_workers(job_factory, options, &block)
       workers = []
-      print "creating workers "
-      STDOUT.flush
-
       Array.new(options[:count]).each do
         workers << worker(job_factory, options.merge(:started_workers => workers), &block)
       end
-      print " done\n"
       workers
     end
 
@@ -364,13 +358,6 @@ module Parallel
           parent_write.close
           parent_read.close
 
-          setup_proc = options[:setup_proc]
-          if setup_proc && setup_proc.respond_to?(:call)
-            setup_proc.call
-          end
-
-          child_write.write('.')
-
           process_incoming_jobs(child_read, child_write, job_factory, options, &block)
         ensure
           child_read.close
@@ -380,10 +367,6 @@ module Parallel
 
       child_read.close
       child_write.close
-
-      parent_read.read(1)
-      print '.'
-      STDOUT.flush
 
       Worker.new(parent_read, parent_write, pid)
     end
