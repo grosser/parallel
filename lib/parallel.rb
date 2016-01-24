@@ -196,10 +196,14 @@ module Parallel
 
   class << self
     def in_threads(options={:count => 2})
+      options[:begin].call if options[:begin]
       count, _ = extract_count_from_options(options)
-      Array.new(count).each_with_index.map do |_, i|
+      result = Array.new(count).each_with_index.map do |_, i|
+        print "thread #{i}\n"
         Thread.new { yield(i) }
       end.map!(&:value)
+      options[:end].call if options[:end]
+      result
     end
 
     def in_processes(options = {}, &block)
