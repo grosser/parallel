@@ -14,6 +14,9 @@ module Parallel
   class Kill < StandardError
   end
 
+  class RemoteWorkerTimeout < StandardError
+  end
+
   Stop = Object.new
 
   class ExceptionWrapper
@@ -61,6 +64,21 @@ module Parallel
       raise result.exception if ExceptionWrapper === result
       result
     end
+  end
+
+  class RemoteWorker < Worker
+    def initialize(socket)
+      super(socket, socket, nil)
+    end
+
+    def close_pipes
+      Marshal.dump(nil, write)
+      read.close
+    end
+
+    def wait
+    end
+
   end
 
   class JobFactory
@@ -178,10 +196,14 @@ module Parallel
 
   class << self
     def in_threads(options={:count => 2})
+      options[:begin].call if options[:begin]
       count, _ = extract_count_from_options(options)
-      Array.new(count).each_with_index.map do |_, i|
+      result = Array.new(count).each_with_index.map do |_, i|
+        print "thread #{i}\n"
         Thread.new { yield(i) }
       end.map!(&:value)
+      options[:end].call if options[:end]
+      result
     end
 
     def in_processes(options = {}, &block)
@@ -222,7 +244,6 @@ module Parallel
       size = [job_factory.size, size].min
 
       options[:return_results] = (options[:preserve_results] != false || !!options[:finish])
-      add_progress_bar!(job_factory, options)
 
       if size == 0
         work_direct(job_factory, options, &block)
@@ -264,6 +285,7 @@ module Parallel
 
     def work_direct(job_factory, options, &block)
       results = []
+      add_progress_bar!(job_factory, options)
       while set = job_factory.next
         item, index = set
         results << with_instrumentation(item, index, options) do
@@ -279,6 +301,7 @@ module Parallel
       results_mutex = Mutex.new # arrays are not thread-safe on jRuby
       exception = nil
 
+      add_progress_bar!(job_factory, options)
       in_threads(options) do
         # as long as there are more jobs, work on one of them
         while !exception && set = job_factory.next
@@ -298,11 +321,27 @@ module Parallel
     end
 
     def work_in_processes(job_factory, options, &blk)
-      workers = create_workers(job_factory, options, &blk)
+      if ENV['DPARALLEL_MASTER']
+        # run as a slave mode, each workers connect to remote master
+        print "[##$$] run as a slave mode...\n"
+        create_slave_workers(job_factory, options, &blk)
+        while (Process.wait rescue nil); end
+        exit 0
+      end
+
+      if options[:distribute]
+        # run as a master of distributed slaves
+        puts "run as master, launching remote workers ..."
+        workers = create_remote_workers(job_factory, options, &blk)
+        options[:count] = workers.size
+      else
+        workers = create_workers(job_factory, options, &blk)
+      end
       results = []
       results_mutex = Mutex.new # arrays are not thread-safe
       exception = nil
 
+      add_progress_bar!(job_factory, options)
       UserInterruptHandler.kill_on_ctrl_c(workers.map(&:pid), options) do
         in_threads(options) do |i|
           worker = workers[i]
@@ -371,9 +410,71 @@ module Parallel
       Worker.new(parent_read, parent_write, pid)
     end
 
+    def create_slave_workers(job_factory, options, &block)
+      master_host, master_port = ENV['DPARALLEL_MASTER'].split(/\|/, 2)
+      Array.new(options[:count]).each do
+        slave_worker(job_factory, options, master_host, master_port, &block)
+      end
+    end
+
+    def slave_worker(job_factory, options, master_host, master_port, &block)
+      Process.fork do
+        begin
+          socket = TCPSocket.new(master_host, master_port)
+          process_incoming_jobs(socket, socket, job_factory, options, &block)
+        rescue => e
+          STDERR.print "worker ##$$ exception: #{e.class}\n"
+          exit 1
+        end
+      end
+    end
+
+    def create_remote_workers(job_factory, options, &block)
+      workers = []
+
+      unless (local_address = options[:local_address])
+        local_address = Socket.getifaddrs.find{ |x|
+          x.addr.ipv4? and not x.addr.ipv4_loopback?
+        }.addr.ip_address
+      end
+      server = TCPServer.new(local_address, 0)
+      my_port = server.local_address.ip_port
+      my_ip = server.local_address.ip_address
+
+      unless (command = options[:distribute_command])
+        command = [ $0, *ARGV ].map{ |e| "'#{e}'" }.join(' ')
+      end
+
+      pids = options[:distribute].map{ |node|
+        actual_command = command.gsub(/%%/){ options[:count] }
+        spawn 'ssh', '-q', node, "export DPARALLEL_MASTER='#{my_ip}|#{my_port}'; #{actual_command}"
+      }
+
+      timeout_sec = options[:distribute_timeout] || 60
+      total_workers = options[:count] * options[:distribute].size
+      begin
+        timeout(timeout_sec) do
+          while workers.length < total_workers
+            client = server.accept
+            workers << remote_worker(job_factory, options, client, &block)
+          end
+        end
+      rescue Timeout::Error
+        pids.each do |pid| Process.kill(:QUIT, pid) end
+        raise RemoteWorkerTimeout
+      end
+
+      workers
+    end
+
+    def remote_worker(job_factory, options, socket, &block)
+      RemoteWorker.new(socket)
+    end
+
     def process_incoming_jobs(read, write, job_factory, options, &block)
       until read.eof?
         data = Marshal.load(read)
+        break if data.nil?
         item, index = job_factory.unpack(data)
         result = begin
           call_with_index(item, index, options, &block)
