@@ -1,6 +1,7 @@
 require 'rbconfig'
 require 'parallel/version'
 require 'parallel/processor_count'
+require 'parallel/queue'
 
 module Parallel
   extend Parallel::ProcessorCount
@@ -235,6 +236,10 @@ module Parallel
 
     def map_with_index(array, options={}, &block)
       map(array, options.merge(:with_index => true), &block)
+    end
+
+    def queue
+      ParallelQueue.new(processor_count)
     end
 
     private
