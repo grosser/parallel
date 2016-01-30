@@ -471,6 +471,10 @@ describe Parallel do
     end
   end
 
+  it "fails when running with a prefilled queue without stop since there are no threads to fill it" do
+    `ruby spec/cases/fatal_queue.rb 2>&1`.should include "No live threads left. Deadlock?"
+  end
+
   describe "GC" do
     def normalize(result)
       result.sub(/\{(.*)\}/, "\\1").split(", ").reject { |x| x =~ /^(Hash|Array|String)=>(1|-1)$/ }
