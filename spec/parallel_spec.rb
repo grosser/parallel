@@ -472,12 +472,13 @@ describe Parallel do
   end
 
   it "fails when running with a prefilled queue without stop since there are no threads to fill it" do
-    `ruby spec/cases/fatal_queue.rb 2>&1`.should include "No live threads left. Deadlock?"
+    error = (RUBY_VERSION >= "2.0.0" ? "No live threads left. Deadlock?" : "deadlock detected (fatal)")
+    `ruby spec/cases/fatal_queue.rb 2>&1`.should include error
   end
 
   describe "GC" do
     def normalize(result)
-      result.sub(/\{(.*)\}/, "\\1").split(", ").reject { |x| x =~ /^(Hash|Array|String)=>(1|-1)$/ }
+      result.sub(/\{(.*)\}/, "\\1").split(", ").reject { |x| x =~ /^(Hash|Array|String)=>(1|-1|-2)$/ }
     end
 
     worker_types.each do |type|
