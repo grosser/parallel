@@ -247,6 +247,18 @@ describe Parallel do
       it "stops all workers when a finish hook fails with #{type}" do
         `METHOD=map WORKER_TYPE=#{type} ruby spec/cases/with_exception_in_finish.rb 2>&1`.should =~ /^\d{4} raised$/
       end
+
+      it "does not call the finish hook when a worker fails with #{type}" do
+        `METHOD=map WORKER_TYPE=#{type} ruby spec/cases/with_exception_before_finish.rb 2>&1`.should == '3 called'
+      end
+
+      it "does not call the finish hook when a worker raises Break in #{type}" do
+        `METHOD=map WORKER_TYPE=#{type} ruby spec/cases/with_break_before_finish.rb 2>&1`.should == '3 called'
+      end
+
+      it "does not call the finish hook when a start hook fails with #{type}" do
+        `METHOD=map WORKER_TYPE=#{type} ruby spec/cases/with_exception_in_start_before_finish.rb 2>&1`.should == '3 called'
+      end
     end
 
     it "can run with 0 threads" do
@@ -427,6 +439,18 @@ describe Parallel do
 
       it 'stops all workers when a finish hook fails with processes' do
         `METHOD=each WORKER_TYPE=#{type} ruby spec/cases/with_exception_in_finish.rb 2>&1`.should =~ /^\d{4} raised$/
+      end
+
+      it "does not call the finish hook when a worker fails with #{type}" do
+        `METHOD=each WORKER_TYPE=#{type} ruby spec/cases/with_exception_before_finish.rb 2>&1`.should == '3 called'
+      end
+
+      it "does not call the finish hook when a worker raises Break in #{type}" do
+        `METHOD=each WORKER_TYPE=#{type} ruby spec/cases/with_break_before_finish.rb 2>&1`.should == '3 called'
+      end
+
+      it "does not call the finish hook when a start hook fails with #{type}" do
+        `METHOD=each WORKER_TYPE=#{type} ruby spec/cases/with_exception_in_start_before_finish.rb 2>&1`.should == '3 called'
       end
     end
   end
