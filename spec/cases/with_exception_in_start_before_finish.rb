@@ -3,11 +3,14 @@ require './spec/cases/helper'
 method = ENV.fetch('METHOD')
 in_worker_type = "in_#{ENV.fetch('WORKER_TYPE')}".to_sym
 
+class ParallelTestError < StandardError
+end
+
 begin
-  start = lambda do |_item, _index|
-    if _item != 3
+  start = lambda do |item, _index|
+    if item != 3
       sleep 0.2
-      raise 'foo'
+      raise ParallelTestError
     end
   end
 
@@ -19,5 +22,5 @@ begin
     print x
     x
   end
-rescue
+rescue ParallelTestError
 end

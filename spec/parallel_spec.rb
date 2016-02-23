@@ -253,7 +253,7 @@ describe Parallel do
       end
 
       it "does not call the finish hook when a worker raises Break in #{type}" do
-        `METHOD=map WORKER_TYPE=#{type} ruby spec/cases/with_break_before_finish.rb 2>&1`.should == '3 called'
+        `METHOD=map WORKER_TYPE=#{type} ruby spec/cases/with_break_before_finish.rb 2>&1`.should =~ /^\d{3}(finish hook called){3} Parallel::Break raised$/
       end
 
       it "does not call the finish hook when a start hook fails with #{type}" do
@@ -446,7 +446,7 @@ describe Parallel do
       end
 
       it "does not call the finish hook when a worker raises Break in #{type}" do
-        `METHOD=each WORKER_TYPE=#{type} ruby spec/cases/with_break_before_finish.rb 2>&1`.should == '3 called'
+        `METHOD=each WORKER_TYPE=#{type} ruby spec/cases/with_break_before_finish.rb 2>&1`.should =~ /^\d{3}(finish hook called){3} Parallel::Break raised$/
       end
 
       it "does not call the finish hook when a start hook fails with #{type}" do
