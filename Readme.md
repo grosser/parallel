@@ -154,6 +154,7 @@ Authors
  - [Brendan Dougherty](https://github.com/brendar)
  - [Daniel Finnie](https://github.com/danfinnie)
  - [Philip M. White](https://github.com/philipmw)
+ - [Arlan Jaska](https://github.com/ajaska)
 
 [Michael Grosser](http://grosser.it)<br/>
 michael@grosser.it<br/>
