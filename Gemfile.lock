@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    parallel (1.6.1)
+    parallel (1.6.2)
 
 GEM
   remote: https://rubygems.org/
@@ -69,4 +69,4 @@ DEPENDENCIES
   ruby-progressbar
 
 BUNDLED WITH
-   1.10.5
+   1.11.2
