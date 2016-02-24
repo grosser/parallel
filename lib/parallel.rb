@@ -417,9 +417,8 @@ module Parallel
       on_finish = options[:finish]
       options[:mutex].synchronize { on_start.call(item, index) } if on_start
       result = yield
-      result unless options[:preserve_results] == false
-    ensure
       options[:mutex].synchronize { on_finish.call(item, index, result) } if on_finish
+      result unless options[:preserve_results] == false
     end
   end
 end
