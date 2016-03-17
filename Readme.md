@@ -37,6 +37,14 @@ items = [1,2,3]
 Parallel.each(lambda{ items.pop || Parallel::Stop }){|number| ... }
 ```
 
+Use `tasks` for some different works
+
+```Ruby
+Parallel.tasks() do |tasks|
+  tasks.add{puts 'one task'}
+  tasks.add{system("echo 'another task'")}
+end
+```
 
 Processes/Threads are workers, they grab the next piece of work when they finish.
 

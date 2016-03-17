@@ -199,6 +199,20 @@ module Parallel
       each(array, options.merge(:with_index => true), &block)
     end
 
+    def tasks(options={}, &block)
+      tasks = []
+      class << tasks
+        def add(&block)
+          self.push(block)
+        end
+      end
+
+      block.call(tasks)
+      each(tasks, options) do |task|
+        task.call
+      end
+    end
+
     def map(source, options = {}, &block)
       options[:mutex] = Mutex.new
 
