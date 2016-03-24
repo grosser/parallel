@@ -29,19 +29,19 @@ User.delete_all
 print "Parent: "
 puts User.first.name
 
-print "Parallel (fork): "
-Parallel.each(User.all, in_processes: 3) do |user|
-  print user.name
+print "Parallel (threads): "
+Parallel.each([1], in_threads: 1) do
+  puts User.all.map(&:name).join
 end
-ActiveRecord::Base.connection.reconnect!
 
 print "\nParent: "
 puts User.first.name
 
-print "Parallel (threads): "
-Parallel.each(User.all, in_threads: 3) do |user|
-  print user.name
+print "Parallel (fork): "
+Parallel.each([1], in_processes: 1) do
+  puts User.all.map(&:name).join
 end
+ActiveRecord::Base.connection.reconnect!
 
 print "\nParent: "
 puts User.first.name
