@@ -48,6 +48,7 @@ GEM
       rspec
     rspec-support (3.2.2)
     ruby-progressbar (1.7.5)
+    sqlite3 (1.3.11)
     thread_safe (0.3.5)
     thread_safe (0.3.5-java)
     tzinfo (1.2.2)
@@ -67,6 +68,4 @@ DEPENDENCIES
   rspec-legacy_formatters
   rspec-rerun
   ruby-progressbar
-
-BUNDLED WITH
-   1.11.2
+  sqlite3
