@@ -425,6 +425,10 @@ describe Parallel do
       `ruby spec/cases/each_in_place.rb`.should == 'ab'
     end
 
+    pending "works with SQLite" do
+      `ruby spec/cases/each_with_ar_sqlite.rb`.should == "Parent: X\nParallel (fork): XXX\nParent: X\nParallel (threads): XXX\nParent: X\n"
+    end
+
     worker_types.each do |type|
       it "stops all workers when one fails in #{type}" do
         `METHOD=each WORKER_TYPE=#{type} ruby spec/cases/with_exception.rb 2>&1`.should =~ /^\d{4} raised$/

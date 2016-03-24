@@ -9,4 +9,5 @@ Gem::Specification.new name, Parallel::VERSION do |s|
   s.files = `git ls-files lib MIT-LICENSE.txt`.split("\n")
   s.license = "MIT"
   s.required_ruby_version = '>= 1.9.3'
+
 end
