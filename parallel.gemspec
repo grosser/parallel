@@ -11,4 +11,5 @@ Gem::Specification.new name, Parallel::VERSION do |s|
   s.required_ruby_version = '>= 1.9.3'
 
   s.add_development_dependency 'pg'
+  s.add_development_dependency 'sqlite3'
 end

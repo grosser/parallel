@@ -433,6 +433,10 @@ describe Parallel do
       `ruby spec/cases/each_with_ar_postgres.rb`.should == "Parent: X\nParallel (fork): XXX\nParent: X\nParallel (threads): XXX\nParent: X\n"
     end
 
+    it "works with SQLite" do
+      `ruby spec/cases/each_with_ar_sqlite.rb`.should == "Parent: X\nParallel (fork): XXX\nParent: X\nParallel (threads): XXX\nParent: X\n"
+    end
+
 
     worker_types.each do |type|
       it "stops all workers when one fails in #{type}" do
