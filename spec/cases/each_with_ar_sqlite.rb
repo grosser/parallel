@@ -2,7 +2,7 @@ require './spec/cases/helper'
 require "active_record"
 require "sqlite3"
 STDOUT.sync = true
-
+in_worker_type = "in_#{ENV.fetch('WORKER_TYPE')}".to_sym
 
 ActiveRecord::Schema.verbose = false
 ActiveRecord::Base.establish_connection(
@@ -29,19 +29,11 @@ User.delete_all
 print "Parent: "
 puts User.first.name
 
-print "Parallel (threads): "
-Parallel.each([1], in_threads: 1) do
+print "Parallel (#{in_worker_type}): "
+Parallel.each([1], in_worker_type => 1) do
   puts User.all.map(&:name).join
 end
 
 print "\nParent: "
 puts User.first.name
 
-print "Parallel (fork): "
-Parallel.each([1], in_processes: 1) do
-  puts User.all.map(&:name).join
-end
-ActiveRecord::Base.connection.reconnect!
-
-print "\nParent: "
-puts User.first.name
