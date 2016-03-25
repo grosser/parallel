@@ -1,11 +1,15 @@
 require './spec/cases/helper'
 require "active_record"
-require "sqlite3"
+require "mysql2"
 STDOUT.sync = true
 in_worker_type = "in_#{ENV.fetch('WORKER_TYPE')}".to_sym
 
+database = "parallel_with_ar_test"
 ActiveRecord::Schema.verbose = false
-ENV["DATABASE_URL"] = "sqlite3:parallel_with_ar_test.sqlite3"
+ENV["DATABASE_URL"] = "mysql2://root@localhost/#{database}"
+
+# Assumes 'root'@'localhost' has no password
+`mysql -u root #{database} -e '' || mysql -u root -e 'create database #{database};'`
 ActiveRecord::Base.establish_connection
 
 class User < ActiveRecord::Base
@@ -38,6 +42,3 @@ end
 
 print "\nParent: "
 puts User.first.name
-
-# Delete the sqlite3 file.  :memory: was neat, but once you disconnect, it's just gone.
-`rm parallel_with_ar_test.sqlite3`

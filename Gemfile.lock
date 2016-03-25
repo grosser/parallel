@@ -28,6 +28,7 @@ GEM
     json (1.8.2-java)
     minitest (5.6.1)
     mysql2 (0.3.18)
+    pg (0.18.4)
     rake (10.4.2)
     rspec (3.2.0)
       rspec-core (~> 3.2.0)
@@ -63,9 +64,13 @@ DEPENDENCIES
   bump
   mysql2
   parallel!
+  pg
   rake
   rspec
   rspec-legacy_formatters
   rspec-rerun
   ruby-progressbar
   sqlite3
+
+BUNDLED WITH
+   1.11.2

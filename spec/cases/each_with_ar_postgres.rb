@@ -1,11 +1,15 @@
 require './spec/cases/helper'
 require "active_record"
-require "sqlite3"
+require "pg"
 STDOUT.sync = true
 in_worker_type = "in_#{ENV.fetch('WORKER_TYPE')}".to_sym
 
+database = "parallel_with_ar_test"
 ActiveRecord::Schema.verbose = false
-ENV["DATABASE_URL"] = "sqlite3:parallel_with_ar_test.sqlite3"
+ENV["DATABASE_URL"] = "postgres://postgres@localhost/#{database}"
+
+# Assumes 'postgres' user is SUPERUSER
+`createdb #{database}` unless `psql -l | grep parallel_with_ar_test`
 ActiveRecord::Base.establish_connection
 
 class User < ActiveRecord::Base
@@ -38,6 +42,3 @@ end
 
 print "\nParent: "
 puts User.first.name
-
-# Delete the sqlite3 file.  :memory: was neat, but once you disconnect, it's just gone.
-`rm parallel_with_ar_test.sqlite3`

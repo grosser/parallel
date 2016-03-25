@@ -430,6 +430,14 @@ describe Parallel do
         `WORKER_TYPE=#{type} ruby spec/cases/each_with_ar_sqlite.rb 2>&1`.should == "Parent: X\nParallel (in_#{type} => 0): XXX\nParallel (in_#{type} => 1): XXX\n\nParent: X\n"
       end
 
+      it "works with Postgres in #{type}" do
+        `WORKER_TYPE=#{type} ruby spec/cases/each_with_ar_postgres.rb 2>&1`.should == "Parent: X\nParallel (in_#{type} => 0): XXX\nParallel (in_#{type} => 1): XXX\n\nParent: X\n"
+      end
+
+      it "works with MySQL in #{type}" do
+        `WORKER_TYPE=#{type} ruby spec/cases/each_with_ar_mysql.rb 2>&1`.should == "Parent: X\nParallel (in_#{type} => 0): XXX\nParallel (in_#{type} => 1): XXX\n\nParent: X\n"
+      end
+
       it "stops all workers when one fails in #{type}" do
         `METHOD=each WORKER_TYPE=#{type} ruby spec/cases/with_exception.rb 2>&1`.should =~ /^\d{4} raised$/
       end

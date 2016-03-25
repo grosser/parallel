@@ -11,3 +11,4 @@ gem 'rspec-legacy_formatters'
 
 gem 'mysql2', :group => :mysql
 gem 'sqlite3'
+gem 'pg'
