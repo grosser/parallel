@@ -220,7 +220,6 @@ module Parallel
 
       job_factory = JobFactory.new(source, options[:mutex])
       size = [job_factory.size, size].min
-      ar_workaround = defined?(ActiveRecord::Base) && ActiveRecord::Base.connected?
 
       options[:return_results] = (options[:preserve_results] != false || !!options[:finish])
       add_progress_bar!(job_factory, options)
@@ -228,15 +227,11 @@ module Parallel
       if size == 0
         work_direct(job_factory, options, &block)
       elsif method == :in_threads
-        ActiveRecord::Base.connection.disconnect! if ar_workaround
-        return_value = work_in_threads(job_factory, options.merge(:count => size), &block)
-        ActiveRecord::Base.establish_connection if ar_workaround
-        return_value
+        ar_down
+        work_in_threads(job_factory, options.merge(:count => size), &block) || ar_up
       else
-        ActiveRecord::Base.connection.disconnect! if ar_workaround
-        return_value = work_in_processes(job_factory, options.merge(:count => size), &block)
-        ActiveRecord::Base.establish_connection if ar_workaround
-        return_value
+        ar_down
+        work_in_processes(job_factory, options.merge(:count => size), &block) || ar_up
       end
     end
 
@@ -395,6 +390,20 @@ module Parallel
       return nil if [Parallel::Break, Parallel::Kill].include? exception.class
       raise exception if exception
       results
+    end
+
+    # If ActiveRecord is being used, disconnect before forking / threading
+    def ar_down
+      if defined?(ActiveRecord::Base) && ActiveRecord::Base.connected?
+        ActiveRecord::Base.connection.disconnect!
+      end
+    end
+
+    # Reconnect ActiveRecord after the forks / threads have completed.
+    def ar_up
+      if defined?(ActiveRecord::Base) && !ActiveRecord::Base.connected?
+        ActiveRecord::Base.establish_connection
+      end
     end
 
     # options is either a Integer or a Hash with :count
