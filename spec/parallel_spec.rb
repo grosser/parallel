@@ -471,6 +471,10 @@ describe Parallel do
       `ruby spec/cases/progress.rb`.sub(/=+/, '==').strip.should == "Doing stuff: |==|"
     end
 
+    it "takes true from :progress" do
+      `TITLE=true ruby spec/cases/progress.rb`.sub(/=+/, '==').strip.should == "Progress: |==|"
+    end
+
     it "works with :finish" do
       `ruby spec/cases/progress_with_finish.rb`.strip.sub(/=+/, '==').gsub(/\n+/,"\n").should == "Doing stuff: |==|\n100"
     end

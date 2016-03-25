@@ -244,7 +244,9 @@ module Parallel
         raise "Progressbar can only be used with array like items" if job_factory.size == Float::INFINITY
         require 'ruby-progressbar'
 
-        if progress_options.respond_to? :to_str
+        if progress_options == true
+          progress_options = { title: "Progress" }
+        elsif progress_options.respond_to? :to_str
           progress_options = { title: progress_options.to_str }
         end
 
