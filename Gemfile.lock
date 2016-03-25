@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    parallel (1.6.2)
+    parallel (1.7.0)
 
 GEM
   remote: https://rubygems.org/
@@ -69,3 +69,6 @@ DEPENDENCIES
   rspec-rerun
   ruby-progressbar
   sqlite3
+
+BUNDLED WITH
+   1.11.2
