@@ -229,12 +229,14 @@ module Parallel
         work_direct(job_factory, options, &block)
       elsif method == :in_threads
         ActiveRecord::Base.connection.disconnect! if ar_workaround
-        work_in_threads(job_factory, options.merge(:count => size), &block)
+        return_value = work_in_threads(job_factory, options.merge(:count => size), &block)
         ActiveRecord::Base.establish_connection if ar_workaround
+        return_value
       else
         ActiveRecord::Base.connection.disconnect! if ar_workaround
-        work_in_processes(job_factory, options.merge(:count => size), &block)
+        return_value = work_in_processes(job_factory, options.merge(:count => size), &block)
         ActiveRecord::Base.establish_connection if ar_workaround
+        return_value
       end
     end
 
