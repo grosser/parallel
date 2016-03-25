@@ -5,8 +5,8 @@ STDOUT.sync = true
 in_worker_type = "in_#{ENV.fetch('WORKER_TYPE')}".to_sym
 
 ActiveRecord::Schema.verbose = false
-params = { adapter: "sqlite3", database: "parallel_with_ar_test.sqlite3" }
-ActiveRecord::Base.establish_connection(params)
+ENV["DATABASE_URL"] = "sqlite3:parallel_with_ar_test.sqlite3"
+ActiveRecord::Base.establish_connection
 
 class User < ActiveRecord::Base
 end
@@ -31,13 +31,17 @@ puts User.first.name
 # Under Unix, you should not carry an open SQLite database across a fork() system call into the child process.
 ActiveRecord::Base.connection.disconnect!
 
-print "Parallel (#{in_worker_type}): "
-Parallel.each([1], in_worker_type => 1) do
-  ActiveRecord::Base.establish_connection(params)
-  puts User.all.map(&:name).join
+# Run with both disabled and enabled Parallel (AR workarounds shouldn't break 0)
+[0,1].each do |zero_one|
+  print "Parallel (#{in_worker_type} => #{zero_one}): "
+  Parallel.each([1], in_worker_type => 0) do
+    ActiveRecord::Base.establish_connection
+    puts User.all.map(&:name).join
+    # ActiveRecord::Base.connection.disconnect!  # I feel like you should need this, but it works either way.
+  end
 end
 
-ActiveRecord::Base.establish_connection(params)
+ActiveRecord::Base.establish_connection
 print "\nParent: "
 puts User.first.name
 
