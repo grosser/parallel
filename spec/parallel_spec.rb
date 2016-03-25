@@ -426,8 +426,8 @@ describe Parallel do
     end
 
     worker_types.each do |type|
-      pending "works with SQLite in #{type}" do
-        `WORKER_TYPE=#{type} ruby spec/cases/each_with_ar_sqlite.rb`.should == "Parent: X\nParallel (in_#{type}): XXX\n\nParent: X\n"
+      it "works with SQLite in #{type}" do
+        `WORKER_TYPE=#{type} ruby spec/cases/each_with_ar_sqlite.rb 2>&1`.should == "Parent: X\nParallel (in_#{type} => 0): XXX\nParallel (in_#{type} => 1): XXX\n\nParent: X\n"
       end
 
       it "stops all workers when one fails in #{type}" do
