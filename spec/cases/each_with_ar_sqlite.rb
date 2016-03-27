@@ -7,7 +7,7 @@ in_worker_type = "in_#{ENV.fetch('WORKER_TYPE')}".to_sym
 ActiveRecord::Schema.verbose = false
 ActiveRecord::Base.establish_connection(
   :adapter => "sqlite3",
-  :database => ":memory:"
+  :database => Tempfile.new("db").path
 )
 
 class User < ActiveRecord::Base
@@ -26,14 +26,11 @@ User.delete_all
 
 3.times { User.create!(:name => "X") }
 
-print "Parent: "
-puts User.first.name
+puts "Parent: #{User.first.name}"
 
-print "Parallel (#{in_worker_type}): "
 Parallel.each([1], in_worker_type => 1) do
-  puts User.all.map(&:name).join
+  puts "Parallel (#{in_worker_type}): #{User.all.map(&:name).join}"
 end
 
-print "\nParent: "
-puts User.first.name
+puts "Parent: #{User.first.name}"
 

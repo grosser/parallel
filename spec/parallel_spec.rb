@@ -370,6 +370,11 @@ describe Parallel do
       l = Array.new(10_000){|i| i}
       Parallel.map(l, {in_threads: 4}){|x| x+1}.should == l.map{|x| x+1}
     end
+
+    it 'can work in isolation' do
+      out = `ruby spec/cases/map_isolation.rb`
+      out.should == "1\n2\n3\n4\nOK"
+    end
   end
 
   describe ".map_with_index" do
@@ -426,8 +431,8 @@ describe Parallel do
     end
 
     worker_types.each do |type|
-      pending "works with SQLite in #{type}" do
-        `WORKER_TYPE=#{type} ruby spec/cases/each_with_ar_sqlite.rb`.should == "Parent: X\nParallel (in_#{type}): XXX\n\nParent: X\n"
+      it "works with SQLite in #{type}" do
+        `WORKER_TYPE=#{type} ruby spec/cases/each_with_ar_sqlite.rb 2>&1`.should == "Parent: X\nParallel (in_#{type}): XXX\nParent: X\n"
       end
 
       it "stops all workers when one fails in #{type}" do
@@ -468,19 +473,19 @@ describe Parallel do
 
   describe "progress" do
     it "takes the title from :progress" do
-      `ruby spec/cases/progress.rb`.sub(/=+/, '==').strip.should == "Doing stuff: |==|"
+      `ruby spec/cases/progress.rb 2>&1`.sub(/=+/, '==').strip.should == "Doing stuff: |==|"
     end
 
     it "takes true from :progress" do
-      `TITLE=true ruby spec/cases/progress.rb`.sub(/=+/, '==').strip.should == "Progress: |==|"
+      `TITLE=true ruby spec/cases/progress.rb 2>&1`.sub(/=+/, '==').strip.should == "Progress: |==|"
     end
 
     it "works with :finish" do
-      `ruby spec/cases/progress_with_finish.rb`.strip.sub(/=+/, '==').gsub(/\n+/,"\n").should == "Doing stuff: |==|\n100"
+      `ruby spec/cases/progress_with_finish.rb 2>&1`.strip.sub(/=+/, '==').gsub(/\n+/,"\n").should == "Doing stuff: |==|\n100"
     end
 
     it "takes the title from :progress[:title] and passes options along" do
-      `ruby spec/cases/progress_with_options.rb`.should =~ /Reticulating Splines ;+ \d+ ;+/
+      `ruby spec/cases/progress_with_options.rb 2>&1`.should =~ /Reticulating Splines ;+ \d+ ;+/
     end
   end
 
@@ -489,11 +494,11 @@ describe Parallel do
       let(:result) { "ITEM-1\nITEM-2\nITEM-3\n" }
 
       it "runs in threads" do
-        `ruby spec/cases/with_#{thing}.rb THREADS`.should == result
+        `ruby spec/cases/with_#{thing}.rb THREADS 2>&1`.should == result
       end
 
       it "runs in processs" do
-        `ruby spec/cases/with_#{thing}.rb PROCESSES`.should == result
+        `ruby spec/cases/with_#{thing}.rb PROCESSES 2>&1`.should == result
       end
 
       it "refuses to use progress" do
