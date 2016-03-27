@@ -35,15 +35,16 @@ module Parallel
       @read, @write, @pid = read, write, pid
     end
 
-    def close_pipes
-      read.close
-      write.close
+    def stop
+      close_pipes
+      wait # if it goes zombie, rather wait here to be able to debug
     end
 
-    def wait
-      Process.wait(pid)
-    rescue Interrupt
-      # process died
+    # might be passed to started_processes and simultaneously closed by another thread
+    # when running in isolation mode, so we have to check if it is closed before closing
+    def close_pipes
+      read.close unless read.closed?
+      write.close unless write.closed?
     end
 
     def work(data)
@@ -60,6 +61,14 @@ module Parallel
       end
       raise result.exception if ExceptionWrapper === result
       result
+    end
+
+    private
+
+    def wait
+      Process.wait(pid)
+    rescue Interrupt
+      # process died
     end
   end
 
@@ -300,7 +309,11 @@ module Parallel
     end
 
     def work_in_processes(job_factory, options, &blk)
-      workers = create_workers(job_factory, options, &blk)
+      workers = if options[:isolation]
+        [] # we create workers per job and not beforehand
+      else
+        create_workers(job_factory, options, &blk)
+      end
       results = []
       results_mutex = Mutex.new # arrays are not thread-safe
       exception = nil
@@ -308,13 +321,18 @@ module Parallel
       UserInterruptHandler.kill_on_ctrl_c(workers.map(&:pid), options) do
         in_threads(options) do |i|
           worker = workers[i]
-          worker.thread = Thread.current
 
           begin
             loop do
               break if exception
               item, index = job_factory.next
               break unless index
+
+              if options[:isolation]
+                worker = replace_worker(job_factory, workers, i, options, blk)
+              end
+
+              worker.thread = Thread.current
 
               begin
                 result = with_instrumentation item, index, options do
@@ -332,13 +350,22 @@ module Parallel
               end
             end
           ensure
-            worker.close_pipes
-            worker.wait # if it goes zombie, rather wait here to be able to debug
+            worker.stop if worker
           end
         end
       end
 
       handle_exception(exception, results)
+    end
+
+    def replace_worker(job_factory, workers, i, options, blk)
+      # old worker is no longer used ... stop it
+      worker = workers[i]
+      worker.stop if worker
+
+      # create a new replacement worker
+      running = workers - [worker]
+      workers[i] = worker(job_factory, options.merge(started_workers: running), &blk)
     end
 
     def create_workers(job_factory, options, &block)

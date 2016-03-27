@@ -370,6 +370,11 @@ describe Parallel do
       l = Array.new(10_000){|i| i}
       Parallel.map(l, {in_threads: 4}){|x| x+1}.should == l.map{|x| x+1}
     end
+
+    it 'can work in isolation' do
+      out = `ruby spec/cases/map_isolation.rb`
+      out.should == "1\n2\n3\n4\nOK"
+    end
   end
 
   describe ".map_with_index" do
