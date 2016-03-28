@@ -426,16 +426,13 @@ describe Parallel do
     end
 
     worker_types.each do |type|
-      it "works with SQLite in #{type}" do
-        `WORKER_TYPE=#{type} ruby spec/cases/each_with_ar_sqlite.rb 2>&1`.should == "Parent: X\nParallel (in_#{type} => 0): XXX\nParallel (in_#{type} => 1): XXX\n\nParent: X\n"
-      end
 
-      it "works with Postgres in #{type}" do
-        `WORKER_TYPE=#{type} ruby spec/cases/each_with_ar_postgres.rb 2>&1`.should == "Parent: X\nParallel (in_#{type} => 0): XXX\nParallel (in_#{type} => 1): XXX\n\nParent: X\n"
-      end
-
-      it "works with MySQL in #{type}" do
-        `WORKER_TYPE=#{type} ruby spec/cases/each_with_ar_mysql.rb 2>&1`.should == "Parent: X\nParallel (in_#{type} => 0): XXX\nParallel (in_#{type} => 1): XXX\n\nParent: X\n"
+      %w(sqlite postgres mysql).each do |db_type|
+        it "works with #{db_type} in #{type}" do
+          result = `WORKER_TYPE=#{type} ruby spec/cases/each_with_ar_#{db_type}.rb 2>&1`
+          pending "#{db_type} test database is not configured" if ["cannot load such file", "ActiveRecord::NoDatabaseError", "Unknown database"].include? result
+          result.should == "Parent: X\nParallel (in_#{type} => 0): XXX\nParallel (in_#{type} => 1): XXX\n\nParent: X\n"
+        end
       end
 
       it "stops all workers when one fails in #{type}" do

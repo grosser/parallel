@@ -227,11 +227,13 @@ module Parallel
       if size == 0
         work_direct(job_factory, options, &block)
       elsif method == :in_threads
-        ar_down
-        work_in_threads(job_factory, options.merge(:count => size), &block) || ar_up
+        orm_wrapper(options) do
+          work_in_threads(job_factory, options.merge(:count => size), &block)
+        end
       else
-        ar_down
-        work_in_processes(job_factory, options.merge(:count => size), &block) || ar_up
+        orm_wrapper(options) do
+          work_in_processes(job_factory, options.merge(:count => size), &block)
+        end
       end
     end
 
@@ -392,16 +394,29 @@ module Parallel
       results
     end
 
-    # If ActiveRecord is being used, disconnect before forking / threading
-    def ar_down
+
+    # Wrap a block in a DB disconnect / establish_connection
+    def orm_wrapper(options, &block)
+      if options.is_a?(Hash) && !!options[:reconnect]
+        orm_down
+        result = yield
+        orm_up
+        result
+      else
+        yield
+      end
+    end
+
+    # If the ORM used has issues with forks / threads all calls to disconnect
+    def orm_down
       if defined?(ActiveRecord::Base) && ActiveRecord::Base.connected?
         ActiveRecord::Base.connection.disconnect!
       end
     end
 
-    # Reconnect ActiveRecord after the forks / threads have completed.
-    def ar_up
-      if defined?(ActiveRecord::Base) && !ActiveRecord::Base.connected?
+    # Reconnect ORM after the forks / threads have completed.
+    def orm_up
+      if defined?(ActiveRecord::Base)
         ActiveRecord::Base.establish_connection
       end
     end
