@@ -1,0 +1,9 @@
+{
+  "name": "Test",
+  "repository": "https://github.com/grosser/parallel",
+  "env": {
+    "TEST": {
+      "description": "Does it work?",
+    }
+  }
+}
