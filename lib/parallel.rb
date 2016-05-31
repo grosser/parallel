@@ -189,7 +189,10 @@ module Parallel
     def in_threads(options={:count => 2})
       count, _ = extract_count_from_options(options)
       Array.new(count).each_with_index.map do |_, i|
-        Thread.new { yield(i) }
+        Thread.new do
+          Thread.current[:parallel_worker_number] = i
+          yield(i)
+        end
       end.map!(&:value)
     end
 
@@ -365,13 +368,13 @@ module Parallel
 
       # create a new replacement worker
       running = workers - [worker]
-      workers[i] = worker(job_factory, options.merge(started_workers: running), &blk)
+      workers[i] = worker(job_factory, options.merge(started_workers: running, worker_number: i), &blk)
     end
 
     def create_workers(job_factory, options, &block)
       workers = []
-      Array.new(options[:count]).each do
-        workers << worker(job_factory, options.merge(:started_workers => workers), &block)
+      Array.new(options[:count]).each_with_index do |_, i|
+        workers << worker(job_factory, options.merge(started_workers: workers, worker_number: i), &block)
       end
       workers
     end
@@ -381,6 +384,8 @@ module Parallel
       parent_read, child_write = IO.pipe
 
       pid = Process.fork do
+        Thread.current[:parallel_worker_number] = options[:worker_number]
+
         begin
           options.delete(:started_workers).each(&:close_pipes)
 
