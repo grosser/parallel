@@ -261,10 +261,16 @@ describe Parallel do
         `METHOD=map WORKER_TYPE=#{type} ruby spec/cases/with_exception_in_start_before_finish.rb 2>&1`.should == '3 called'
       end
 
-      it "has access to thread local parallel_worker_number with #{type}" do
+      it "has access to thread local parallel_worker_number with 4 #{type}" do
         out = `METHOD=map WORKER_TYPE=#{type} ruby spec/cases/with_worker_number.rb`
         out.should =~ /\A[0123]+\z/
         %w(0 1 2 3).each { |number| out.should include number }
+      end
+
+      it "has access to thread local parallel_worker_number with 0 #{type}" do
+        type_key = "in_#{type}".to_sym
+        Parallel.map([1,2,3,4,5,6,7,8,9], type_key => 0) { |x| Thread.current[:parallel_worker_number] }.uniq.should == [0]
+        Thread.current[:parallel_worker_number].should be_nil
       end
     end
 

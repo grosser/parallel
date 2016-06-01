@@ -277,6 +277,7 @@ module Parallel
     end
 
     def work_direct(job_factory, options, &block)
+      Thread.current[:parallel_worker_number] = 0
       results = []
       while set = job_factory.next
         item, index = set
@@ -285,6 +286,8 @@ module Parallel
         end
       end
       results
+    ensure
+      Thread.current[:parallel_worker_number] = nil
     end
 
     def work_in_threads(job_factory, options, &block)
