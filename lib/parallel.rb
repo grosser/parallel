@@ -189,10 +189,7 @@ module Parallel
     def in_threads(options={:count => 2})
       count, _ = extract_count_from_options(options)
       Array.new(count).each_with_index.map do |_, i|
-        Thread.new do
-          Thread.current[:parallel_worker_number] = i
-          yield(i)
-        end
+        Thread.new { yield(i) }
       end.map!(&:value)
     end
 
@@ -296,7 +293,8 @@ module Parallel
       results_mutex = Mutex.new # arrays are not thread-safe on jRuby
       exception = nil
 
-      in_threads(options) do
+      in_threads(options) do |worker_number|
+        Thread.current[:parallel_worker_number] = worker_number
         # as long as there are more jobs, work on one of them
         while !exception && set = job_factory.next
           begin
