@@ -262,7 +262,7 @@ describe Parallel do
       end
 
       it "sets Parallel.worker_number with 4 #{type}" do
-        out = `METHOD=map WORKER_TYPE=#{type} ruby spec/cases/with_worker_number.rb`
+        out = `METHOD=map WORKER_TYPE=#{type} ruby spec/cases/with_worker_number.rb 2>&1`
         out.should =~ /\A[0123]+\z/
         %w(0 1 2 3).each { |number| out.should include number }
       end
@@ -482,7 +482,7 @@ describe Parallel do
       end
 
       it "sets Parallel.worker_number with #{type}" do
-        out = `METHOD=each WORKER_TYPE=#{type} ruby spec/cases/with_worker_number.rb`
+        out = `METHOD=each WORKER_TYPE=#{type} ruby spec/cases/with_worker_number.rb 2>&1`
         out.should =~ /\A[0123]+\z/
         %w(0 1 2 3).each { |number| out.should include number }
       end
