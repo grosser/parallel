@@ -116,6 +116,20 @@ They are called on the main process and protected with a mutex.
 Parallel.map(1..100, finish: -> (item, i, result) { ... do something ... }) { sleep 1 }
 ```
 
+### Worker number
+
+Use `Parallel.worker_number` to determine the worker slot in which your
+task is running.
+
+```Ruby
+Parallel.each(1..5, :in_processes => 2) { |i| puts "Item: #{i}, Worker: #{Parallel.worker_number}" }
+Item: 1, Worker: 1
+Item: 2, Worker: 0
+Item: 3, Worker: 1
+Item: 4, Worker: 0
+Item: 5, Worker: 1
+```
+
 Tips
 ====
  - [Benchmark/Test] Disable threading/forking with `in_threads: 0` or `in_processes: 0`, great to test performance or to debug parallel issues
@@ -156,6 +170,7 @@ Authors
  - [Daniel Finnie](https://github.com/danfinnie)
  - [Philip M. White](https://github.com/philipmw)
  - [Arlan Jaska](https://github.com/ajaska)
+ - [Sean Walbran](https://github.com/seanwalbran)
 
 [Michael Grosser](http://grosser.it)<br/>
 michael@grosser.it<br/>
