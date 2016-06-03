@@ -260,6 +260,18 @@ describe Parallel do
       it "does not call the finish hook when a start hook fails with #{type}" do
         `METHOD=map WORKER_TYPE=#{type} ruby spec/cases/with_exception_in_start_before_finish.rb 2>&1`.should == '3 called'
       end
+
+      it "sets Parallel.worker_number with 4 #{type}" do
+        out = `METHOD=map WORKER_TYPE=#{type} ruby spec/cases/with_worker_number.rb 2>&1`
+        out.should =~ /\A[0123]+\z/
+        %w(0 1 2 3).each { |number| out.should include number }
+      end
+
+      it "sets Parallel.worker_number with 0 #{type}" do
+        type_key = "in_#{type}".to_sym
+        Parallel.map([1,2,3,4,5,6,7,8,9], type_key => 0) { |x| Parallel.worker_number }.uniq.should == [0]
+        Parallel.worker_number.should be_nil
+      end
     end
 
     it "can run with 0 threads" do
@@ -375,6 +387,12 @@ describe Parallel do
       out = `ruby spec/cases/map_isolation.rb`
       out.should == "1\n2\n3\n4\nOK"
     end
+
+    it 'sets Parallel.worker_number when run with isolation' do
+      out = `ruby spec/cases/map_worker_number_isolation.rb`
+      out.should == "0,1\nOK"
+    end
+
   end
 
   describe ".map_with_index" do
@@ -461,6 +479,12 @@ describe Parallel do
 
       it "does not call the finish hook when a start hook fails with #{type}" do
         `METHOD=each WORKER_TYPE=#{type} ruby spec/cases/with_exception_in_start_before_finish.rb 2>&1`.should == '3 called'
+      end
+
+      it "sets Parallel.worker_number with #{type}" do
+        out = `METHOD=each WORKER_TYPE=#{type} ruby spec/cases/with_worker_number.rb 2>&1`
+        out.should =~ /\A[0123]+\z/
+        %w(0 1 2 3).each { |number| out.should include number }
       end
     end
   end
