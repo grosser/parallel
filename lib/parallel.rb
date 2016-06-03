@@ -246,6 +246,14 @@ module Parallel
       map(array, options.merge(:with_index => true), &block)
     end
 
+    def worker_number
+      Thread.current[:parallel_worker_number]
+    end
+
+    def worker_number=(worker_num)
+      Thread.current[:parallel_worker_number] = worker_num
+    end
+
     private
 
     def add_progress_bar!(job_factory, options)
@@ -274,7 +282,7 @@ module Parallel
     end
 
     def work_direct(job_factory, options, &block)
-      Thread.current[:parallel_worker_number] = 0
+      self.worker_number = 0
       results = []
       while set = job_factory.next
         item, index = set
@@ -284,7 +292,7 @@ module Parallel
       end
       results
     ensure
-      Thread.current[:parallel_worker_number] = nil
+      self.worker_number = nil
     end
 
     def work_in_threads(job_factory, options, &block)
@@ -293,8 +301,8 @@ module Parallel
       results_mutex = Mutex.new # arrays are not thread-safe on jRuby
       exception = nil
 
-      in_threads(options) do |worker_number|
-        Thread.current[:parallel_worker_number] = worker_number
+      in_threads(options) do |worker_num|
+        self.worker_number = worker_num
         # as long as there are more jobs, work on one of them
         while !exception && set = job_factory.next
           begin
@@ -385,7 +393,7 @@ module Parallel
       parent_read, child_write = IO.pipe
 
       pid = Process.fork do
-        Thread.current[:parallel_worker_number] = options[:worker_number]
+        self.worker_number = options[:worker_number]
 
         begin
           options.delete(:started_workers).each(&:close_pipes)

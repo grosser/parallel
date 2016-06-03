@@ -261,16 +261,16 @@ describe Parallel do
         `METHOD=map WORKER_TYPE=#{type} ruby spec/cases/with_exception_in_start_before_finish.rb 2>&1`.should == '3 called'
       end
 
-      it "has access to thread local parallel_worker_number with 4 #{type}" do
+      it "sets Parallel.worker_number with 4 #{type}" do
         out = `METHOD=map WORKER_TYPE=#{type} ruby spec/cases/with_worker_number.rb`
         out.should =~ /\A[0123]+\z/
         %w(0 1 2 3).each { |number| out.should include number }
       end
 
-      it "has access to thread local parallel_worker_number with 0 #{type}" do
+      it "sets Parallel.worker_number with 0 #{type}" do
         type_key = "in_#{type}".to_sym
-        Parallel.map([1,2,3,4,5,6,7,8,9], type_key => 0) { |x| Thread.current[:parallel_worker_number] }.uniq.should == [0]
-        Thread.current[:parallel_worker_number].should be_nil
+        Parallel.map([1,2,3,4,5,6,7,8,9], type_key => 0) { |x| Parallel.worker_number }.uniq.should == [0]
+        Parallel.worker_number.should be_nil
       end
     end
 
@@ -388,7 +388,7 @@ describe Parallel do
       out.should == "1\n2\n3\n4\nOK"
     end
 
-    it 'has access to thread local parallel_worker_number values in isolation' do
+    it 'sets Parallel.worker_number when run with isolation' do
       out = `ruby spec/cases/map_worker_number_isolation.rb`
       out.should == "0,1\nOK"
     end
@@ -481,7 +481,7 @@ describe Parallel do
         `METHOD=each WORKER_TYPE=#{type} ruby spec/cases/with_exception_in_start_before_finish.rb 2>&1`.should == '3 called'
       end
 
-      it "has access to thread local parallel_worker_number with #{type}" do
+      it "sets Parallel.worker_number with #{type}" do
         out = `METHOD=each WORKER_TYPE=#{type} ruby spec/cases/with_worker_number.rb`
         out.should =~ /\A[0123]+\z/
         %w(0 1 2 3).each { |number| out.should include number }
