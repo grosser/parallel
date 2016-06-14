@@ -405,7 +405,9 @@ module Parallel
         ensure
           child_read.close
           child_write.close
+          exit!(options[:exit_bang_status]) unless options[:exit_bang_status].nil?
         end
+
       end
 
       child_read.close
