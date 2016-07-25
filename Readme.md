@@ -43,13 +43,13 @@ Processes/Threads are workers, they grab the next piece of work when they finish
 ### Processes
  - Speedup through multiple CPUs
  - Speedup for blocking operations
- - Protects global data
+ - Variables are protected from change
  - Extra memory used
  - Child processes are killed when your main process is killed through Ctrl+c or kill -2
 
 ### Threads
  - Speedup for blocking operations
- - Global data can be modified
+ - Variables can be shared/modified
  - No extra memory used
 
 ### ActiveRecord
