@@ -355,7 +355,7 @@ module Parallel
                 exception = e
                 if Parallel::Kill === exception
                   (workers - [worker]).each do |w|
-                    w.thread.kill
+                    w.thread.kill unless w.thread.nil?
                     UserInterruptHandler.kill(w.pid)
                   end
                 end
