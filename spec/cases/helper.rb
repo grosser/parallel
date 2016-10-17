@@ -2,7 +2,7 @@ require 'bundler/setup'
 require 'parallel'
 
 def process_diff
-  cmd = "ps uaxw|grep ruby|wc -l"
+  cmd = "ps uxw|grep ruby|wc -l"
 
   processes_before = `#{cmd}`.to_i
 
