@@ -37,6 +37,26 @@ items = [1,2,3]
 Parallel.each( -> { items.pop || Parallel::Stop }) { |number| ... }
 ```
 
+Reduce will return results colleced from each worker. So you need to merge them on the end.
+```Ruby
+result = Parallel.reduce(['a','b','c','d','a','b','c','d']) do |result,x|
+  result ||= Set.new
+  result << x
+  result
+end
+result.compact.reduce(&:+)
+```
+Remember that if set is small and number of workers hi some workers can return nil. So it is better to use "compact" before merging resuls.
+
+Reduce can be used with initial value similar to original reuse:
+```Ruby
+result = Parallel.reduce(['a','b','c','d','a','b','c','d'], start_with: Set.new) do |result,x|
+  result << x
+  result
+end
+result.compact.reduce(&:+)
+```
+
 
 Processes/Threads are workers, they grab the next piece of work when they finish.
 

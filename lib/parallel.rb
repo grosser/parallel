@@ -36,8 +36,14 @@ module Parallel
     end
 
     def stop
-      close_pipes
+      write.close unless write.closed?
+      result = begin
+        Marshal.load(read)
+      rescue EOFError
+      end
+      read.close unless read.closed?
       wait # if it goes zombie, rather wait here to be able to debug
+      result
     end
 
     # might be passed to started_processes and simultaneously closed by another thread
@@ -246,6 +252,10 @@ module Parallel
       map(array, options.merge(:with_index => true), &block)
     end
 
+    def reduce(array, options={}, &block)
+      map(array, options.merge(:results_on_end => true), &block)
+    end
+
     def worker_number
       Thread.current[:parallel_worker_number]
     end
@@ -287,7 +297,7 @@ module Parallel
       while set = job_factory.next
         item, index = set
         results << with_instrumentation(item, index, options) do
-          call_with_index(item, index, options, &block)
+          call_with_index(item, index, options, nil, &block)
         end
       end
       results
@@ -308,7 +318,7 @@ module Parallel
           begin
             item, index = set
             result = with_instrumentation item, index, options do
-              call_with_index(item, index, options, &block)
+              call_with_index(item, index, options, nil, &block)
             end
             results_mutex.synchronize { results[index] = result }
           rescue StandardError => e
@@ -350,7 +360,9 @@ module Parallel
                 result = with_instrumentation item, index, options do
                   worker.work(job_factory.pack(item, index))
                 end
-                results_mutex.synchronize { results[index] = result } # arrays are not threads safe on jRuby
+                unless options[:results_on_end]
+                  results_mutex.synchronize { results[index] = result } # arrays are not threads safe on jRuby
+                end
               rescue StandardError => e
                 exception = e
                 if Parallel::Kill === exception
@@ -362,7 +374,8 @@ module Parallel
               end
             end
           ensure
-            worker.stop if worker
+            result = worker.stop if worker
+            results_mutex.synchronize { results << result } if options[:results_on_end]
           end
         end
       end
@@ -415,15 +428,24 @@ module Parallel
     end
 
     def process_incoming_jobs(read, write, job_factory, options, &block)
+      end_result = options[:start_with]
       until read.eof?
         data = Marshal.load(read)
         item, index = job_factory.unpack(data)
         result = begin
-          call_with_index(item, index, options, &block)
+          call_with_index(item, index, options, end_result, &block)
         rescue StandardError => e
           ExceptionWrapper.new(e)
         end
-        Marshal.dump(result, write)
+        if options[:results_on_end] && !result.instance_of?(ExceptionWrapper)
+          end_result = result
+          Marshal.dump(nil, write)
+        else
+          Marshal.dump(result, write)
+        end
+      end
+      if options[:results_on_end]
+         Marshal.dump(end_result, write)
       end
     end
 
@@ -444,10 +466,13 @@ module Parallel
       [count, options]
     end
 
-    def call_with_index(item, index, options, &block)
+    def call_with_index(item, index, options, end_result, &block)
       args = [item]
       args << index if options[:with_index]
-      if options[:return_results]
+      if options[:results_on_end]
+        args.unshift(end_result)
+        block.call(*args)
+      elsif options[:return_results]
         block.call(*args)
       else
         block.call(*args)

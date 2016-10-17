@@ -551,4 +551,21 @@ describe Parallel do
       end
     end
   end
+
+  describe ".reduce" do
+    worker_types.each do |type|
+      it "return results on the end in #{type}" do
+        ["-a- -b- -c- -d-"].should include `ruby spec/cases/parallel_reduce.rb #{type} 2>&1`
+      end
+    end
+    worker_types.each do |type|
+      it "use start_with option in #{type}" do
+        ["-a- -b- -c- -d-"].should include `ruby spec/cases/parallel_reduce_with_argument.rb #{type} 2>&1`
+      end
+    end
+    it "throw exception on the fly" do
+      ["TEST\n"].should include `ruby spec/cases/parallel_reduce_raise.rb 2>&1`
+    end
+  end
+
 end
