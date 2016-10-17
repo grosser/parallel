@@ -46,7 +46,7 @@ result = Parallel.reduce(['a','b','c','d','a','b','c','d']) do |result,x|
 end
 result.compact.reduce(&:+)
 ```
-Remember that if set is small and number of workers hi some workers can return nil. So it is better to use "compact" before merging resuls.
+Remember that if set is small and hi number of workers some workers can return nil. So it is better to use "compact" before merging resuls.
 
 Reduce can be used with initial value similar to original reuse:
 ```Ruby
