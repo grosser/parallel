@@ -92,7 +92,7 @@ Only use if whatever is executing in the sub-command is safe to kill at any poin
 ```Ruby
 Parallel.map([1,2,3]) do |x|
   raise Parallel::Kill if x == 1# -> stop all sub-processes, killing them instantly
-  sleep 100
+  sleep 100 # Do stuff
 end
 ```
 
@@ -132,8 +132,12 @@ Item: 5, Worker: 1
 
 Tips
 ====
+
+Here are a few notable options.
+
  - [Benchmark/Test] Disable threading/forking with `in_threads: 0` or `in_processes: 0`, great to test performance or to debug parallel issues
  - [Isolation] Do not reuse previous worker processes: `isolation: true`
+ - [Stop all processses with an alternate interrupt signal] `'INT'` (from `ctrl+c`) is caught by default. Catch `'TERM'` (from `kill`) with `interrupt_signal: 'TERM'`
 
 TODO
 ====
