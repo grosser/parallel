@@ -154,7 +154,10 @@ describe Parallel do
     end
 
     it "can raise an undumpable exception" do
-      `ruby spec/cases/parallel_raise_undumpable.rb`.strip.should include('Undumpable Exception')
+      out = `ruby spec/cases/parallel_raise_undumpable.rb`.strip
+      out.sub!(Dir.pwd, '.') # relative paths
+      out.gsub!(/(\d+)\:.*/, "\\1") # no diff in ruby version xyz.rb:123:in `block in <main>'
+      out.should == "MyException: MyException\nBACKTRACE: spec/cases/parallel_raise_undumpable.rb:12"
     end
 
     it 'can handle to high fork rate' do

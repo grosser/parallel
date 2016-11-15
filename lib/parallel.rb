@@ -14,17 +14,28 @@ module Parallel
   class Kill < StandardError
   end
 
+  class UndumpableException < StandardError
+    def initialize(original)
+      super "#{original.class}: #{original.message}"
+      @bracktrace = original.backtrace
+    end
+
+    def backtrace
+      @bracktrace
+    end
+  end
+
   Stop = Object.new
 
   class ExceptionWrapper
     attr_reader :exception
     def initialize(exception)
-      dumpable = Marshal.dump(exception) rescue nil
-      unless dumpable
-        exception = RuntimeError.new("Undumpable Exception -- #{exception.inspect}")
-      end
-
-      @exception = exception
+      @exception =
+        begin
+          Marshal.dump(exception) && exception
+        rescue
+          UndumpableException.new(exception)
+        end
     end
   end
 

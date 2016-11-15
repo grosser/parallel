@@ -3,8 +3,6 @@ cache: bundler
 sudo: false
 branches:
   only: master
-matrix:
-  fast_finish: true
 rvm:
   - 1.9.3
   - 2.0.0

@@ -11,7 +11,8 @@ begin
   Parallel.in_processes(2) do
     raise MyException.new(StringIO.new)
   end
-  puts "FAIL"
-rescue RuntimeError
+  puts "NOTHING WAS RAISED"
+rescue
   puts $!.message
+  puts "BACKTRACE: #{$!.backtrace.first}"
 end
