@@ -384,15 +384,16 @@ describe Parallel do
     end
 
     it 'can work in isolation' do
+      skip if ENV['TRAVIS'] # this randomly hangs on travis
       out = `ruby spec/cases/map_isolation.rb`
       out.should == "1\n2\n3\n4\nOK"
     end
 
     it 'sets Parallel.worker_number when run with isolation' do
+      skip if ENV['TRAVIS'] # this randomly hangs on travis
       out = `ruby spec/cases/map_worker_number_isolation.rb`
       out.should == "0,1\nOK"
     end
-
   end
 
   describe ".map_with_index" do
