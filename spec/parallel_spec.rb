@@ -194,7 +194,7 @@ describe Parallel do
     end
 
     it "raises when a thread raises" do
-      lambda{ Parallel.in_threads(2){|i| raise "TEST"} }.should raise_error("TEST")
+      lambda{ Parallel.in_threads(2){|i| raise "TEST" if i == 1} }.should raise_error("TEST")
     end
   end
 
@@ -367,9 +367,37 @@ describe Parallel do
       `ruby spec/cases/eof_in_process.rb 2>&1`.should include 'Yep, EOF'
     end
 
-    it "can be killed instantly" do
+    it "processes can be killed instantly" do
       result = `ruby spec/cases/parallel_kill.rb 2>&1`
       result.should == "DEAD\nWorks nil\n"
+    end
+
+    it "threads can be killed instantly" do
+      result = Parallel.map([1,2], in_threads: 2) do |i|
+        if i == 1
+          sleep(0.1)
+          raise Parallel::Kill
+        else
+          sleep(3)
+          "Should not get here"
+        end
+      end
+      result.should_not include("Should not get here")
+    end
+
+    it "kills all child processes" do
+      pid = nil
+      Parallel.map([1,2], :in_threads => 2) do |i|
+        if i == 1
+          sleep(0.1)
+          raise Parallel::Kill
+        else
+          p = IO.popen('sleep 5; echo "Should not get here"')
+          pid = p.pid
+          p.read
+        end
+      end
+      `ps -e | grep '^#{pid}'`.should == ''
     end
 
     it "synchronizes :start and :finish" do

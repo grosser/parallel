@@ -79,6 +79,7 @@ module Parallel
     def wait
       Process.wait(pid)
     rescue Interrupt
+    rescue Errno::ECHILD
       # process died
     end
   end
@@ -168,7 +169,9 @@ module Parallel
 
       def kill(thing)
         Process.kill(:KILL, thing)
+        Process.waitpid(thing)
       rescue Errno::ESRCH
+      rescue Errno::ECHILD
         # some linux systems already automatically killed the children at this point
         # so we just ignore them not being there
       end
@@ -198,10 +201,19 @@ module Parallel
 
   class << self
     def in_threads(options={:count => 2})
-      count, _ = extract_count_from_options(options)
-      Array.new(count) do |i|
-        Thread.new { yield(i) }
-      end.map!(&:value)
+      begin
+        count, _ = extract_count_from_options(options)
+        threads = Array.new(count) do |i|
+          Thread.new do
+            Thread.current.abort_on_exception = true
+            yield(i)
+          end
+        end
+        threads.map!(&:value)
+      rescue Parallel::Kill => e
+        kill_child_processes
+        kill_threads(threads)
+      end
     end
 
     def in_processes(options = {}, &block)
@@ -322,6 +334,8 @@ module Parallel
               call_with_index(item, index, options, &block)
             end
             results_mutex.synchronize { results[index] = result }
+          rescue Parallel::Kill => e
+            raise e
           rescue StandardError => e
             exception = e
           end
@@ -442,6 +456,24 @@ module Parallel
       return nil if [Parallel::Break, Parallel::Kill].include? exception.class
       raise exception if exception
       results
+    end
+
+    # kill all children of this process
+    def kill_child_processes
+      child_processes(Process.pid).each do |pid|
+        UserInterruptHandler.kill(pid)
+      end
+    end
+
+    # kill threads asynchronously (using new threads)
+    def kill_threads(threads)
+      threads.reject(&:nil?).each(&:kill)
+    end
+
+    # get child pids ordered by youngest descendants first
+    def child_processes(pid)
+      pids = `pgrep -P #{pid}`.split("\n").map(&:to_i)
+      pids.map { |p| child_processes(p) }.flatten + pids
     end
 
     # options is either a Integer or a Hash with :count
