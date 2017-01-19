@@ -199,7 +199,7 @@ module Parallel
   class << self
     def in_threads(options={:count => 2})
       count, _ = extract_count_from_options(options)
-      Array.new(count).each_with_index.map do |_, i|
+      Array.new(count) do |i|
         Thread.new { yield(i) }
       end.map!(&:value)
     end
