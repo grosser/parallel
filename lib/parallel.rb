@@ -1,4 +1,5 @@
 require 'rbconfig'
+require 'set'
 require 'parallel/version'
 require 'parallel/processor_count'
 
@@ -215,6 +216,28 @@ module Parallel
       array
     end
 
+    def find(array, options={}, &block)
+      map(array, options.merge(:select_condition => :find), &block)
+    end
+    alias detect find
+
+    def find_all(array, options={}, &block)
+      map(array, options.merge(:select_condition => :find_all), &block)
+    end
+    alias select find_all
+
+    def reject(array, options={}, &block)
+      map(array, options.merge(:select_condition => :reject), &block)
+    end
+
+    def any?(array, options={}, &block)
+      map(array, options.merge(:break_condition => :any), &block || -> (v) { v })
+    end
+
+    def all?(array, options={}, &block)
+      map(array, options.merge(:break_condition => :all), &block || -> (v) { v })
+    end
+
     def each_with_index(array, options={}, &block)
       each(array, options.merge(:with_index => true), &block)
     end
@@ -297,11 +320,37 @@ module Parallel
       results = []
       while set = job_factory.next
         item, index = set
-        results << with_instrumentation(item, index, options) do
+        result = with_instrumentation(item, index, options) do
           call_with_index(item, index, options, &block)
         end
+        case options[:select_condition]
+        when :find
+          return item if result
+        when :find_all, :reject
+          if options[:select_condition] == :find_all ? result : !result
+            results << item
+          end
+        else
+          case options[:break_condition]
+          when :any
+            return true if result
+          when :all
+            return false if !result
+          else
+            results << result
+          end
+        end
       end
-      results
+
+      case options[:select_condition]
+      when :find then return nil
+      else
+        case options[:break_condition]
+        when :any then false
+        when :all then true
+        else results
+        end
+      end
     ensure
       self.worker_number = nil
     end
@@ -309,6 +358,7 @@ module Parallel
     def work_in_threads(job_factory, options, &block)
       raise "interrupt_signal is no longer supported for threads" if options[:interrupt_signal]
       results = []
+      filled_indexes = Set.new
       results_mutex = Mutex.new # arrays are not thread-safe on jRuby
       exception = nil
 
@@ -321,14 +371,34 @@ module Parallel
             result = with_instrumentation item, index, options do
               call_with_index(item, index, options, &block)
             end
-            results_mutex.synchronize { results[index] = result }
+            case options[:select_condition]
+            when :find
+              results_mutex.synchronize { results[0] = item }
+              raise Parallel::Break if result
+            when :find_all, :reject
+              if options[:select_condition] == :find_all ? result : !result
+                results_mutex.synchronize do
+                  filled_indexes << index
+                  results[index] = item
+                end
+              end
+            else
+              case options[:break_condition]
+              when :any
+                raise Parallel::Break if result
+              when :all
+                raise Parallel::Break if !result
+              else
+                results_mutex.synchronize { results[index] = result }
+              end
+            end
           rescue StandardError => e
             exception = e
           end
         end
       end
 
-      handle_exception(exception, results)
+      handle_exception(exception, results, filled_indexes, options)
     end
 
     def work_in_processes(job_factory, options, &blk)
@@ -338,6 +408,7 @@ module Parallel
         create_workers(job_factory, options, &blk)
       end
       results = []
+      filled_indexes = Set.new
       results_mutex = Mutex.new # arrays are not thread-safe
       exception = nil
 
@@ -361,7 +432,29 @@ module Parallel
                 result = with_instrumentation item, index, options do
                   worker.work(job_factory.pack(item, index))
                 end
-                results_mutex.synchronize { results[index] = result } # arrays are not threads safe on jRuby
+                case options[:select_condition]
+                when :find
+                  if result
+                    results_mutex.synchronize { results[0] = item }
+                    raise Parallel::Break
+                  end
+                when :find_all, :reject
+                  if options[:select_condition] == :find_all ? result : !result
+                    results_mutex.synchronize do
+                      filled_indexes << index
+                      results[index] = item
+                    end
+                  end
+                else
+                  case options[:break_condition]
+                  when :any
+                    raise Parallel::Break if result
+                  when :all
+                    raise Parallel::Break if !result
+                  else
+                    results_mutex.synchronize { results[index] = result } # arrays are not threads safe on jRuby
+                  end
+                end
               rescue StandardError => e
                 exception = e
                 if Parallel::Kill === exception
@@ -378,7 +471,7 @@ module Parallel
         end
       end
 
-      handle_exception(exception, results)
+      handle_exception(exception, results, filled_indexes, options)
     end
 
     def replace_worker(job_factory, workers, i, options, blk)
@@ -438,10 +531,35 @@ module Parallel
       end
     end
 
-    def handle_exception(exception, results)
-      return nil if [Parallel::Break, Parallel::Kill].include? exception.class
-      raise exception if exception
-      results
+    def handle_exception(exception, results, filled_indexes, options)
+      if exception
+        if [Parallel::Break, Parallel::Kill].include? exception.class
+          return case options[:select_condition]
+          when :find
+            results.first
+          else
+            case options[:break_condition]
+            when :any then true
+            when :all then false
+            else nil
+            end
+          end
+        end
+        raise exception
+      end
+
+      case options[:select_condition]
+      when :find then nil
+      when :find_all, :reject
+        # Need to process results to remove any missing indexes.
+        results.find_all.with_index {|_, i| filled_indexes.include? i }
+      else
+        case options[:break_condition]
+        when :any then false
+        when :all then true
+        else results
+        end
+      end
     end
 
     # options is either a Integer or a Hash with :count

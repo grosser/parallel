@@ -419,6 +419,48 @@ describe Parallel do
     end
   end
 
+  describe ".any?" do
+    it "returns true if any result is truthy" do
+      `ruby spec/cases/any_true.rb`.split(',').should == ['true'] * 3 * 3
+    end
+
+    it "returns false if all results are falsy" do
+      `ruby spec/cases/any_false.rb`.split(',').should == ['false'] * 3 * 4
+    end
+  end
+
+  describe ".all?" do
+    it "returns true if all results are truthy" do
+      `ruby spec/cases/all_true.rb`.split(',').should == ['true'] * 3 * 4
+    end
+
+    it "returns false if any result is falsy" do
+      `ruby spec/cases/all_false.rb`.split(',').should == ['false'] * 3 * 3
+    end
+  end
+
+  describe ".find" do
+    it "returns the item when the condition returns true" do
+      `ruby spec/cases/find.rb`.split(',').should == ['green'] * 3
+    end
+
+    it "returns nil when it cannot find an item" do
+      `ruby spec/cases/find_no_results.rb`.split(',').should == ['nil'] * 3
+    end
+  end
+
+  describe ".find_all" do
+    it "returns an array containing all elements where the block is not false" do
+      `ruby spec/cases/find_all.rb`.split(',').should == ['red','green','purple','orange'] * 3
+    end
+  end
+
+  describe ".reject" do
+    it "returns an array containing all elements where the block returns false" do
+      `ruby spec/cases/reject.rb`.split(',').should == ['blue','yellow','violet'] * 3
+    end
+  end
+
   describe ".each" do
     it "returns original array, works like map" do
       `ruby spec/cases/each.rb`.should == 'a b c d'
