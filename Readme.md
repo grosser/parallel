@@ -185,6 +185,7 @@ Authors
  - [Philip M. White](https://github.com/philipmw)
  - [Arlan Jaska](https://github.com/ajaska)
  - [Sean Walbran](https://github.com/seanwalbran)
+ - [Nathan Broadbent](https://github.com/ndbroadbent)
 
 [Michael Grosser](http://grosser.it)<br/>
 michael@grosser.it<br/>
