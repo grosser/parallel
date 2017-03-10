@@ -215,6 +215,14 @@ module Parallel
       array
     end
 
+    def any?(array, options={}, &block)
+      map(array, options.merge(:break_condition => :any), &block || -> (v) { v })
+    end
+
+    def all?(array, options={}, &block)
+      map(array, options.merge(:break_condition => :all), &block || -> (v) { v })
+    end
+
     def each_with_index(array, options={}, &block)
       each(array, options.merge(:with_index => true), &block)
     end
@@ -297,11 +305,24 @@ module Parallel
       results = []
       while set = job_factory.next
         item, index = set
-        results << with_instrumentation(item, index, options) do
+        result = with_instrumentation(item, index, options) do
           call_with_index(item, index, options, &block)
         end
+        case options[:break_condition]
+        when :any
+          return true if result
+        when :all
+          return false if !result
+        else
+          results << result
+        end
       end
-      results
+
+      case options[:break_condition]
+      when :any then false
+      when :all then true
+      else results
+      end
     ensure
       self.worker_number = nil
     end
@@ -321,14 +342,21 @@ module Parallel
             result = with_instrumentation item, index, options do
               call_with_index(item, index, options, &block)
             end
-            results_mutex.synchronize { results[index] = result }
+            case options[:break_condition]
+            when :any
+              raise Parallel::Break if result
+            when :all
+              raise Parallel::Break if !result
+            else
+              results_mutex.synchronize { results[index] = result }
+            end
           rescue StandardError => e
             exception = e
           end
         end
       end
 
-      handle_exception(exception, results)
+      handle_exception(exception, results, options)
     end
 
     def work_in_processes(job_factory, options, &blk)
@@ -361,7 +389,14 @@ module Parallel
                 result = with_instrumentation item, index, options do
                   worker.work(job_factory.pack(item, index))
                 end
-                results_mutex.synchronize { results[index] = result } # arrays are not threads safe on jRuby
+                case options[:break_condition]
+                when :any
+                  raise Parallel::Break if result
+                when :all
+                  raise Parallel::Break if !result
+                else
+                  results_mutex.synchronize { results[index] = result } # arrays are not threads safe on jRuby
+                end
               rescue StandardError => e
                 exception = e
                 if Parallel::Kill === exception
@@ -378,7 +413,7 @@ module Parallel
         end
       end
 
-      handle_exception(exception, results)
+      handle_exception(exception, results, options)
     end
 
     def replace_worker(job_factory, workers, i, options, blk)
@@ -438,10 +473,23 @@ module Parallel
       end
     end
 
-    def handle_exception(exception, results)
-      return nil if [Parallel::Break, Parallel::Kill].include? exception.class
-      raise exception if exception
-      results
+    def handle_exception(exception, results, options)
+      if exception
+        if [Parallel::Break, Parallel::Kill].include? exception.class
+          return case options[:break_condition]
+          when :any then true
+          when :all then false
+          else nil
+          end
+        end
+        raise exception
+      end
+
+      case options[:break_condition]
+      when :any then false
+      when :all then true
+      else results
+      end
     end
 
     # options is either a Integer or a Hash with :count

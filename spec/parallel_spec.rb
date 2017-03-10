@@ -419,6 +419,26 @@ describe Parallel do
     end
   end
 
+  describe ".any?" do
+    it "returns true if any result is truthy" do
+      `ruby spec/cases/any_true.rb`.split(',').should == ['true'] * 3 * 3
+    end
+
+    it "returns false if all results are falsy" do
+      `ruby spec/cases/any_false.rb`.split(',').should == ['false'] * 3 * 4
+    end
+  end
+
+  describe ".all?" do
+    it "returns true if all results are truthy" do
+      `ruby spec/cases/all_true.rb`.split(',').should == ['true'] * 3 * 4
+    end
+
+    it "returns false if any result is falsy" do
+      `ruby spec/cases/all_false.rb`.should == (['false'] * 3 * 3).join(' ')
+    end
+  end
+
   describe ".each" do
     it "returns original array, works like map" do
       `ruby spec/cases/each.rb`.should == 'a b c d'
