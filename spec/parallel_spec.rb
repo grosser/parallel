@@ -491,6 +491,16 @@ describe Parallel do
         %w(0 1 2 3).each { |number| out.should include number }
       end
     end
+
+    it "re-raises exceptions in work_direct" do
+      `METHOD=each WORKER_TYPE=threads WORKER_SIZE=0 ruby spec/cases/with_exception.rb 2>&1`
+        .should =~ /^1 raised$/
+    end
+
+    it "handles Break in work_direct" do
+      `METHOD=each WORKER_TYPE=threads WORKER_SIZE=0 ruby spec/cases/with_break.rb 2>&1`
+        .should =~ /^1 Parallel::Break raised - result 1\.\.100$/
+    end
   end
 
   describe ".each_with_index" do
@@ -550,7 +560,7 @@ describe Parallel do
     worker_types.each do |type|
       it "does not leak memory in #{type}" do
         pending if RUBY_ENGINE == 'jruby' # lots of objects ... GC does not seem to work ...
-        result = `ruby #{"-X+O" if RUBY_ENGINE == 'jruby'} spec/cases/profile_memroy.rb #{type} 2>&1`.strip.split("\n").last
+        result = `ruby #{"-X+O" if RUBY_ENGINE == 'jruby'} spec/cases/profile_memory.rb #{type} 2>&1`.strip.split("\n").last
         normalize(result).should == []
       end
     end

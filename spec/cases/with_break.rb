@@ -1,9 +1,11 @@
 require './spec/cases/helper'
+STDOUT.sync = true # otherwise results can go weird...
 
 method = ENV.fetch('METHOD')
 in_worker_type = "in_#{ENV.fetch('WORKER_TYPE')}".to_sym
+worker_size = (ENV['WORKER_SIZE'] || 4).to_i
 
-result = Parallel.public_send(method, 1..100, in_worker_type => 4) do |x|
+result = Parallel.public_send(method, 1..100, in_worker_type => worker_size) do |x|
   sleep 0.1 # so all workers get started
   print x
   raise Parallel::Break if x == 1

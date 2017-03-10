@@ -295,13 +295,18 @@ module Parallel
     def work_direct(job_factory, options, &block)
       self.worker_number = 0
       results = []
-      while set = job_factory.next
-        item, index = set
-        results << with_instrumentation(item, index, options) do
-          call_with_index(item, index, options, &block)
+      exception = nil
+      begin
+        while set = job_factory.next
+          item, index = set
+          results << with_instrumentation(item, index, options) do
+            call_with_index(item, index, options, &block)
+          end
         end
+      rescue
+        exception = $!
       end
-      results
+      handle_exception(exception, results)
     ensure
       self.worker_number = nil
     end
@@ -322,8 +327,8 @@ module Parallel
               call_with_index(item, index, options, &block)
             end
             results_mutex.synchronize { results[index] = result }
-          rescue StandardError => e
-            exception = e
+          rescue
+            exception = $!
           end
         end
       end
@@ -362,8 +367,8 @@ module Parallel
                   worker.work(job_factory.pack(item, index))
                 end
                 results_mutex.synchronize { results[index] = result } # arrays are not threads safe on jRuby
-              rescue StandardError => e
-                exception = e
+              rescue
+                exception = $!
                 if Parallel::Kill === exception
                   (workers - [worker]).each do |w|
                     w.thread.kill unless w.thread.nil?
@@ -431,8 +436,8 @@ module Parallel
         item, index = job_factory.unpack(data)
         result = begin
           call_with_index(item, index, options, &block)
-        rescue StandardError => e
-          ExceptionWrapper.new(e)
+        rescue
+          ExceptionWrapper.new($!)
         end
         Marshal.dump(result, write)
       end

@@ -1,5 +1,6 @@
 require 'parallel'
 require 'benchmark'
+require 'timeout'
 
 RSpec.configure do |config|
   config.expect_with(:rspec) { |c| c.syntax = :should }
