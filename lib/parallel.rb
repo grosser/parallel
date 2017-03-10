@@ -212,7 +212,16 @@ module Parallel
 
     def each(array, options={}, &block)
       map(array, options.merge(:preserve_results => false), &block)
-      array
+    end
+
+    def any?(*args, &block)
+      raise "You must provide a block when calling #any?" if block.nil?
+      !each(*args) { |*args| raise Parallel::Kill if block.call(*args) }
+    end
+
+    def all?(*args, &block)
+      raise "You must provide a block when calling #all?" if block.nil?
+      !!each(*args) { |*args| raise Parallel::Kill unless block.call(*args) }
     end
 
     def each_with_index(array, options={}, &block)
@@ -244,12 +253,15 @@ module Parallel
       options[:return_results] = (options[:preserve_results] != false || !!options[:finish])
       add_progress_bar!(job_factory, options)
 
-      if size == 0
+      results = if size == 0
         work_direct(job_factory, options, &block)
       elsif method == :in_threads
         work_in_threads(job_factory, options.merge(:count => size), &block)
       else
         work_in_processes(job_factory, options.merge(:count => size), &block)
+      end
+      if results
+        options[:return_results] ? results : source
       end
     end
 

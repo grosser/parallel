@@ -419,6 +419,26 @@ describe Parallel do
     end
   end
 
+  describe ".any?" do
+    it "returns true if any result is truthy" do
+      `ruby spec/cases/any_true.rb`.split(',').should == ['true'] * 3 * 2
+    end
+
+    it "returns false if all results are falsy" do
+      `ruby spec/cases/any_false.rb`.split(',').should == ['false'] * 3 * 3
+    end
+  end
+
+  describe ".all?" do
+    it "returns true if all results are truthy" do
+      `ruby spec/cases/all_true.rb`.split(',').should == ['true'] * 3 * 3
+    end
+
+    it "returns false if any result is falsy" do
+      `ruby spec/cases/all_false.rb`.split(',').should == ['false'] * 3 * 2
+    end
+  end
+
   describe ".each" do
     it "returns original array, works like map" do
       `ruby spec/cases/each.rb`.should == 'a b c d'
@@ -462,7 +482,7 @@ describe Parallel do
       end
 
       it "stops all workers when one raises Break in #{type}" do
-        `METHOD=each WORKER_TYPE=#{type} ruby spec/cases/with_break.rb 2>&1`.should =~ /^\d{4} Parallel::Break raised - result 1\.\.100$/
+        `METHOD=each WORKER_TYPE=#{type} ruby spec/cases/with_break.rb 2>&1`.should =~ /^\d{4} Parallel::Break raised - result nil$/
       end
 
       it "stops all workers when a start hook fails with #{type}" do
@@ -499,7 +519,7 @@ describe Parallel do
 
     it "handles Break in work_direct" do
       `METHOD=each WORKER_TYPE=threads WORKER_SIZE=0 ruby spec/cases/with_break.rb 2>&1`
-        .should =~ /^1 Parallel::Break raised - result 1\.\.100$/
+        .should =~ /^1 Parallel::Break raised - result nil$/
     end
   end
 
