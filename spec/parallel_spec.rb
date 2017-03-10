@@ -491,6 +491,16 @@ describe Parallel do
         %w(0 1 2 3).each { |number| out.should include number }
       end
     end
+
+    it "re-raises exceptions in work_direct" do
+      `METHOD=each WORKER_TYPE=threads WORKER_SIZE=0 ruby spec/cases/with_exception.rb 2>&1`
+        .should =~ /^1 raised$/
+    end
+
+    it "handles Break in work_direct" do
+      `METHOD=each WORKER_TYPE=threads WORKER_SIZE=0 ruby spec/cases/with_break.rb 2>&1`
+        .should =~ /^1 Parallel::Break raised - result 1\.\.100$/
+    end
   end
 
   describe ".each_with_index" do
