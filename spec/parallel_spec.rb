@@ -435,7 +435,29 @@ describe Parallel do
     end
 
     it "returns false if any result is falsy" do
-      `ruby spec/cases/all_false.rb`.should == (['false'] * 3 * 3).join(' ')
+      `ruby spec/cases/all_false.rb`.split(',').should == ['false'] * 3 * 3
+    end
+  end
+
+  describe ".find" do
+    it "returns the item when the condition returns true" do
+      `ruby spec/cases/find.rb`.split(',').should == ['green'] * 3
+    end
+
+    it "returns nil when it cannot find an item" do
+      `ruby spec/cases/find_no_results.rb`.split(',').should == ['nil'] * 3
+    end
+  end
+
+  describe ".find_all" do
+    it "returns an array containing all elements where the block is not false" do
+      `ruby spec/cases/find_all.rb`.split(',').should == ['red','green','purple','orange'] * 3
+    end
+  end
+
+  describe ".reject" do
+    it "returns an array containing all elements where the block returns false" do
+      `ruby spec/cases/reject.rb`.split(',').should == ['blue','yellow','violet'] * 3
     end
   end
 

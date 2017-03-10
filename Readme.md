@@ -37,7 +37,7 @@ items = [1,2,3]
 Parallel.each( -> { items.pop || Parallel::Stop }) { |number| ... }
 ```
 
-You can also call `any?` or `all?`, which work the same way as `Array#any?` and `Array#all?`.
+`any?` or `all?`, which work the same way as `Array#any?` and `Array#all?`.
 
 ```Ruby
 items = [1,2,3,4,5,6,7]
@@ -47,6 +47,21 @@ Parallel.any?(items) { |number| number == 4 }
 items = [1,2,nil,4,5]
 Parallel.all?(items)
 # => false
+```
+
+You can also call `find` (or `detect`), `find_all` (or `select`), or `reject`:
+
+```Ruby
+colors = ['red','blue','green','yellow','purple','violet']
+
+Parallel.find(colors) { |color| color.include? 'ee' }
+# => "green"
+
+Parallel.find_all(colors) { |color| color.include? 'r' }
+# => ["red", "green", "purple"]
+
+Parallel.reject(colors) { |color| color.include? 'r' }
+# => ["blue", "yellow", "violet"]
 ```
 
 
