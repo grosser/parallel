@@ -212,7 +212,16 @@ module Parallel
 
     def each(array, options={}, &block)
       map(array, options.merge(:preserve_results => false), &block)
-      array
+    end
+
+    def any?(*args, &block)
+      raise "You must provide a block when calling #any?" if block.nil?
+      !each(*args) { |*args| raise Parallel::Kill if block.call(*args) }
+    end
+
+    def all?(*args, &block)
+      raise "You must provide a block when calling #all?" if block.nil?
+      !!each(*args) { |*args| raise Parallel::Kill unless block.call(*args) }
     end
 
     def each_with_index(array, options={}, &block)
@@ -244,12 +253,15 @@ module Parallel
       options[:return_results] = (options[:preserve_results] != false || !!options[:finish])
       add_progress_bar!(job_factory, options)
 
-      if size == 0
+      results = if size == 0
         work_direct(job_factory, options, &block)
       elsif method == :in_threads
         work_in_threads(job_factory, options.merge(:count => size), &block)
       else
         work_in_processes(job_factory, options.merge(:count => size), &block)
+      end
+      if results
+        options[:return_results] ? results : source
       end
     end
 
@@ -295,13 +307,18 @@ module Parallel
     def work_direct(job_factory, options, &block)
       self.worker_number = 0
       results = []
-      while set = job_factory.next
-        item, index = set
-        results << with_instrumentation(item, index, options) do
-          call_with_index(item, index, options, &block)
+      exception = nil
+      begin
+        while set = job_factory.next
+          item, index = set
+          results << with_instrumentation(item, index, options) do
+            call_with_index(item, index, options, &block)
+          end
         end
+      rescue
+        exception = $!
       end
-      results
+      handle_exception(exception, results)
     ensure
       self.worker_number = nil
     end
@@ -322,8 +339,8 @@ module Parallel
               call_with_index(item, index, options, &block)
             end
             results_mutex.synchronize { results[index] = result }
-          rescue StandardError => e
-            exception = e
+          rescue
+            exception = $!
           end
         end
       end
@@ -362,8 +379,8 @@ module Parallel
                   worker.work(job_factory.pack(item, index))
                 end
                 results_mutex.synchronize { results[index] = result } # arrays are not threads safe on jRuby
-              rescue StandardError => e
-                exception = e
+              rescue
+                exception = $!
                 if Parallel::Kill === exception
                   (workers - [worker]).each do |w|
                     w.thread.kill unless w.thread.nil?
@@ -431,8 +448,8 @@ module Parallel
         item, index = job_factory.unpack(data)
         result = begin
           call_with_index(item, index, options, &block)
-        rescue StandardError => e
-          ExceptionWrapper.new(e)
+        rescue
+          ExceptionWrapper.new($!)
         end
         Marshal.dump(result, write)
       end
