@@ -295,13 +295,18 @@ module Parallel
     def work_direct(job_factory, options, &block)
       self.worker_number = 0
       results = []
-      while set = job_factory.next
-        item, index = set
-        results << with_instrumentation(item, index, options) do
-          call_with_index(item, index, options, &block)
+      exception = nil
+      begin
+        while set = job_factory.next
+          item, index = set
+          results << with_instrumentation(item, index, options) do
+            call_with_index(item, index, options, &block)
+          end
         end
+      rescue StandardError => e
+        exception = e
       end
-      results
+      handle_exception(exception, results)
     ensure
       self.worker_number = nil
     end
