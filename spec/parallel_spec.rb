@@ -550,7 +550,7 @@ describe Parallel do
     worker_types.each do |type|
       it "does not leak memory in #{type}" do
         pending if RUBY_ENGINE == 'jruby' # lots of objects ... GC does not seem to work ...
-        result = `ruby #{"-X+O" if RUBY_ENGINE == 'jruby'} spec/cases/profile_memroy.rb #{type} 2>&1`.strip.split("\n").last
+        result = `ruby #{"-X+O" if RUBY_ENGINE == 'jruby'} spec/cases/profile_memory.rb #{type} 2>&1`.strip.split("\n").last
         normalize(result).should == []
       end
     end
