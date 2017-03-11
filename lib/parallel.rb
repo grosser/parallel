@@ -15,13 +15,10 @@ module Parallel
   end
 
   class UndumpableException < StandardError
+    attr_reader :backtrace
     def initialize(original)
       super "#{original.class}: #{original.message}"
-      @bracktrace = original.backtrace
-    end
-
-    def backtrace
-      @bracktrace
+      @backtrace = original.backtrace
     end
   end
 
