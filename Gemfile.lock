@@ -69,6 +69,3 @@ DEPENDENCIES
   rspec-rerun
   ruby-progressbar
   sqlite3
-
-BUNDLED WITH
-   1.13.6

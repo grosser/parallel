@@ -15,13 +15,10 @@ module Parallel
   end
 
   class UndumpableException < StandardError
+    attr_reader :backtrace
     def initialize(original)
       super "#{original.class}: #{original.message}"
-      @bracktrace = original.backtrace
-    end
-
-    def backtrace
-      @bracktrace
+      @backtrace = original.backtrace
     end
   end
 
@@ -30,6 +27,12 @@ module Parallel
   class ExceptionWrapper
     attr_reader :exception
     def initialize(exception)
+      # Remove the bindings stack added by the better_errors gem,
+      # because it cannot be marshalled
+      if exception.instance_variable_defined? :@__better_errors_bindings_stack
+        exception.send :remove_instance_variable, :@__better_errors_bindings_stack
+      end
+
       @exception =
         begin
           Marshal.dump(exception) && exception
