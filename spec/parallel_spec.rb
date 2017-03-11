@@ -160,6 +160,11 @@ describe Parallel do
       out.should == "MyException: MyException\nBACKTRACE: spec/cases/parallel_raise_undumpable.rb:12"
     end
 
+    it "can handle Break exceptions when the better_errors gem is installed" do
+      out = `ruby spec/cases/parallel_break_better_errors.rb`.strip
+      out.should == "NOTHING WAS RAISED"
+    end
+
     it 'can handle to high fork rate' do
       unless RbConfig::CONFIG["target_os"] =~ /darwin1/
         `ruby spec/cases/parallel_high_fork_rate.rb`.should == 'OK'
