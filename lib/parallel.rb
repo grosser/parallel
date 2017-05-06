@@ -402,13 +402,15 @@ module Parallel
     end
 
     def replace_worker(job_factory, workers, i, options, blk)
-      # old worker is no longer used ... stop it
-      worker = workers[i]
-      worker.stop if worker
+      options[:mutex].synchronize do
+        # old worker is no longer used ... stop it
+        worker = workers[i]
+        worker.stop if worker
 
-      # create a new replacement worker
-      running = workers - [worker]
-      workers[i] = worker(job_factory, options.merge(started_workers: running, worker_number: i), &blk)
+        # create a new replacement worker
+        running = workers - [worker]
+        workers[i] = worker(job_factory, options.merge(started_workers: running, worker_number: i), &blk)
+      end
     end
 
     def create_workers(job_factory, options, &block)
