@@ -4,10 +4,12 @@ require "sqlite3"
 STDOUT.sync = true
 in_worker_type = "in_#{ENV.fetch('WORKER_TYPE')}".to_sym
 
+temp = Tempfile.new("db")
+
 ActiveRecord::Schema.verbose = false
 ActiveRecord::Base.establish_connection(
   :adapter => "sqlite3",
-  :database => Tempfile.new("db").path
+  :database => temp.path
 )
 
 class User < ActiveRecord::Base
@@ -34,3 +36,5 @@ end
 
 puts "Parent: #{User.first.name}"
 
+temp.close
+temp.unlink
