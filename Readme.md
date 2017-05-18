@@ -168,7 +168,7 @@ Authors
  - [Byron Bowerman](http://blog.bm5k.com/)
  - [Mikko Kokkonen](https://github.com/mikian)
  - [brian p o'rourke](https://github.com/bpo)
- - [Norio Sato]
+ - [Norio Sato](https://github.com/noriosato)
  - [Neal Stewart](https://github.com/n-time)
  - [Jurriaan Pruis](https://github.com/jurriaan)
  - [Rob Worley](https://github.com/robworley)
