@@ -534,6 +534,12 @@ describe Parallel do
     end
   end
 
+  describe ".tasks" do
+    it "run all tasks like each" do
+      ["one task\nanother task\n", "another task\none task\n"].should include `ruby spec/cases/tasks.rb 2>&1`
+    end
+  end
+
   describe "progress" do
     it "takes the title from :progress" do
       `ruby spec/cases/progress.rb 2>&1`.sub(/=+/, '==').strip.should == "Doing stuff: |==|"

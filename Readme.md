@@ -47,6 +47,14 @@ Parallel.all?([1,2,nil,4,5]) { |number| number != nil }
 # => false
 ```
 
+Use `tasks` for some different works
+
+```Ruby
+Parallel.tasks() do |tasks|
+  tasks.add{puts 'one task'}
+  tasks.add{system("echo 'another task'")}
+end
+```
 
 Processes/Threads are workers, they grab the next piece of work when they finish.
 
