@@ -219,12 +219,12 @@ module Parallel
 
     def any?(*args, &block)
       raise "You must provide a block when calling #any?" if block.nil?
-      !each(*args) { |*args| raise Parallel::Kill if block.call(*args) }
+      !each(*args) { |*a| raise Parallel::Kill if block.call(*a) }
     end
 
     def all?(*args, &block)
       raise "You must provide a block when calling #all?" if block.nil?
-      !!each(*args) { |*args| raise Parallel::Kill unless block.call(*args) }
+      !!each(*args) { |*a| raise Parallel::Kill unless block.call(*a) }
     end
 
     def each_with_index(array, options={}, &block)
