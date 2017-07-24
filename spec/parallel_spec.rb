@@ -50,7 +50,7 @@ describe Parallel do
       end
     else
       it 'doesnt use Etc.nprocessors in Ruby 2.1 and below' do
-        defined?(Etc).should == nil
+        defined?(Etc).should == "constant"
       end
     end
   end
