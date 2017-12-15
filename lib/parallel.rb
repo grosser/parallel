@@ -183,7 +183,7 @@ module Parallel
 
         Signal.trap signal do
           yield
-          if old == "DEFAULT" || !old.respond_to?(:call)
+          if !old || old == "DEFAULT"
             raise Interrupt
           else
             old.call
