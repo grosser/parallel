@@ -1,3 +1,9 @@
+Parallel
+==============
+
+[![Build Status](https://travis-ci.org/grosser/parallel.png)](https://travis-ci.org/grosser/parallel)
+
+
 Run any code in parallel Processes(> use all CPUs) or Threads(> speedup blocking operations).<br/>
 Best suited for map-reduce or e.g. parallel downloads/uploads.
 
@@ -190,4 +196,3 @@ Authors
 [Michael Grosser](http://grosser.it)<br/>
 michael@grosser.it<br/>
 License: MIT<br/>
-[![Build Status](https://travis-ci.org/grosser/parallel.png)](https://travis-ci.org/grosser/parallel)
