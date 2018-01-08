@@ -1,6 +1,6 @@
 Parallel
 ==============
-
+[![Gem Version](https://badge.fury.io/rb/parallel.svg)](https://rubygems.org/gems/parallel)
 [![Build Status](https://travis-ci.org/grosser/parallel.png)](https://travis-ci.org/grosser/parallel)
 
 
