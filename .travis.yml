@@ -4,11 +4,13 @@ sudo: false
 dist: precise
 branches:
   only: master
+before_install: gem update --system # needed for 2.5.0
 rvm:
-  - 1.9.3
-  - 2.0.0
-  - 2.1.6
-  - 2.2.9
-  - 2.3.6
-  - 2.4.3
+  - 1.9
+  - 2.0
+  - 2.1
+  - 2.2
+  - 2.3
+  - 2.4
+  - 2.5.0 # TODO: use 2.5
 
