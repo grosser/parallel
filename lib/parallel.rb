@@ -234,7 +234,9 @@ module Parallel
     def map(source, options = {}, &block)
       options[:mutex] = Mutex.new
 
-      if RUBY_PLATFORM =~ /java/ and not options[:in_processes]
+      if options[:in_processes] && options[:in_threads]
+        raise ArgumentError.new("Please specify only one of `in_processes` or `in_threads`.")
+      elsif RUBY_PLATFORM =~ /java/ and not options[:in_processes]
         method = :in_threads
         size = options[method] || processor_count
       elsif options[:in_threads]
