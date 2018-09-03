@@ -86,6 +86,10 @@ describe Parallel do
       `ruby spec/cases/parallel_with_set_processes.rb`.should == "HELLO\n" * 5
     end
 
+    it "enforces only one worker type" do
+      lambda { Parallel.map([1,2,3], in_processes: 2, in_threads: 3) }.should raise_error(ArgumentError)
+    end
+
     it "does not influence outside data" do
       `ruby spec/cases/parallel_influence_outside_data.rb`.should == "yes"
     end
