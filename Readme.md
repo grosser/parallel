@@ -132,6 +132,8 @@ They are called on the main process and protected with a mutex.
 Parallel.map(1..100, finish: -> (item, i, result) { ... do something ... }) { sleep 1 }
 ```
 
+_NOTE: If all you are trying to do is get the index, it is much more performant to use `each_with_index` instead._
+
 ### Worker number
 
 Use `Parallel.worker_number` to determine the worker slot in which your
