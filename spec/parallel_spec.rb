@@ -225,6 +225,10 @@ describe Parallel do
       }.should <= 3.5
     end
 
+    it "does not modify options" do
+      lambda { Parallel.map([], {}.freeze) }.should_not raise_error
+    end
+
     it "executes with given parameters" do
       `ruby spec/cases/parallel_map.rb`.should == "-a- -b- -c- -d-"
     end
@@ -233,7 +237,7 @@ describe Parallel do
       `ruby spec/cases/parallel_map_complex_objects.rb`.should == "YES"
     end
 
-    it "starts new process imediatly when old exists" do
+    it "starts new process immediately when old exists" do
       time_taken{
       `ruby spec/cases/parallel_map_uneven.rb`
       }.should <= 3.5

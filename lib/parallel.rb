@@ -232,6 +232,7 @@ module Parallel
     end
 
     def map(source, options = {}, &block)
+      options = options.dup
       options[:mutex] = Mutex.new
 
       if options[:in_processes] && options[:in_threads]
