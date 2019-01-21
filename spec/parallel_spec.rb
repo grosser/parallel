@@ -45,8 +45,8 @@ describe Parallel do
 
     if RUBY_VERSION.to_f >= 2.2
       it 'uses Etc.nprocessors in Ruby 2.2+' do
-        defined?(Etc).should == "constant" 
-        Etc.respond_to?(:nprocessors).should == true 
+        defined?(Etc).should == "constant"
+        Etc.respond_to?(:nprocessors).should == true
       end
     else
       it 'doesnt use Etc.nprocessors in Ruby 2.1 and below' do
@@ -598,7 +598,10 @@ describe Parallel do
 
   describe "GC" do
     def normalize(result)
-      result.sub(/\{(.*)\}/, "\\1").split(", ").reject { |x| x =~ /^(Hash|Array|String)=>(1|-1|-2)$/ }
+      result = result.sub(/\{(.*)\}/, "\\1").split(", ")
+      result.reject! { |x| x =~ /^(Hash|Array|String)=>(1|-1|-2)$/ }
+      result.reject! { |x| x =~ /^(Mutex)=>(1)$/ } if RUBY_VERSION < "2.0"
+      result
     end
 
     worker_types.each do |type|
