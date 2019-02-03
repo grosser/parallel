@@ -14,17 +14,31 @@ module Parallel
   class Kill < StandardError
   end
 
+  class UndumpableException < StandardError
+    attr_reader :backtrace
+    def initialize(original)
+      super "#{original.class}: #{original.message}"
+      @backtrace = original.backtrace
+    end
+  end
+
   Stop = Object.new
 
   class ExceptionWrapper
     attr_reader :exception
     def initialize(exception)
-      dumpable = Marshal.dump(exception) rescue nil
-      unless dumpable
-        exception = RuntimeError.new("Undumpable Exception -- #{exception.inspect}")
+      # Remove the bindings stack added by the better_errors gem,
+      # because it cannot be marshalled
+      if exception.instance_variable_defined? :@__better_errors_bindings_stack
+        exception.send :remove_instance_variable, :@__better_errors_bindings_stack
       end
 
-      @exception = exception
+      @exception =
+        begin
+          Marshal.dump(exception) && exception
+        rescue
+          UndumpableException.new(exception)
+        end
     end
   end
 
@@ -175,7 +189,7 @@ module Parallel
 
         Signal.trap signal do
           yield
-          if old == "DEFAULT"
+          if !old || old == "DEFAULT"
             raise Interrupt
           else
             old.call
@@ -194,7 +208,7 @@ module Parallel
   class << self
     def in_threads(options={:count => 2})
       count, _ = extract_count_from_options(options)
-      Array.new(count).each_with_index.map do |_, i|
+      Array.new(count) do |i|
         Thread.new { yield(i) }
       end.map!(&:value)
     end
@@ -207,7 +221,16 @@ module Parallel
 
     def each(array, options={}, &block)
       map(array, options.merge(:preserve_results => false), &block)
-      array
+    end
+
+    def any?(*args, &block)
+      raise "You must provide a block when calling #any?" if block.nil?
+      !each(*args) { |*a| raise Parallel::Kill if block.call(*a) }
+    end
+
+    def all?(*args, &block)
+      raise "You must provide a block when calling #all?" if block.nil?
+      !!each(*args) { |*a| raise Parallel::Kill unless block.call(*a) }
     end
 
     def each_with_index(array, options={}, &block)
@@ -215,9 +238,12 @@ module Parallel
     end
 
     def map(source, options = {}, &block)
+      options = options.dup
       options[:mutex] = Mutex.new
 
-      if RUBY_PLATFORM =~ /java/ and not options[:in_processes]
+      if options[:in_processes] && options[:in_threads]
+        raise ArgumentError.new("Please specify only one of `in_processes` or `in_threads`.")
+      elsif RUBY_PLATFORM =~ /java/ and not options[:in_processes]
         method = :in_threads
         size = options[method] || processor_count
       elsif options[:in_threads]
@@ -239,12 +265,15 @@ module Parallel
       options[:return_results] = (options[:preserve_results] != false || !!options[:finish])
       add_progress_bar!(job_factory, options)
 
-      if size == 0
+      results = if size == 0
         work_direct(job_factory, options, &block)
       elsif method == :in_threads
         work_in_threads(job_factory, options.merge(:count => size), &block)
       else
         work_in_processes(job_factory, options.merge(:count => size), &block)
+      end
+      if results
+        options[:return_results] ? results : source
       end
     end
 
@@ -294,13 +323,18 @@ module Parallel
     def work_direct(job_factory, options, &block)
       self.worker_number = 0
       results = []
-      while set = job_factory.next
-        item, index = set
-        results << with_instrumentation(item, index, options) do
-          call_with_index(item, index, options, nil, &block)
+      exception = nil
+      begin
+        while set = job_factory.next
+          item, index = set
+          results << with_instrumentation(item, index, options) do
+            call_with_index(item, index, options, nil, &block)
+          end
         end
+      rescue
+        exception = $!
       end
-      results
+      handle_exception(exception, results)
     ensure
       self.worker_number = nil
     end
@@ -321,8 +355,8 @@ module Parallel
               call_with_index(item, index, options, nil, &block)
             end
             results_mutex.synchronize { results[index] = result }
-          rescue StandardError => e
-            exception = e
+          rescue
+            exception = $!
           end
         end
       end
@@ -363,8 +397,8 @@ module Parallel
                 unless options[:results_on_end]
                   results_mutex.synchronize { results[index] = result } # arrays are not threads safe on jRuby
                 end
-              rescue StandardError => e
-                exception = e
+              rescue
+                exception = $!
                 if Parallel::Kill === exception
                   (workers - [worker]).each do |w|
                     w.thread.kill unless w.thread.nil?
@@ -384,13 +418,15 @@ module Parallel
     end
 
     def replace_worker(job_factory, workers, i, options, blk)
-      # old worker is no longer used ... stop it
-      worker = workers[i]
-      worker.stop if worker
+      options[:mutex].synchronize do
+        # old worker is no longer used ... stop it
+        worker = workers[i]
+        worker.stop if worker
 
-      # create a new replacement worker
-      running = workers - [worker]
-      workers[i] = worker(job_factory, options.merge(started_workers: running, worker_number: i), &blk)
+        # create a new replacement worker
+        running = workers - [worker]
+        workers[i] = worker(job_factory, options.merge(started_workers: running, worker_number: i), &blk)
+      end
     end
 
     def create_workers(job_factory, options, &block)
@@ -434,8 +470,8 @@ module Parallel
         item, index = job_factory.unpack(data)
         result = begin
           call_with_index(item, index, options, end_result, &block)
-        rescue StandardError => e
-          ExceptionWrapper.new(e)
+        rescue
+          ExceptionWrapper.new($!)
         end
         if options[:results_on_end] && !result.instance_of?(ExceptionWrapper)
           end_result = result

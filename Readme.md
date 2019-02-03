@@ -1,3 +1,9 @@
+Parallel
+==============
+[![Gem Version](https://badge.fury.io/rb/parallel.svg)](https://rubygems.org/gems/parallel)
+[![Build Status](https://travis-ci.org/grosser/parallel.png)](https://travis-ci.org/grosser/parallel)
+
+
 Run any code in parallel Processes(> use all CPUs) or Threads(> speedup blocking operations).<br/>
 Best suited for map-reduce or e.g. parallel downloads/uploads.
 
@@ -37,6 +43,16 @@ items = [1,2,3]
 Parallel.each( -> { items.pop || Parallel::Stop }) { |number| ... }
 ```
 
+You can also call `any?` or `all?`, which work the same way as `Array#any?` and `Array#all?`.
+
+```Ruby
+Parallel.any?([1,2,3,4,5,6,7]) { |number| number == 4 }
+# => true
+
+Parallel.all?([1,2,nil,4,5]) { |number| number != nil }
+# => false
+```
+
 Reduce will return results colleced from each worker. So you need to merge them on the end.
 ```Ruby
 result = Parallel.reduce(['a','b','c','d','a','b','c','d']) do |result,x|
@@ -56,7 +72,6 @@ result = Parallel.reduce(['a','b','c','d','a','b','c','d'], start_with: Set.new)
 end
 result.compact.reduce(&:+)
 ```
-
 
 Processes/Threads are workers, they grab the next piece of work when they finish.
 
@@ -112,7 +127,7 @@ Only use if whatever is executing in the sub-command is safe to kill at any poin
 ```Ruby
 Parallel.map([1,2,3]) do |x|
   raise Parallel::Kill if x == 1# -> stop all sub-processes, killing them instantly
-  sleep 100
+  sleep 100 # Do stuff
 end
 ```
 
@@ -136,6 +151,8 @@ They are called on the main process and protected with a mutex.
 Parallel.map(1..100, finish: -> (item, i, result) { ... do something ... }) { sleep 1 }
 ```
 
+_NOTE: If all you are trying to do is get the index, it is much more performant to use `each_with_index` instead._
+
 ### Worker number
 
 Use `Parallel.worker_number` to determine the worker slot in which your
@@ -152,8 +169,12 @@ Item: 5, Worker: 1
 
 Tips
 ====
+
+Here are a few notable options.
+
  - [Benchmark/Test] Disable threading/forking with `in_threads: 0` or `in_processes: 0`, great to test performance or to debug parallel issues
  - [Isolation] Do not reuse previous worker processes: `isolation: true`
+ - [Stop all processses with an alternate interrupt signal] `'INT'` (from `ctrl+c`) is caught by default. Catch `'TERM'` (from `kill`) with `interrupt_signal: 'TERM'`
 
 TODO
 ====
@@ -191,8 +212,8 @@ Authors
  - [Philip M. White](https://github.com/philipmw)
  - [Arlan Jaska](https://github.com/ajaska)
  - [Sean Walbran](https://github.com/seanwalbran)
+ - [Nathan Broadbent](https://github.com/ndbroadbent)
 
 [Michael Grosser](http://grosser.it)<br/>
 michael@grosser.it<br/>
 License: MIT<br/>
-[![Build Status](https://travis-ci.org/grosser/parallel.png)](https://travis-ci.org/grosser/parallel)

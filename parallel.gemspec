@@ -1,5 +1,6 @@
 name = "parallel"
-require "./lib/#{name}/version"
+$LOAD_PATH << File.expand_path('../lib', __FILE__)
+require "#{name}/version"
 
 Gem::Specification.new name, Parallel::VERSION do |s|
   s.summary = "Run any kind of code in parallel processes"

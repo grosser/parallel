@@ -42,6 +42,17 @@ describe Parallel do
         (1..999).should include(Parallel.processor_count)
       end
     end
+
+    if RUBY_VERSION.to_f >= 2.2
+      it 'uses Etc.nprocessors in Ruby 2.2+' do
+        defined?(Etc).should == "constant"
+        Etc.respond_to?(:nprocessors).should == true
+      end
+    else
+      it 'doesnt use Etc.nprocessors in Ruby 2.1 and below' do
+        defined?(Etc).should == "constant"
+      end
+    end
   end
 
   describe ".physical_processor_count" do
@@ -73,6 +84,10 @@ describe Parallel do
 
     it "set amount of parallel processes" do
       `ruby spec/cases/parallel_with_set_processes.rb`.should == "HELLO\n" * 5
+    end
+
+    it "enforces only one worker type" do
+      lambda { Parallel.map([1,2,3], in_processes: 2, in_threads: 3) }.should raise_error(ArgumentError)
     end
 
     it "does not influence outside data" do
@@ -154,7 +169,15 @@ describe Parallel do
     end
 
     it "can raise an undumpable exception" do
-      `ruby spec/cases/parallel_raise_undumpable.rb`.strip.should include('Undumpable Exception')
+      out = `ruby spec/cases/parallel_raise_undumpable.rb`.strip
+      out.sub!(Dir.pwd, '.') # relative paths
+      out.gsub!(/(\d+)\:.*/, "\\1") # no diff in ruby version xyz.rb:123:in `block in <main>'
+      out.should == "MyException: MyException\nBACKTRACE: spec/cases/parallel_raise_undumpable.rb:12"
+    end
+
+    it "can handle Break exceptions when the better_errors gem is installed" do
+      out = `ruby spec/cases/parallel_break_better_errors.rb`.strip
+      out.should == "NOTHING WAS RAISED"
     end
 
     it 'can handle to high fork rate' do
@@ -202,6 +225,10 @@ describe Parallel do
       }.should <= 3.5
     end
 
+    it "does not modify options" do
+      lambda { Parallel.map([], {}.freeze) }.should_not raise_error
+    end
+
     it "executes with given parameters" do
       `ruby spec/cases/parallel_map.rb`.should == "-a- -b- -c- -d-"
     end
@@ -210,7 +237,7 @@ describe Parallel do
       `ruby spec/cases/parallel_map_complex_objects.rb`.should == "YES"
     end
 
-    it "starts new process imediatly when old exists" do
+    it "starts new process immediately when old exists" do
       time_taken{
       `ruby spec/cases/parallel_map_uneven.rb`
       }.should <= 3.5
@@ -384,15 +411,16 @@ describe Parallel do
     end
 
     it 'can work in isolation' do
+      skip if ENV['TRAVIS'] # this randomly hangs on travis
       out = `ruby spec/cases/map_isolation.rb`
       out.should == "1\n2\n3\n4\nOK"
     end
 
     it 'sets Parallel.worker_number when run with isolation' do
+      skip if ENV['TRAVIS'] # this randomly hangs on travis
       out = `ruby spec/cases/map_worker_number_isolation.rb`
       out.should == "0,1\nOK"
     end
-
   end
 
   describe ".map_with_index" do
@@ -412,6 +440,26 @@ describe Parallel do
     it "can run with 0 processes" do
       Process.should_not_receive(:fork)
       Parallel.map_with_index([1,2,3,4,5,6,7,8,9], :in_processes => 0){|x,i| x+2 }.should == [3,4,5,6,7,8,9,10,11]
+    end
+  end
+
+  describe ".any?" do
+    it "returns true if any result is truthy" do
+      `ruby spec/cases/any_true.rb`.split(',').should == ['true'] * 3 * 2
+    end
+
+    it "returns false if all results are falsy" do
+      `ruby spec/cases/any_false.rb`.split(',').should == ['false'] * 3 * 3
+    end
+  end
+
+  describe ".all?" do
+    it "returns true if all results are truthy" do
+      `ruby spec/cases/all_true.rb`.split(',').should == ['true'] * 3 * 3
+    end
+
+    it "returns false if any result is falsy" do
+      `ruby spec/cases/all_false.rb`.split(',').should == ['false'] * 3 * 2
     end
   end
 
@@ -458,7 +506,7 @@ describe Parallel do
       end
 
       it "stops all workers when one raises Break in #{type}" do
-        `METHOD=each WORKER_TYPE=#{type} ruby spec/cases/with_break.rb 2>&1`.should =~ /^\d{4} Parallel::Break raised - result 1\.\.100$/
+        `METHOD=each WORKER_TYPE=#{type} ruby spec/cases/with_break.rb 2>&1`.should =~ /^\d{4} Parallel::Break raised - result nil$/
       end
 
       it "stops all workers when a start hook fails with #{type}" do
@@ -486,6 +534,16 @@ describe Parallel do
         out.should =~ /\A[0123]+\z/
         %w(0 1 2 3).each { |number| out.should include number }
       end
+    end
+
+    it "re-raises exceptions in work_direct" do
+      `METHOD=each WORKER_TYPE=threads WORKER_SIZE=0 ruby spec/cases/with_exception.rb 2>&1`
+        .should =~ /^1 raised$/
+    end
+
+    it "handles Break in work_direct" do
+      `METHOD=each WORKER_TYPE=threads WORKER_SIZE=0 ruby spec/cases/with_break.rb 2>&1`
+        .should =~ /^1 Parallel::Break raised - result nil$/
     end
   end
 
@@ -540,13 +598,16 @@ describe Parallel do
 
   describe "GC" do
     def normalize(result)
-      result.sub(/\{(.*)\}/, "\\1").split(", ").reject { |x| x =~ /^(Hash|Array|String)=>(1|-1|-2)$/ }
+      result = result.sub(/\{(.*)\}/, "\\1").split(", ")
+      result.reject! { |x| x =~ /^(Hash|Array|String)=>(1|-1|-2)$/ }
+      result.reject! { |x| x =~ /^(Mutex)=>(1)$/ } if RUBY_VERSION < "2.0"
+      result
     end
 
     worker_types.each do |type|
       it "does not leak memory in #{type}" do
         pending if RUBY_ENGINE == 'jruby' # lots of objects ... GC does not seem to work ...
-        result = `ruby #{"-X+O" if RUBY_ENGINE == 'jruby'} spec/cases/profile_memroy.rb #{type} 2>&1`.strip.split("\n").last
+        result = `ruby #{"-X+O" if RUBY_ENGINE == 'jruby'} spec/cases/profile_memory.rb #{type} 2>&1`.strip.split("\n").last
         normalize(result).should == []
       end
     end
