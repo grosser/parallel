@@ -53,27 +53,27 @@ Parallel.all?([1,2,nil,4,5]) { |number| number != nil }
 # => false
 ```
 
-Reduce will return results colleced from each worker. So you need to merge them on the end.
+To avoid overhead from reducing big result sets at the end of processing, use `reduce` this method will return results collected from each worker. You need to merge them on the end to get the fully reduced result.
+
 ```Ruby
 result = Parallel.reduce(['a','b','c','d','a','b','c','d']) do |result,x|
   result ||= Set.new
   result << x
   result
 end
-result.compact.reduce(&:+)
+result.reduce(&:+)
 ```
-Remember that if set is small and high number of workers some workers can return nil. So it is better to use "compact" before merging resuls.
 
-Reduce can be used with initial value similar to original reuse:
+Reduce can be used with initial value similar to original use:
 ```Ruby
 result = Parallel.reduce(['a','b','c','d','a','b','c','d'], start_with: Set.new) do |result,x|
   result << x
   result
 end
-result.compact.reduce(&:+)
+result.reduce(&:+)
 ```
 
-Processes/Threads are workers, they grab the next piece of work when they finish.
+Processes/Threads are workers, they grab the next piece of work when they finish. However in case of reduce the end result is returned only when all work is done.
 
 ### Processes
  - Speedup through multiple CPUs
