@@ -43,15 +43,9 @@ describe Parallel do
       end
     end
 
-    if RUBY_VERSION.to_f >= 2.2
-      it 'uses Etc.nprocessors in Ruby 2.2+' do
-        defined?(Etc).should == "constant"
-        Etc.respond_to?(:nprocessors).should == true
-      end
-    else
-      it 'doesnt use Etc.nprocessors in Ruby 2.1 and below' do
-        defined?(Etc).should == "constant"
-      end
+    it 'uses Etc.nprocessors in Ruby 2.2+' do
+      defined?(Etc).should == "constant"
+      Etc.respond_to?(:nprocessors).should == true
     end
   end
 
