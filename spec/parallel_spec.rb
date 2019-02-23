@@ -188,7 +188,7 @@ describe Parallel do
 
     it 'does not leave processes behind while running' do
       skip if ENV['TRAVIS'] # this randomly fails on travis all the time :(
-      `ruby spec/cases/closes_processes_at_runtime.rb`.should == 'OK'
+      `ruby spec/cases/closes_processes_at_runtime.rb`.split(/\n/).last.should == 'OK'
     end
 
     it "does not open unnecessary pipes" do
@@ -498,7 +498,7 @@ describe Parallel do
 
     worker_types.each do |type|
       it "works with SQLite in #{type}" do
-        `WORKER_TYPE=#{type} ruby spec/cases/each_with_ar_sqlite.rb 2>&1`.should == "Parent: X\nParallel (in_#{type}): XXX\nParent: X\n"
+        `WORKER_TYPE=#{type} ruby spec/cases/each_with_ar_sqlite.rb 2>&1`.split(/\n/).last(3).join("\n").should == "Parent: X\nParallel (in_#{type}): XXX\nParent: X"
       end
 
       it "stops all workers when one fails in #{type}" do
