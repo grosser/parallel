@@ -275,6 +275,10 @@ module Parallel
       map(array, options.merge(:with_index => true), &block)
     end
 
+    def flat_map(*args, &block)
+      map(*args, &block).flatten(1)
+    end
+
     def worker_number
       Thread.current[:parallel_worker_number]
     end

@@ -34,7 +34,7 @@ Same can be done with `each`
 ```Ruby
 Parallel.each(['a','b','c']) { |one_letter| ... }
 ```
-or `each_with_index` or `map_with_index`
+or `each_with_index`, `map_with_index`, `flat_map`
 
 Produce one item at a time with `lambda` (anything that responds to `.call`) or `Queue`.
 
