@@ -392,7 +392,7 @@ module Parallel
               rescue
                 exception = $!
                 if Parallel::Kill === exception
-                  (workers - [worker]).each do |w|
+                  (workers - [worker]).compact.each do |w|
                     w.thread.kill unless w.thread.nil?
                     UserInterruptHandler.kill(w.pid)
                   end
@@ -436,7 +436,7 @@ module Parallel
         self.worker_number = options[:worker_number]
 
         begin
-          options.delete(:started_workers).each(&:close_pipes)
+          options.delete(:started_workers).compact.each(&:close_pipes)
 
           parent_write.close
           parent_read.close
