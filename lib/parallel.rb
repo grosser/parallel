@@ -283,6 +283,7 @@ module Parallel
       Thread.current[:parallel_worker_number]
     end
 
+    # TODO: this does not work when doing threads in forks, so should remove and yield the number instead if needed
     def worker_number=(worker_num)
       Thread.current[:parallel_worker_number] = worker_num
     end
@@ -359,11 +360,7 @@ module Parallel
     end
 
     def work_in_processes(job_factory, options, &blk)
-      workers = if options[:isolation]
-        [] # we create workers per job and not beforehand
-      else
-        create_workers(job_factory, options, &blk)
-      end
+      workers = create_workers(job_factory, options, &blk)
       results = []
       results_mutex = Mutex.new # arrays are not thread-safe
       exception = nil
@@ -371,6 +368,7 @@ module Parallel
       UserInterruptHandler.kill_on_ctrl_c(workers.map(&:pid), options) do
         in_threads(options) do |i|
           worker = workers[i]
+          worker.thread = Thread.current
 
           begin
             loop do
@@ -379,28 +377,29 @@ module Parallel
               break unless index
 
               if options[:isolation]
-                worker = replace_worker(job_factory, workers, i, options, blk)
+                lap ||= 0
+                lap += 1
+                replace_worker(job_factory, workers, i, options, blk) if lap > 1
+                worker.thread = Thread.current
               end
-
-              worker.thread = Thread.current
 
               begin
                 result = with_instrumentation item, index, options do
                   worker.work(job_factory.pack(item, index))
                 end
                 results_mutex.synchronize { results[index] = result } # arrays are not threads safe on jRuby
-              rescue
-                exception = $!
+              rescue StandardError => e
+                exception = e
                 if Parallel::Kill === exception
                   (workers - [worker]).each do |w|
-                    w.thread.kill unless w.thread.nil?
+                    w.thread.kill if w.thread
                     UserInterruptHandler.kill(w.pid)
                   end
                 end
               end
             end
           ensure
-            worker.stop if worker
+            worker.stop
           end
         end
       end
