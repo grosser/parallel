@@ -409,6 +409,32 @@ describe Parallel do
       state[1].should == :ready
     end
 
+    it "processes can be killed instantly" do
+      pipes = [IO.pipe, IO.pipe]
+      thread = Thread.new do
+        Parallel.map([0, 1, 2, 3], :in_processes => 2) do |i|
+          pipes[i%2][0].close unless pipes[i%2][0].closed?
+          Marshal.dump('finish', pipes[i%2][1])
+          sleep 1
+          nil
+        end
+      end
+      [0, 1].each do |i|
+        Marshal.load(pipes[i][0]).should == 'finish'
+      end
+      pipes.each { |pipe| pipe[1].close }
+      thread.kill
+      pipes.each do |pipe|
+        begin
+          ret = Marshal.load(pipe[0])
+        rescue EOFError
+          ret = :error
+        end
+        ret.should == :error
+      end
+      pipes.each { |pipe| pipe[0].close }
+    end
+
     it "synchronizes :start and :finish" do
       out = `ruby spec/cases/synchronizes_start_and_finish.rb`
       %w{a b c}.each {|letter|
