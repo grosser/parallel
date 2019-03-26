@@ -205,7 +205,7 @@ module Parallel
       threads = Array.new(count) do |i|
         Thread.new { yield(i) }
       end
-      threads.map!(&:value)
+      threads.map(&:value)
     ensure
       threads.each(&:kill)
     end
