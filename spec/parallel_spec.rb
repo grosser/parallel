@@ -385,9 +385,54 @@ describe Parallel do
       `ruby spec/cases/eof_in_process.rb 2>&1`.should include 'Yep, EOF'
     end
 
-    it "can be killed instantly" do
-      result = `ruby spec/cases/parallel_kill.rb 2>&1`
-      result.should == "DEAD\nWorks nil\n"
+    it "threads can be killed instantly" do
+      mutex = Mutex.new
+      state = [nil, nil]
+      children = [nil, nil]
+      thread = Thread.new do
+        parent = Thread.current
+        Parallel.map([0,1], :in_threads => 2) do |i|
+          mutex.synchronize { children[i] = Thread.current }
+          mutex.synchronize { state[i] = :ready }
+          parent.join
+          mutex.synchronize { state[i] = :error }
+        end
+      end
+      while state.any? { |s| s.nil? }
+        Thread.pass
+      end
+      thread.kill
+      while children.any? { |c| c.alive? }
+        Thread.pass
+      end
+      state[0].should == :ready
+      state[1].should == :ready
+    end
+
+    it "processes can be killed instantly" do
+      pipes = [IO.pipe, IO.pipe]
+      thread = Thread.new do
+        Parallel.map([0, 1, 2, 3], :in_processes => 2) do |i|
+          pipes[i%2][0].close unless pipes[i%2][0].closed?
+          Marshal.dump('finish', pipes[i%2][1])
+          sleep 1
+          nil
+        end
+      end
+      [0, 1].each do |i|
+        Marshal.load(pipes[i][0]).should == 'finish'
+      end
+      pipes.each { |pipe| pipe[1].close }
+      thread.kill
+      pipes.each do |pipe|
+        begin
+          ret = Marshal.load(pipe[0])
+        rescue EOFError
+          ret = :error
+        end
+        ret.should == :error
+      end
+      pipes.each { |pipe| pipe[0].close }
     end
 
     it "synchronizes :start and :finish" do
