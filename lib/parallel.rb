@@ -22,7 +22,7 @@ module Parallel
     end
   end
 
-  Stop = Object.new
+  Stop = Object.new.freeze
 
   class ExceptionWrapper
     attr_reader :exception
