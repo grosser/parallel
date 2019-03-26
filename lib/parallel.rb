@@ -465,7 +465,11 @@ module Parallel
         rescue
           ExceptionWrapper.new($!)
         end
-        Marshal.dump(result, write)
+        begin
+          Marshal.dump(result, write)
+        rescue Errno::EPIPE
+          return # parent thread already dead
+        end
       end
     end
 
