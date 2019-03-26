@@ -4,9 +4,12 @@ sudo: false
 dist: precise
 branches:
   only: master
+before_install:
+  - travis_retry gem update --system
+  - travis_retry gem install bundler --no-document
 rvm:
   - 2.2
   - 2.3
   - 2.4
   - 2.5
-  - 2.6.1
+  - 2.6.2
