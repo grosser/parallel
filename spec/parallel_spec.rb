@@ -385,9 +385,28 @@ describe Parallel do
       `ruby spec/cases/eof_in_process.rb 2>&1`.should include 'Yep, EOF'
     end
 
-    it "can be killed instantly" do
-      result = `ruby spec/cases/parallel_kill.rb 2>&1`
-      result.should == "DEAD\nWorks nil\n"
+    it "threads can be killed instantly" do
+      mutex = Mutex.new
+      state = [nil, nil]
+      children = [nil, nil]
+      thread = Thread.new do
+        parent = Thread.current
+        Parallel.map([0,1], :in_threads => 2) do |i|
+          mutex.synchronize { children[i] = Thread.current }
+          mutex.synchronize { state[i] = :ready }
+          parent.join
+          mutex.synchronize { state[i] = :error }
+        end
+      end
+      while state.any? { |s| s.nil? }
+        Thread.pass
+      end
+      thread.kill
+      while children.any? { |c| c.alive? }
+        Thread.pass
+      end
+      state[0].should == :ready
+      state[1].should == :ready
     end
 
     it "synchronizes :start and :finish" do
