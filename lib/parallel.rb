@@ -44,10 +44,9 @@ module Parallel
 
   class Worker
     attr_reader :pid, :read, :write
-    attr_accessor :thread, :lap
+    attr_accessor :thread
     def initialize(read, write, pid)
       @read, @write, @pid = read, write, pid
-      @lap = 0
     end
 
     def stop
@@ -373,6 +372,7 @@ module Parallel
         in_threads(options) do |i|
           worker = workers[i]
           worker.thread = Thread.current
+          worked = false
 
           begin
             loop do
@@ -381,8 +381,8 @@ module Parallel
               break unless index
 
               if options[:isolation]
-                worker = replace_worker(job_factory, workers, i, options, blk) if worker.lap > 0
-                worker.lap += 1
+                worker = replace_worker(job_factory, workers, i, options, blk) if worked
+                worked = true
                 worker.thread = Thread.current
               end
 
