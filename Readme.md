@@ -195,6 +195,7 @@ Authors
  - [Sean Walbran](https://github.com/seanwalbran)
  - [Nathan Broadbent](https://github.com/ndbroadbent)
  - [Yuki Inoue](https://github.com/Yuki-Inoue)
+ - [Takumasa Ochi](https://github.com/aeroastro)
 
 [Michael Grosser](http://grosser.it)<br/>
 michael@grosser.it<br/>
