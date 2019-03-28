@@ -208,7 +208,7 @@ module Parallel
           count.times do |i|
             threads << Thread.new { yield(i) }
           end
-          Thread.handle_interrupt(Exception => :always) do
+          Thread.handle_interrupt(Exception => :immediate) do
             threads.map(&:value)
           end
         ensure
