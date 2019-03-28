@@ -44,9 +44,10 @@ module Parallel
 
   class Worker
     attr_reader :pid, :read, :write
-    attr_accessor :thread
+    attr_accessor :thread, :lap
     def initialize(read, write, pid)
       @read, @write, @pid = read, write, pid
+      @lap = 0
     end
 
     def stop
@@ -380,9 +381,8 @@ module Parallel
               break unless index
 
               if options[:isolation]
-                lap ||= 0
-                lap += 1
-                replace_worker(job_factory, workers, i, options, blk) if lap > 1
+                worker = replace_worker(job_factory, workers, i, options, blk) if worker.lap > 0
+                worker.lap += 1
                 worker.thread = Thread.current
               end
 
@@ -414,7 +414,7 @@ module Parallel
       options[:mutex].synchronize do
         # old worker is no longer used ... stop it
         worker = workers[i]
-        worker.stop if worker
+        worker.stop
 
         # create a new replacement worker
         running = workers - [worker]
