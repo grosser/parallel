@@ -450,7 +450,6 @@ describe Parallel do
     end
 
     it 'can work in isolation' do
-      skip if ENV['TRAVIS'] # this randomly hangs on travis
       out = `ruby spec/cases/map_isolation.rb`
       out.should == "1\n2\n3\n4\nOK"
     end
