@@ -1,7 +1,7 @@
 Parallel
 ==============
 [![Gem Version](https://badge.fury.io/rb/parallel.svg)](https://rubygems.org/gems/parallel)
-[![Build Status](https://travis-ci.org/grosser/parallel.png)](https://travis-ci.org/grosser/parallel)
+[![Build Status](https://travis-ci.org/grosser/parallel.svg?branch=master)](https://travis-ci.org/grosser/parallel)
 
 
 Run any code in parallel Processes(> use all CPUs) or Threads(> speedup blocking operations).<br/>
@@ -34,7 +34,7 @@ Same can be done with `each`
 ```Ruby
 Parallel.each(['a','b','c']) { |one_letter| ... }
 ```
-or `each_with_index` or `map_with_index`
+or `each_with_index`, `map_with_index`, `flat_map`
 
 Produce one item at a time with `lambda` (anything that responds to `.call`) or `Queue`.
 
@@ -194,6 +194,8 @@ Authors
  - [Arlan Jaska](https://github.com/ajaska)
  - [Sean Walbran](https://github.com/seanwalbran)
  - [Nathan Broadbent](https://github.com/ndbroadbent)
+ - [Yuki Inoue](https://github.com/Yuki-Inoue)
+ - [Takumasa Ochi](https://github.com/aeroastro)
 
 [Michael Grosser](http://grosser.it)<br/>
 michael@grosser.it<br/>
