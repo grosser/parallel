@@ -10,8 +10,14 @@ Best suited for map-reduce or e.g. parallel downloads/uploads.
 Install
 =======
 
-```Bash
+Directly:
+```bash
 gem install parallel
+```
+With Gemfile:
+```ruby
+source "https://rubygems.org"
+gem 'parallel'
 ```
 
 Usage
