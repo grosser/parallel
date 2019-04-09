@@ -1,5 +1,5 @@
 language: ruby
-dist: precise
+dist: xenial
 branches:
   only: master
 rvm:
