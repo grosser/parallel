@@ -9,4 +9,21 @@ rvm:
   - 2.4
   - 2.5
   - 2.6
+
+env:
+  - RUBYOPT="--jit"
+  - ""
+
+matrix:
+  exclude:
+    - rvm: 2.2
+      env: RUBYOPT="--jit"
+    - rvm: 2.3
+      env: RUBYOPT="--jit"
+    - rvm: 2.4
+      env: RUBYOPT="--jit"
+    - rvm: 2.5
+      env: RUBYOPT="--jit"
+
+
 before_install: ruby -e "File.write('Gemfile.lock', File.read('Gemfile.lock').split('BUNDLED WITH').first)"
