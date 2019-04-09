@@ -1,5 +1,4 @@
 language: ruby
-cache: bundler
 dist: precise
 branches:
   only: 
