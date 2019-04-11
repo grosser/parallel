@@ -1,5 +1,5 @@
 language: ruby
-dist: xenial
+dist: precise
 branches:
   only: master
 rvm:
@@ -9,19 +9,9 @@ rvm:
   - 2.5
   - 2.6
 
-env:
-  - RUBYOPT="--jit"
-  - ""
-
 matrix:
-  exclude:
-    - rvm: 2.2
-      env: RUBYOPT="--jit"
-    - rvm: 2.3
-      env: RUBYOPT="--jit"
-    - rvm: 2.4
-      env: RUBYOPT="--jit"
-    - rvm: 2.5
+  include:
+    - rvm: 2.6
       env: RUBYOPT="--jit"
   allow_failures:
     - env: RUBYOPT="--jit"
