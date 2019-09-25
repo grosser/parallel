@@ -156,6 +156,7 @@ Here are a few notable options.
  - [Benchmark/Test] Disable threading/forking with `in_threads: 0` or `in_processes: 0`, great to test performance or to debug parallel issues
  - [Isolation] Do not reuse previous worker processes: `isolation: true`
  - [Stop all processses with an alternate interrupt signal] `'INT'` (from `ctrl+c`) is caught by default. Catch `'TERM'` (from `kill`) with `interrupt_signal: 'TERM'`
+ - You can set the environment variable `PARALLEL_OVERRIDE_PROCESSOR_COUNT` to use a custom default value of procesess / threads instead of the number of processors detected.
 
 TODO
 ====

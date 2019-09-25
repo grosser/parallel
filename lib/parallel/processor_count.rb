@@ -5,7 +5,7 @@ module Parallel
     # Number of processors seen by the OS and used for process scheduling. It's just wrapper for Etc.nprocessors
     def processor_count
       @processor_count ||= begin
-        Etc.nprocessors
+        (ENV['PARALLEL_OVERRIDE_PROCESSOR_COUNT'] || Etc.nprocessors).to_i
       end
     end
 
