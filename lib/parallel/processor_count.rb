@@ -1,16 +1,14 @@
 require 'etc'
 
 module Parallel
+  # TODO: inline this method into parallel.rb and kill physical_processor_count in next major release
   module ProcessorCount
-    # Number of processors seen by the OS and used for process scheduling. It's just wrapper for Etc.nprocessors
+    # Number of processors seen by the OS, used for process scheduling
     def processor_count
-      @processor_count ||= begin
-        (ENV['PARALLEL_OVERRIDE_PROCESSOR_COUNT'] || Etc.nprocessors).to_i
-      end
+      @processor_count ||= Integer(ENV['PARALLEL_PROCESSOR_COUNT'] || Etc.nprocessors)
     end
 
     # Number of physical processor cores on the current system.
-    #
     def physical_processor_count
       @physical_processor_count ||= begin
         ppc = case RbConfig::CONFIG["target_os"]
