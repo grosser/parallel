@@ -76,6 +76,10 @@ describe Parallel do
       `ruby spec/cases/parallel_with_nil_uses_detected_cpus.rb`.should == "HELLO\n" * cpus
     end
 
+    it "executes with cpus from ENV" do
+      `PARALLEL_PROCESSOR_COUNT=10 ruby spec/cases/parallel_with_detected_cpus.rb`.should == "HELLO\n" * 10
+    end
+
     it "set amount of parallel processes" do
       `ruby spec/cases/parallel_with_set_processes.rb`.should == "HELLO\n" * 5
     end
