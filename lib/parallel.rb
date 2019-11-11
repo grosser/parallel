@@ -469,7 +469,7 @@ module Parallel
         item, index = job_factory.unpack(data)
         result = begin
           call_with_index(item, index, options, &block)
-        rescue SystemExit
+        rescue SystemExit, SignalException
           raise $!
         rescue Exception
           ExceptionWrapper.new($!)
