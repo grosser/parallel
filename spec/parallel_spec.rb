@@ -385,6 +385,10 @@ describe Parallel do
       `ruby spec/cases/exit_in_process.rb 2>&1`.should include "Yep, DEAD"
     end
 
+    it "should rescue the Exception raised in child process" do
+      `ruby spec/cases/exception_raised_in_process.rb 2>&1`.should include "Yep, rescued the exception"
+    end
+
     it 'raises EOF (not DeadWorker) when a worker raises EOF in process' do
       `ruby spec/cases/eof_in_process.rb 2>&1`.should include 'Yep, EOF'
     end
