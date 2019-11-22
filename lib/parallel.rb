@@ -469,7 +469,8 @@ module Parallel
         item, index = job_factory.unpack(data)
         result = begin
           call_with_index(item, index, options, &block)
-        rescue SystemExit, SignalException
+        # https://github.com/rspec/rspec-support/blob/673133cdd13b17077b3d88ece8d7380821f8d7dc/lib/rspec/support.rb#L132-L140
+        rescue NoMemoryError, SignalException, Interrupt, SystemExit
           raise $!
         rescue Exception
           ExceptionWrapper.new($!)
