@@ -70,13 +70,10 @@ Processes/Threads are workers, they grab the next piece of work when they finish
 
 ### ActiveRecord
 
-Parallel can be used with ActiveRecord. However, there may be a few pitfalls
-you should know of.
+#### Connection Lost
 
-#### Database Connection Loss
-
-Multithreading in ActiveRecords needs connection pooling or explicit
-reconnects. Try any of those to get working parallel AR:
+ - Multithreading needs connection pooling, forks need reconnects
+ - Adjust connection pool size in `config/database.yml` when multithreading
 
 ```Ruby
 # reproducibly fixes things (spec/cases/map_with_ar.rb)
@@ -99,28 +96,12 @@ Parallel.each(User.all, in_processes: 8) do |user|
 end
 ```
 
-You may also want to bump up your connection pool size in
-`config/database.yml`.
+#### NameError: uninitialized constant
 
-#### Unexpected and Random "NameError: unintialized constant"
+A race happens when ActiveRecord models are autoloaded inside parallel threads
+in environments that lazy-load, like development, test, or migrations.
 
-There's a potential race when ActiveRecord models are going to be autoloaded
-from within Parallel code blocks. This is mostly only visible in environments
-not preloading the whole application, like development/test/migrations.
-
-This problem usually shows up more or less randomly and your code fails with
-`NameError: uninitialized constant ModelName` although the class should be
-clearly available.
-
-To fix this, simply force preloading of autoloaded classes by either
-explicitely using `require '<modelname>'` or simply calling your class using
-`ModelName.class` just before the `Parallel.each` block.
-
-Keep in mind: Your models may require other models in turn at runtime
-resulting in more autoloads. Just add those classes, too, and take note of it
-for future reference.
-
-Reference: https://github.com/grosser/parallel/issues/150
+To fix, autoloaded classes before the parallel block with either `require '<modelname>'` or  `ModelName.class`.
 
 ### Break
 
