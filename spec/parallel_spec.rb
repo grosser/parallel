@@ -467,6 +467,11 @@ describe Parallel do
       out = `ruby spec/cases/map_worker_number_isolation.rb`
       out.should == "0,1\nOK"
     end
+
+    it 'can use Timeout' do
+      out = `ruby spec/cases/timeout_in_threads.rb`
+      out.should == "OK\n"
+    end
   end
 
   describe ".map_with_index" do
