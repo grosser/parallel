@@ -1,11 +1,11 @@
 require './spec/cases/helper'
 require "active_record"
 require "sqlite3"
+require "tempfile"
 STDOUT.sync = true
 in_worker_type = "in_#{ENV.fetch('WORKER_TYPE')}".to_sym
 
-Tempfile.open("db") do |temp|
-
+Tempfile.create("db") do |temp|
   ActiveRecord::Schema.verbose = false
   ActiveRecord::Base.establish_connection(
     :adapter => "sqlite3",
