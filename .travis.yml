@@ -1,17 +1,15 @@
 language: ruby
 dist: precise
 branches:
-  only: master
+  only: [master]
 rvm:
-  - 2.2
-  - 2.3
-  - 2.4
   - 2.5
   - 2.6
+  - 2.7
 
 matrix:
   include:
-    - rvm: 2.6
+    - rvm: 2.7
       env: RUBYOPT="--jit"
   allow_failures:
     - env: RUBYOPT="--jit"
