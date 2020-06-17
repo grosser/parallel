@@ -179,9 +179,8 @@ describe Parallel do
     end
 
     it 'can handle to high fork rate' do
-      unless RbConfig::CONFIG["target_os"] =~ /darwin1/
-        `ruby spec/cases/parallel_high_fork_rate.rb`.should == 'OK'
-      end
+      next if RbConfig::CONFIG["target_os"].include?("darwin1") # kills macs for some reason
+      `ruby spec/cases/parallel_high_fork_rate.rb`.should == 'OK'
     end
 
     it 'does not leave processes behind while running' do
@@ -190,9 +189,8 @@ describe Parallel do
     end
 
     it "does not open unnecessary pipes" do
-      open_pipes = `lsof | grep pipe | wc -l`.to_i
-      max_pipes = `ruby spec/cases/count_open_pipes.rb`.to_i
-      (max_pipes - open_pipes).should < 400
+      max = (RbConfig::CONFIG["target_os"].include?("darwin1") ? 10 : 1500) # somehow super bad on travis
+      `ruby spec/cases/count_open_pipes.rb`.to_i.should < max
     end
   end
 
@@ -212,7 +210,10 @@ describe Parallel do
     end
 
     it "raises when a thread raises" do
+      Thread.report_on_exception = false
       lambda{ Parallel.in_threads(2){|i| raise "TEST"} }.should raise_error("TEST")
+    ensure
+      Thread.report_on_exception = true
     end
   end
 
