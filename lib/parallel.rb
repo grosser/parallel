@@ -350,13 +350,17 @@ module Parallel
       results = []
       results_mutex = Mutex.new # arrays are not thread-safe on jRuby
       exception = nil
+      max_work_times = Array.new(options[:count], job_factory.size/options[:count])
+      max_work_times.map!.with_index { |times,i| i <(job_factory.size % options[:count]) ? times += 1 : times }
 
       in_threads(options) do |worker_num|
         self.worker_number = worker_num
         # as long as there are more jobs, work on one of them
-        while !exception && set = job_factory.next
+        loop.with_index(1) do |_, count|
+          break if exception || (count > max_work_times[worker_num])
           begin
-            item, index = set
+            item, index = job_factory.next
+            break unless index
             result = with_instrumentation item, index, options do
               call_with_index(item, index, options, &block)
             end
@@ -375,6 +379,8 @@ module Parallel
       results = []
       results_mutex = Mutex.new # arrays are not thread-safe
       exception = nil
+      max_work_times = Array.new(options[:count], job_factory.size/options[:count])
+      max_work_times.map!.with_index { |times,i| i <(job_factory.size % options[:count]) ? times += 1 : times }
 
       UserInterruptHandler.kill_on_ctrl_c(workers.map(&:pid), options) do
         in_threads(options) do |i|
@@ -383,8 +389,8 @@ module Parallel
           worked = false
 
           begin
-            loop do
-              break if exception
+            loop.with_index(1) do |_, count|
+              break if exception || (count > max_work_times[i])
               item, index = job_factory.next
               break unless index
 
