@@ -266,6 +266,10 @@ module Parallel
 
       job_factory = JobFactory.new(source, options[:mutex])
       size = [job_factory.size, size].min
+      unless size == 0
+        max_work_times = Array.new(size, job_factory.size/size)
+        max_work_times.map!.with_index { |times,i| i <(job_factory.size % size) ? times += 1 : times }
+      end
 
       options[:return_results] = (options[:preserve_results] != false || !!options[:finish])
       add_progress_bar!(job_factory, options)
@@ -273,9 +277,9 @@ module Parallel
       results = if size == 0
         work_direct(job_factory, options, &block)
       elsif method == :in_threads
-        work_in_threads(job_factory, options.merge(:count => size), &block)
+        work_in_threads(job_factory, options.merge(:count => size, :max => max_work_times), &block)
       else
-        work_in_processes(job_factory, options.merge(:count => size), &block)
+        work_in_processes(job_factory, options.merge(:count => size, :max => max_work_times), &block)
       end
       if results
         options[:return_results] ? results : source
@@ -350,14 +354,12 @@ module Parallel
       results = []
       results_mutex = Mutex.new # arrays are not thread-safe on jRuby
       exception = nil
-      max_work_times = Array.new(options[:count], job_factory.size/options[:count])
-      max_work_times.map!.with_index { |times,i| i <(job_factory.size % options[:count]) ? times += 1 : times }
 
       in_threads(options) do |worker_num|
         self.worker_number = worker_num
         # as long as there are more jobs, work on one of them
         loop.with_index(1) do |_, count|
-          break if exception || (count > max_work_times[worker_num])
+          break if exception || (count > options[:max][worker_num])
           begin
             item, index = job_factory.next
             break unless index
@@ -379,8 +381,6 @@ module Parallel
       results = []
       results_mutex = Mutex.new # arrays are not thread-safe
       exception = nil
-      max_work_times = Array.new(options[:count], job_factory.size/options[:count])
-      max_work_times.map!.with_index { |times,i| i <(job_factory.size % options[:count]) ? times += 1 : times }
 
       UserInterruptHandler.kill_on_ctrl_c(workers.map(&:pid), options) do
         in_threads(options) do |i|
@@ -390,7 +390,7 @@ module Parallel
 
           begin
             loop.with_index(1) do |_, count|
-              break if exception || (count > max_work_times[i])
+              break if exception || (count > options[:max][i])
               item, index = job_factory.next
               break unless index
 
