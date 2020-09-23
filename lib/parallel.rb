@@ -14,6 +14,14 @@ module Parallel
   class Kill < StandardError
   end
 
+  class Return < StandardError
+    attr_reader :return_value
+
+    def initialize(return_value)
+      @return_value = return_value
+    end
+  end
+
   class UndumpableException < StandardError
     attr_reader :backtrace
     def initialize(original)
@@ -228,6 +236,24 @@ module Parallel
       map(array, options.merge(:preserve_results => false), &block)
     end
 
+    def first_result(array, options = {}, &block)
+      raise "You must provide a block when calling #first_result" if block.nil?
+      map(array, options.merge({return_one: true})) do |*a| 
+        if result = block.call(*a) 
+          raise Parallel::Return.new(result)
+        end
+      end
+    end
+
+    def find(array, options = {}, &block)
+      raise "You must provide a block when calling #find" if block.nil?
+      map(array, options.merge({return_one: true})) do |*a| 
+        if block.call(*a) 
+          raise Parallel::Return.new(*a)
+        end
+      end
+    end
+
     def any?(*args, &block)
       raise "You must provide a block when calling #any?" if block.nil?
       !each(*args) { |*a| raise Parallel::Kill if block.call(*a) }
@@ -271,14 +297,22 @@ module Parallel
       add_progress_bar!(job_factory, options)
 
       results = if size == 0
-        work_direct(job_factory, options, &block)
-      elsif method == :in_threads
-        work_in_threads(job_factory, options.merge(:count => size), &block)
-      else
-        work_in_processes(job_factory, options.merge(:count => size), &block)
-      end
+                  work_direct(job_factory, options, &block)
+                elsif method == :in_threads
+                  work_in_threads(job_factory, options.merge(:count => size), &block)
+                else
+                  work_in_processes(job_factory, options.merge(:count => size), &block)
+                end
       if results
-        options[:return_results] ? results : source
+        if options[:return_one] 
+          if results.is_a?(Return)
+            results.return_value
+          end
+        elsif options[:return_results] 
+          results
+        else
+          source
+        end
       end
     end
 
@@ -401,11 +435,9 @@ module Parallel
                 results_mutex.synchronize { results[index] = result } # arrays are not threads safe on jRuby
               rescue StandardError => e
                 exception = e
+                # takes care of Kill and its subclasses
                 if Parallel::Kill === exception
-                  (workers - [worker]).each do |w|
-                    w.thread.kill if w.thread
-                    UserInterruptHandler.kill(w.pid)
-                  end
+                  stop_workers(workers - [worker])
                 end
               end
             end
@@ -416,6 +448,13 @@ module Parallel
       end
 
       handle_exception(exception, results)
+    end
+
+    def stop_workers(workers_to_stop)
+      workers_to_stop.each do |w|
+        w.thread.kill if w.thread
+        UserInterruptHandler.kill(w.pid)
+      end
     end
 
     def replace_worker(job_factory, workers, i, options, blk)
@@ -485,7 +524,8 @@ module Parallel
     end
 
     def handle_exception(exception, results)
-      return nil if [Parallel::Break, Parallel::Kill].include? exception.class
+      return if [Parallel::Break, Parallel::Kill].include?(exception.class)
+      return exception if exception.class == Parallel::Return
       raise exception if exception
       results
     end

@@ -511,6 +511,26 @@ describe Parallel do
     end
   end
 
+  describe ".find" do
+    it "returns nil if none is turthy" do
+      `ruby spec/cases/parallel_find_nothing.rb`.strip.should == 'nil'
+    end
+
+    it "returns false if all results are falsy" do
+      `ruby spec/cases/parallel_find.rb`.strip.should == 'ellcs'
+    end
+  end
+
+  describe ".first_result" do
+    it "returns nil if none is turthy" do
+      `ruby spec/cases/parallel_first_result_nothing.rb`.strip.should == 'nil'
+    end
+
+    it "returns false if all results are falsy" do
+      `ruby spec/cases/parallel_first_result.rb`.strip.should == 'ellcs'
+    end
+  end
+
   describe ".all?" do
     it "returns true if all results are truthy" do
       `ruby spec/cases/all_true.rb`.split(',').should == ['true'] * 3 * 3
