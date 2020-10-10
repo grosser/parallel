@@ -521,13 +521,13 @@ describe Parallel do
     end
   end
 
-  describe ".first_result" do
+  describe ".find_result" do
     it "returns nil if none is turthy" do
-      `ruby spec/cases/parallel_first_result_nothing.rb`.strip.should == 'nil'
+      `ruby spec/cases/parallel_find_result_nothing.rb`.strip.should == 'nil'
     end
 
     it "returns false if all results are falsy" do
-      `ruby spec/cases/parallel_first_result.rb`.strip.should == 'ellcs'
+      `ruby spec/cases/parallel_find_result.rb`.strip.should == 'ellcs'
     end
   end
 

@@ -236,7 +236,7 @@ module Parallel
       map(array, options.merge(:preserve_results => false), &block)
     end
 
-    def first_result(array, options = {}, &block)
+    def find_result(array, options = {}, &block)
       raise "You must provide a block when calling #first_result" if block.nil?
       map(array, options.merge({return_one: true})) do |*a| 
         if result = block.call(*a) 
