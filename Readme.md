@@ -53,6 +53,28 @@ Parallel.all?([1,2,nil,4,5]) { |number| number != nil }
 # => false
 ```
 
+As well you can run parallel methods:
+```Ruby
+def run_parallel_methods
+  data = nil;
+  info = nil;
+
+  get_data = -> { data = Api.get_data() }
+  get_info = -> { info = Api.get_info() }
+
+  methods = [
+    get_property,
+    get_description
+  ]
+
+  Parallel.each(methods, in_threads: 2) do |method_to_call|
+    method_to_call.call
+  end
+
+  return [ data, info ]
+end
+```
+
 
 Processes/Threads are workers, they grab the next piece of work when they finish.
 
