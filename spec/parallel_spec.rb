@@ -287,6 +287,10 @@ describe Parallel do
         `METHOD=map WORKER_TYPE=#{type} ruby spec/cases/with_exception_in_start_before_finish.rb 2>&1`.should == '3 called'
       end
 
+      it "can return from break with #{type}" do
+        `METHOD=map WORKER_TYPE=#{type} ruby spec/cases/with_break.rb hi 2>&1`.should =~ /^\d{4} Parallel::Break raised - result "hi"$/
+      end
+
       it "sets Parallel.worker_number with 4 #{type}" do
         out = `METHOD=map WORKER_TYPE=#{type} ruby spec/cases/with_worker_number.rb 2>&1`
         out.should =~ /\A[0123]+\z/

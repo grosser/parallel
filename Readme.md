@@ -43,7 +43,7 @@ items = [1,2,3]
 Parallel.each( -> { items.pop || Parallel::Stop }) { |number| ... }
 ```
 
-You can also call `any?` or `all?`, which work the same way as `Array#any?` and `Array#all?`.
+Also supports `any?` or `all?`
 
 ```Ruby
 Parallel.any?([1,2,3,4,5,6,7]) { |number| number == 4 }
@@ -52,7 +52,6 @@ Parallel.any?([1,2,3,4,5,6,7]) { |number| number == 4 }
 Parallel.all?([1,2,nil,4,5]) { |number| number != nil }
 # => false
 ```
-
 
 Processes/Threads are workers, they grab the next piece of work when they finish.
 
@@ -106,9 +105,13 @@ To fix, autoloaded classes before the parallel block with either `require '<mode
 ### Break
 
 ```Ruby
-Parallel.map(User.all) do |user|
+Parallel.map([1, 2, 3]) do |i|
   raise Parallel::Break # -> stops after all current items are finished
 end
+```
+
+```Ruby
+Parallel.map([1, 2, 3]) { |i| raise Parallel::Break, i if i == 2 } == 2
 ```
 
 ### Kill

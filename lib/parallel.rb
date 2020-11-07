@@ -3,15 +3,21 @@ require 'parallel/version'
 require 'parallel/processor_count'
 
 module Parallel
-  extend Parallel::ProcessorCount
+  extend ProcessorCount
+
+  Stop = Object.new.freeze
 
   class DeadWorker < StandardError
   end
 
   class Break < StandardError
+    attr_reader :value
+    def initialize(value = nil)
+      @value = value
+    end
   end
 
-  class Kill < StandardError
+  class Kill < Break
   end
 
   class UndumpableException < StandardError
@@ -21,8 +27,6 @@ module Parallel
       @backtrace = original.backtrace
     end
   end
-
-  Stop = Object.new.freeze
 
   class ExceptionWrapper
     attr_reader :exception
@@ -102,7 +106,7 @@ module Parallel
         item, index = @mutex.synchronize do
           return if @stopped
           item = @lambda.call
-          @stopped = (item == Parallel::Stop)
+          @stopped = (item == Stop)
           return if @stopped
           [item, @index += 1]
         end
@@ -230,12 +234,12 @@ module Parallel
 
     def any?(*args, &block)
       raise "You must provide a block when calling #any?" if block.nil?
-      !each(*args) { |*a| raise Parallel::Kill if block.call(*a) }
+      !each(*args) { |*a| raise Kill if block.call(*a) }
     end
 
     def all?(*args, &block)
       raise "You must provide a block when calling #all?" if block.nil?
-      !!each(*args) { |*a| raise Parallel::Kill unless block.call(*a) }
+      !!each(*args) { |*a| raise Kill unless block.call(*a) }
     end
 
     def each_with_index(array, options={}, &block)
@@ -270,16 +274,18 @@ module Parallel
       options[:return_results] = (options[:preserve_results] != false || !!options[:finish])
       add_progress_bar!(job_factory, options)
 
-      results = if size == 0
-        work_direct(job_factory, options, &block)
-      elsif method == :in_threads
-        work_in_threads(job_factory, options.merge(:count => size), &block)
-      else
-        work_in_processes(job_factory, options.merge(:count => size), &block)
-      end
-      if results
-        options[:return_results] ? results : source
-      end
+      result =
+        if size == 0
+          work_direct(job_factory, options, &block)
+        elsif method == :in_threads
+          work_in_threads(job_factory, options.merge(:count => size), &block)
+        else
+          work_in_processes(job_factory, options.merge(:count => size), &block)
+        end
+
+      return result.value if result.is_a?(Break)
+      raise result if result.is_a?(Exception)
+      options[:return_results] ? result : source
     end
 
     def map_with_index(array, options={}, &block)
@@ -340,7 +346,7 @@ module Parallel
       rescue
         exception = $!
       end
-      handle_exception(exception, results)
+      exception || results
     ensure
       self.worker_number = nil
     end
@@ -367,7 +373,7 @@ module Parallel
         end
       end
 
-      handle_exception(exception, results)
+      exception || results
     end
 
     def work_in_processes(job_factory, options, &blk)
@@ -401,7 +407,7 @@ module Parallel
                 results_mutex.synchronize { results[index] = result } # arrays are not threads safe on jRuby
               rescue StandardError => e
                 exception = e
-                if Parallel::Kill === exception
+                if Kill === exception
                   (workers - [worker]).each do |w|
                     w.thread.kill if w.thread
                     UserInterruptHandler.kill(w.pid)
@@ -414,8 +420,7 @@ module Parallel
           end
         end
       end
-
-      handle_exception(exception, results)
+      exception || results
     end
 
     def replace_worker(job_factory, workers, i, options, blk)
@@ -482,12 +487,6 @@ module Parallel
           return # parent thread already dead
         end
       end
-    end
-
-    def handle_exception(exception, results)
-      return nil if [Parallel::Break, Parallel::Kill].include? exception.class
-      raise exception if exception
-      results
     end
 
     # options is either a Integer or a Hash with :count
