@@ -189,7 +189,7 @@ describe Parallel do
     end
 
     it "does not open unnecessary pipes" do
-      max = (RbConfig::CONFIG["target_os"].include?("darwin1") ? 10 : 1500) # somehow super bad on travis
+      max = (RbConfig::CONFIG["target_os"].include?("darwin1") ? 10 : 1800) # somehow super bad on CI
       `ruby spec/cases/count_open_pipes.rb`.to_i.should < max
     end
   end
