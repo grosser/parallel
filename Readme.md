@@ -181,7 +181,7 @@ Authors
 ### [Contributors](https://github.com/grosser/parallel/graphs/contributors)
  - [Przemyslaw Wroblewski](https://github.com/lowang)
  - [TJ Holowaychuk](http://vision-media.ca/)
- - [Masatomo Nakano](https://twitter.com/masatomo2)
+ - [Masatomo Nakano](https://github.com/masatomo)
  - [Fred Wu](http://fredwu.me)
  - [mikezter](https://github.com/mikezter)
  - [Jeremy Durham](http://www.jeremydurham.com)
