@@ -1,7 +1,7 @@
 Parallel
 ==============
 [![Gem Version](https://badge.fury.io/rb/parallel.svg)](https://rubygems.org/gems/parallel)
-[![Build Status](https://travis-ci.org/grosser/parallel.svg?branch=master)](https://travis-ci.org/grosser/parallel)
+[![Build Status](https://github.com/grosser/parallel/actions/workflows/actions.yml/badge.svg)](https://github.com/grosser/parallel/actions/workflows/actions.yml)
 
 
 Run any code in parallel Processes(> use all CPUs) or Threads(> speedup blocking operations).<br/>
