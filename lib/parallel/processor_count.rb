@@ -12,7 +12,7 @@ module Parallel
     def physical_processor_count
       @physical_processor_count ||= begin
         ppc = case RbConfig::CONFIG["target_os"]
-        when /darwin[12]/,
+        when /darwin1/
           IO.popen("/usr/sbin/sysctl -n hw.physicalcpu").read.to_i
         when /linux/
           cores = {}  # unique physical ID / core ID combinations
