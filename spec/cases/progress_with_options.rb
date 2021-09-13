@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require './spec/cases/helper'
 
 # ruby-progressbar ignores the format string you give it
@@ -14,11 +15,11 @@ class << tty_stdout
 end
 
 parallel_options = {
-  :progress => {
-    :title => "Reticulating Splines",
-    :progress_mark => ';',
-    :format => "%t %w",
-    :output => tty_stdout
+  progress: {
+    title: "Reticulating Splines",
+    progress_mark: ';',
+    format: "%t %w",
+    output: tty_stdout
   }
 }
 

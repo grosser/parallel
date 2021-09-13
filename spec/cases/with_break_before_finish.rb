@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require './spec/cases/helper'
 
 method = ENV.fetch('METHOD')
@@ -8,7 +9,7 @@ finish = lambda do |_item, _index, _result|
   print "finish hook called"
 end
 
-result = Parallel.public_send(method, 1..100, in_worker_type => 4, finish: finish) do |x|
+Parallel.public_send(method, 1..100, in_worker_type => 4, finish: finish) do |x|
   sleep 0.1 # let workers start
   raise Parallel::Break if x == 1
   sleep 0.2

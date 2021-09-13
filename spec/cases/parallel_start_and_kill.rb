@@ -1,9 +1,10 @@
+# frozen_string_literal: true
 require './spec/cases/helper'
 
 method = case ARGV[0]
-when "PROCESS" then :in_processes
-when "THREAD" then :in_threads
-else raise "Learn to use this!"
+         when "PROCESS" then :in_processes
+         when "THREAD" then :in_threads
+         else raise "Learn to use this!"
 end
 
 options = {}

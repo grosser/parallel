@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require './spec/cases/helper'
 
 Parallel::Worker.class_eval do
@@ -10,7 +11,7 @@ Parallel::Worker.class_eval do
 end
 
 begin
-  Parallel.map([1,2,3]) do |x, i|
+  Parallel.map([1, 2, 3]) do |_x, _i|
     Process.kill("SIGKILL", Process.pid)
   end
 rescue Parallel::DeadWorker

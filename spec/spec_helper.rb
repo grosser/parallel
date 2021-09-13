@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'parallel'
 require 'benchmark'
 require 'timeout'

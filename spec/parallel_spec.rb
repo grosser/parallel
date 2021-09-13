@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'spec_helper'
 
 describe Parallel do
@@ -6,17 +7,17 @@ describe Parallel do
   def time_taken
     t = Time.now.to_f
     yield
-    RUBY_ENGINE == "jruby" ? 0: Time.now.to_f - t # jruby is super slow ... don't blow up all the tests ...
+    RUBY_ENGINE == "jruby" ? 0 : Time.now.to_f - t # jruby is super slow ... don't blow up all the tests ...
   end
 
-  def kill_process_with_name(file, signal='INT')
-    running_processes = `ps -f`.split("\n").map{ |line| line.split(/\s+/) }
+  def kill_process_with_name(file, signal = 'INT')
+    running_processes = `ps -f`.split("\n").map { |line| line.split(/\s+/) }
     pid_index = running_processes.detect { |p| p.include?("UID") }.index("UID") + 1
-    parent_pid = running_processes.detect { |p| p.include?(file) and not p.include?("sh") }[pid_index]
+    parent_pid = running_processes.detect { |p| p.include?(file) and !p.include?("sh") }[pid_index]
     `kill -s #{signal} #{parent_pid}`
   end
 
-  def execute_start_and_kill(command, amount, signal='INT')
+  def execute_start_and_kill(command, amount, signal = 'INT')
     t = nil
     lambda {
       t = Thread.new { `ruby spec/cases/parallel_start_and_kill.rb #{command} 2>&1 && echo "FINISHED"` }
@@ -85,7 +86,7 @@ describe Parallel do
     end
 
     it "enforces only one worker type" do
-      lambda { Parallel.map([1,2,3], in_processes: 2, in_threads: 3) }.should raise_error(ArgumentError)
+      -> { Parallel.map([1, 2, 3], in_processes: 2, in_threads: 3) }.should raise_error(ArgumentError)
     end
 
     it "does not influence outside data" do
@@ -93,48 +94,48 @@ describe Parallel do
     end
 
     it "kills the processes when the main process gets killed through ctrl+c" do
-      time_taken {
+      time_taken do
         result = execute_start_and_kill "PROCESS", 0
         result.should_not include "FINISHED"
-      }.should be <= 3
+      end.should be <= 3
     end
 
     it "kills the processes when the main process gets killed through a custom interrupt" do
-      time_taken {
+      time_taken do
         execute_start_and_kill "PROCESS SIGTERM", 0, "TERM"
-      }.should be <= 3
+      end.should be <= 3
     end
 
     it "kills the threads when the main process gets killed through ctrl+c" do
-      time_taken {
+      time_taken do
         result = execute_start_and_kill "THREAD", 0
         result.should_not include "FINISHED"
-      }.should be <= 3
+      end.should be <= 3
     end
 
     it "does not kill processes when the main process gets sent an interrupt besides the custom interrupt" do
-      time_taken {
+      time_taken do
         result = execute_start_and_kill "PROCESS SIGTERM", 4
         result.should include 'FINISHED'
         result.should include 'Wrapper caught SIGINT'
         result.should include 'I should have been killed earlier'
-      }.should be <= 7
+      end.should be <= 7
     end
 
     it "does not kill threads when the main process gets sent an interrupt besides the custom interrupt" do
-      time_taken {
+      time_taken do
         result = execute_start_and_kill "THREAD SIGTERM", 2
         result.should include 'FINISHED'
         result.should include 'Wrapper caught SIGINT'
         result.should include 'I should have been killed earlier'
-      }.should be <= 7
+      end.should be <= 7
     end
 
     it "does not kill anything on ctrl+c when everything has finished" do
       time_taken do
         t = Thread.new { `ruby spec/cases/parallel_fast_exit.rb 2>&1` }
         sleep 2
-        kill_process_with_name("spec/cases/parallel_fast_exit.rb") #simulates Ctrl+c
+        kill_process_with_name("spec/cases/parallel_fast_exit.rb") # simulates Ctrl+c
         sleep 1
         result = t.value
         result.scan(/I finished/).size.should == 3
@@ -145,7 +146,7 @@ describe Parallel do
     it "preserves original intrrupts" do
       t = Thread.new { `ruby spec/cases/double_interrupt.rb 2>&1 && echo FIN` }
       sleep 2
-      kill_process_with_name("spec/cases/double_interrupt.rb") #simulates Ctrl+c
+      kill_process_with_name("spec/cases/double_interrupt.rb") # simulates Ctrl+c
       sleep 1
       result = t.value
       result.should include("YES")
@@ -157,9 +158,9 @@ describe Parallel do
     end
 
     it "saves time" do
-      time_taken{
+      time_taken do
         `ruby spec/cases/parallel_sleeping_2.rb`
-      }.should < 3.5
+      end.should < 3.5
     end
 
     it "raises when one of the processes raises" do
@@ -169,8 +170,8 @@ describe Parallel do
     it "can raise an undumpable exception" do
       out = `ruby spec/cases/parallel_raise_undumpable.rb`.strip
       out.sub!(Dir.pwd, '.') # relative paths
-      out.gsub!(/(\d+)\:.*/, "\\1") # no diff in ruby version xyz.rb:123:in `block in <main>'
-      out.should == "MyException: MyException\nBACKTRACE: spec/cases/parallel_raise_undumpable.rb:12"
+      out.gsub!(/(\d+):.*/, "\\1") # no diff in ruby version xyz.rb:123:in `block in <main>'
+      out.should == "MyException: MyException\nBACKTRACE: spec/cases/parallel_raise_undumpable.rb:14"
     end
 
     it "can handle Break exceptions when the better_errors gem is installed" do
@@ -196,22 +197,22 @@ describe Parallel do
 
   describe ".in_threads" do
     it "saves time" do
-      time_taken{
-        Parallel.in_threads(3){ sleep 2 }
-      }.should < 3
+      time_taken do
+        Parallel.in_threads(3) { sleep 2 }
+      end.should < 3
     end
 
     it "does not create new processes" do
-      lambda{ Thread.new{ Parallel.in_threads(2){sleep 1} } }.should_not change{`ps`.split("\n").size}
+      -> { Thread.new { Parallel.in_threads(2) { sleep 1 } } }.should_not(change { `ps`.split("\n").size })
     end
 
     it "returns results as array" do
-      Parallel.in_threads(4){|i| "XXX#{i}"}.should == ["XXX0",'XXX1','XXX2','XXX3']
+      Parallel.in_threads(4) { |i| "XXX#{i}" }.should == ["XXX0", 'XXX1', 'XXX2', 'XXX3']
     end
 
     it "raises when a thread raises" do
       Thread.report_on_exception = false
-      lambda{ Parallel.in_threads(2){|i| raise "TEST"} }.should raise_error("TEST")
+      -> { Parallel.in_threads(2) { |_i| raise "TEST" } }.should raise_error("TEST")
     ensure
       Thread.report_on_exception = true
     end
@@ -219,13 +220,13 @@ describe Parallel do
 
   describe ".map" do
     it "saves time" do
-      time_taken{
-      `ruby spec/cases/parallel_map_sleeping.rb`
-      }.should <= 3.5
+      time_taken do
+        `ruby spec/cases/parallel_map_sleeping.rb`
+      end.should <= 3.5
     end
 
     it "does not modify options" do
-      lambda { Parallel.map([], {}.freeze) }.should_not raise_error
+      -> { Parallel.map([], {}.freeze) }.should_not raise_error
     end
 
     it "executes with given parameters" do
@@ -237,17 +238,18 @@ describe Parallel do
     end
 
     it "starts new process immediately when old exists" do
-      time_taken{
-      `ruby spec/cases/parallel_map_uneven.rb`
-      }.should <= 3.5
+      time_taken do
+        `ruby spec/cases/parallel_map_uneven.rb`
+      end.should <= 3.5
     end
 
     it "does not flatten results" do
-      Parallel.map([1,2,3], :in_threads=>2){|x| [x,x]}.should == [[1,1],[2,2],[3,3]]
+      Parallel.map([1, 2, 3], in_threads: 2) { |x| [x, x] }.should == [[1, 1], [2, 2], [3, 3]]
     end
 
     it "can run in threads" do
-      Parallel.map([1,2,3,4,5,6,7,8,9], :in_threads=>4){|x| x+2 }.should == [3,4,5,6,7,8,9,10,11]
+      result = Parallel.map([1, 2, 3, 4, 5, 6, 7, 8, 9], in_threads: 4) { |x| x + 2 }
+      result.should == [3, 4, 5, 6, 7, 8, 9, 10, 11]
     end
 
     it 'supports all Enumerable-s' do
@@ -264,7 +266,8 @@ describe Parallel do
       end
 
       it "stops all workers when one raises Break in #{type}" do
-        `METHOD=map WORKER_TYPE=#{type} ruby spec/cases/with_break.rb 2>&1`.should =~ /^\d{4} Parallel::Break raised - result nil$/
+        out = `METHOD=map WORKER_TYPE=#{type} ruby spec/cases/with_break.rb 2>&1`
+        out.should =~ /^\d{4} Parallel::Break raised - result nil$/
       end
 
       it "stops all workers when a start hook fails with #{type}" do
@@ -280,102 +283,108 @@ describe Parallel do
       end
 
       it "does not call the finish hook when a worker raises Break in #{type}" do
-        `METHOD=map WORKER_TYPE=#{type} ruby spec/cases/with_break_before_finish.rb 2>&1`.should =~ /^\d{3}(finish hook called){3} Parallel::Break raised$/
+        out = `METHOD=map WORKER_TYPE=#{type} ruby spec/cases/with_break_before_finish.rb 2>&1`
+        out.should =~ /^\d{3}(finish hook called){3} Parallel::Break raised$/
       end
 
       it "does not call the finish hook when a start hook fails with #{type}" do
-        `METHOD=map WORKER_TYPE=#{type} ruby spec/cases/with_exception_in_start_before_finish.rb 2>&1`.should == '3 called'
+        out = `METHOD=map WORKER_TYPE=#{type} ruby spec/cases/with_exception_in_start_before_finish.rb 2>&1`
+        out.should == '3 called'
       end
 
       it "can return from break with #{type}" do
-        `METHOD=map WORKER_TYPE=#{type} ruby spec/cases/with_break.rb hi 2>&1`.should =~ /^\d{4} Parallel::Break raised - result "hi"$/
+        out = `METHOD=map WORKER_TYPE=#{type} ruby spec/cases/with_break.rb hi 2>&1`
+        out.should =~ /^\d{4} Parallel::Break raised - result "hi"$/
       end
 
       it "sets Parallel.worker_number with 4 #{type}" do
         out = `METHOD=map WORKER_TYPE=#{type} ruby spec/cases/with_worker_number.rb 2>&1`
         out.should =~ /\A[0123]+\z/
-        %w(0 1 2 3).each { |number| out.should include number }
+        ['0', '1', '2', '3'].each { |number| out.should include number }
       end
 
       it "sets Parallel.worker_number with 0 #{type}" do
         type_key = "in_#{type}".to_sym
-        Parallel.map([1,2,3,4,5,6,7,8,9], type_key => 0) { |x| Parallel.worker_number }.uniq.should == [0]
+        result = Parallel.map([1, 2, 3, 4, 5, 6, 7, 8, 9], type_key => 0) { |_x| Parallel.worker_number }
+        result.uniq.should == [0]
         Parallel.worker_number.should be_nil
       end
     end
 
     it "can run with 0 threads" do
       Thread.should_not_receive(:exclusive)
-      Parallel.map([1,2,3,4,5,6,7,8,9], :in_threads => 0){|x| x+2 }.should == [3,4,5,6,7,8,9,10,11]
+      result = Parallel.map([1, 2, 3, 4, 5, 6, 7, 8, 9], in_threads: 0) { |x| x + 2 }
+      result.should == [3, 4, 5, 6, 7, 8, 9, 10, 11]
     end
 
     it "can run with 0 processes" do
       Process.should_not_receive(:fork)
-      Parallel.map([1,2,3,4,5,6,7,8,9], :in_processes => 0){|x| x+2 }.should == [3,4,5,6,7,8,9,10,11]
+      result = Parallel.map([1, 2, 3, 4, 5, 6, 7, 8, 9], in_processes: 0) { |x| x + 2 }
+      result.should == [3, 4, 5, 6, 7, 8, 9, 10, 11]
     end
 
     it "notifies when an item of work is dispatched to a worker process" do
-      monitor = double('monitor', :call => nil)
+      monitor = double('monitor', call: nil)
       monitor.should_receive(:call).once.with(:first, 0)
       monitor.should_receive(:call).once.with(:second, 1)
       monitor.should_receive(:call).once.with(:third, 2)
-      Parallel.map([:first, :second, :third], :start => monitor, :in_processes => 3) {}
+      Parallel.map([:first, :second, :third], start: monitor, in_processes: 3) {}
     end
 
     it "notifies when an item of work is dispatched with 0 processes" do
-      monitor = double('monitor', :call => nil)
+      monitor = double('monitor', call: nil)
       monitor.should_receive(:call).once.with(:first, 0)
       monitor.should_receive(:call).once.with(:second, 1)
       monitor.should_receive(:call).once.with(:third, 2)
-      Parallel.map([:first, :second, :third], :start => monitor, :in_processes => 0) {}
+      Parallel.map([:first, :second, :third], start: monitor, in_processes: 0) {}
     end
 
     it "notifies when an item of work is completed by a worker process" do
-      monitor = double('monitor', :call => nil)
+      monitor = double('monitor', call: nil)
       monitor.should_receive(:call).once.with(:first, 0, 123)
       monitor.should_receive(:call).once.with(:second, 1, 123)
       monitor.should_receive(:call).once.with(:third, 2, 123)
-      Parallel.map([:first, :second, :third], :finish => monitor, :in_processes => 3) { 123 }
+      Parallel.map([:first, :second, :third], finish: monitor, in_processes: 3) { 123 }
     end
 
     it "notifies when an item of work is completed with 0 processes" do
-      monitor = double('monitor', :call => nil)
+      monitor = double('monitor', call: nil)
       monitor.should_receive(:call).once.with(:first, 0, 123)
       monitor.should_receive(:call).once.with(:second, 1, 123)
       monitor.should_receive(:call).once.with(:third, 2, 123)
-      Parallel.map([:first, :second, :third], :finish => monitor, :in_processes => 0) { 123 }
+      Parallel.map([:first, :second, :third], finish: monitor, in_processes: 0) { 123 }
     end
 
     it "notifies when an item of work is dispatched to a threaded worker" do
-      monitor = double('monitor', :call => nil)
+      monitor = double('monitor', call: nil)
       monitor.should_receive(:call).once.with(:first, 0)
       monitor.should_receive(:call).once.with(:second, 1)
       monitor.should_receive(:call).once.with(:third, 2)
-      Parallel.map([:first, :second, :third], :start => monitor, :in_threads => 3) {}
+      Parallel.map([:first, :second, :third], start: monitor, in_threads: 3) {}
     end
 
     it "notifies when an item of work is dispatched with 0 threads" do
-      monitor = double('monitor', :call => nil)
+      monitor = double('monitor', call: nil)
       monitor.should_receive(:call).once.with(:first, 0)
       monitor.should_receive(:call).once.with(:second, 1)
       monitor.should_receive(:call).once.with(:third, 2)
-      Parallel.map([:first, :second, :third], :start => monitor, :in_threads => 0) {}
+      Parallel.map([:first, :second, :third], start: monitor, in_threads: 0) {}
     end
 
     it "notifies when an item of work is completed by a threaded worker" do
-      monitor = double('monitor', :call => nil)
+      monitor = double('monitor', call: nil)
       monitor.should_receive(:call).once.with(:first, 0, 123)
       monitor.should_receive(:call).once.with(:second, 1, 123)
       monitor.should_receive(:call).once.with(:third, 2, 123)
-      Parallel.map([:first, :second, :third], :finish => monitor, :in_threads => 3) { 123 }
+      Parallel.map([:first, :second, :third], finish: monitor, in_threads: 3) { 123 }
     end
 
     it "notifies when an item of work is completed with 0 threads" do
-      monitor = double('monitor', :call => nil)
+      monitor = double('monitor', call: nil)
       monitor.should_receive(:call).once.with(:first, 0, 123)
       monitor.should_receive(:call).once.with(:second, 1, 123)
       monitor.should_receive(:call).once.with(:third, 2, 123)
-      Parallel.map([:first, :second, :third], :finish => monitor, :in_threads => 0) { 123 }
+      Parallel.map([:first, :second, :third], finish: monitor, in_threads: 0) { 123 }
     end
 
     it "spits out a useful error when a worker dies before read" do
@@ -390,7 +399,7 @@ describe Parallel do
       `ruby spec/cases/exit_in_process.rb 2>&1`.should include "Yep, DEAD"
     end
 
-    it "should rescue the Exception raised in child process" do
+    it "rescues the Exception raised in child process" do
       `ruby spec/cases/exception_raised_in_process.rb 2>&1`.should include "Yep, rescued the exception"
     end
 
@@ -404,20 +413,16 @@ describe Parallel do
       children = [nil, nil]
       thread = Thread.new do
         parent = Thread.current
-        Parallel.map([0,1], :in_threads => 2) do |i|
+        Parallel.map([0, 1], in_threads: 2) do |i|
           mutex.synchronize { children[i] = Thread.current }
           mutex.synchronize { state[i] = :ready }
           parent.join
           mutex.synchronize { state[i] = :error }
         end
       end
-      while state.any? { |s| s.nil? }
-        Thread.pass
-      end
+      Thread.pass while state.any?(&:nil?)
       thread.kill
-      while children.any? { |c| c.alive? }
-        Thread.pass
-      end
+      Thread.pass while children.any?(&:alive?)
       state[0].should == :ready
       state[1].should == :ready
     end
@@ -425,9 +430,9 @@ describe Parallel do
     it "processes can be killed instantly" do
       pipes = [IO.pipe, IO.pipe]
       thread = Thread.new do
-        Parallel.map([0, 1, 2, 3], :in_processes => 2) do |i|
-          pipes[i%2][0].close unless pipes[i%2][0].closed?
-          Marshal.dump('finish', pipes[i%2][1])
+        Parallel.map([0, 1, 2, 3], in_processes: 2) do |i|
+          pipes[i % 2][0].close unless pipes[i % 2][0].closed?
+          Marshal.dump('finish', pipes[i % 2][1])
           sleep 1
           nil
         end
@@ -450,16 +455,16 @@ describe Parallel do
 
     it "synchronizes :start and :finish" do
       out = `ruby spec/cases/synchronizes_start_and_finish.rb`
-      %w{a b c}.each {|letter|
+      ['a', 'b', 'c'].each do |letter|
         out.sub! letter.downcase * 10, 'OK'
         out.sub! letter.upcase * 10, 'OK'
-      }
+      end
       out.should == "OK\n" * 6
     end
 
     it 'is equivalent to serial map' do
-      l = Array.new(10_000){|i| i}
-      Parallel.map(l, {in_threads: 4}){|x| x+1}.should == l.map{|x| x+1}
+      l = Array.new(10_000) { |i| i }
+      Parallel.map(l, { in_threads: 4 }) { |x| x + 1 }.should == l.map { |x| x + 1 }
     end
 
     it 'can work in isolation' do
@@ -490,16 +495,20 @@ describe Parallel do
 
     it "can run with 0 threads" do
       Thread.should_not_receive(:exclusive)
-      Parallel.map_with_index([1,2,3,4,5,6,7,8,9], :in_threads => 0){|x,i| x+2 }.should == [3,4,5,6,7,8,9,10,11]
+      Parallel.map_with_index([1, 2, 3, 4, 5, 6, 7, 8, 9], in_threads: 0) do |x, _i|
+        x + 2
+      end.should == [3, 4, 5, 6, 7, 8, 9, 10, 11]
     end
 
     it "can run with 0 processes" do
       Process.should_not_receive(:fork)
-      Parallel.map_with_index([1,2,3,4,5,6,7,8,9], :in_processes => 0){|x,i| x+2 }.should == [3,4,5,6,7,8,9,10,11]
+      Parallel.map_with_index([1, 2, 3, 4, 5, 6, 7, 8, 9], in_processes: 0) do |x, _i|
+        x + 2
+      end.should == [3, 4, 5, 6, 7, 8, 9, 10, 11]
     end
   end
 
-  describe ".map_with_index" do
+  describe ".flat_map" do
     it "yields object and index" do
       `ruby spec/cases/flat_map.rb 2>&1`.should == '["a", ["a"], "b", ["b"]]'
     end
@@ -531,19 +540,19 @@ describe Parallel do
     end
 
     it "passes result to :finish callback :in_processes`" do
-      monitor = double('monitor', :call => nil)
+      monitor = double('monitor', call: nil)
       monitor.should_receive(:call).once.with(:first, 0, 123)
       monitor.should_receive(:call).once.with(:second, 1, 123)
       monitor.should_receive(:call).once.with(:third, 2, 123)
-      Parallel.each([:first, :second, :third], :finish => monitor, :in_processes => 3) { 123 }
+      Parallel.each([:first, :second, :third], finish: monitor, in_processes: 3) { 123 }
     end
 
     it "passes result to :finish callback :in_threads`" do
-      monitor = double('monitor', :call => nil)
+      monitor = double('monitor', call: nil)
       monitor.should_receive(:call).once.with(:first, 0, 123)
       monitor.should_receive(:call).once.with(:second, 1, 123)
       monitor.should_receive(:call).once.with(:third, 2, 123)
-      Parallel.each([:first, :second, :third], :finish => monitor, :in_threads => 3) { 123 }
+      Parallel.each([:first, :second, :third], finish: monitor, in_threads: 3) { 123 }
     end
 
     it "does not use marshal_dump" do
@@ -560,7 +569,10 @@ describe Parallel do
 
     worker_types.each do |type|
       it "works with SQLite in #{type}" do
-        `WORKER_TYPE=#{type} ruby spec/cases/each_with_ar_sqlite.rb 2>&1`.gsub(/.* deprecated; use BigDecimal.*\n/, '').should == "Parent: X\nParallel (in_#{type}): XXX\nParent: X\n"
+        `WORKER_TYPE=#{type} ruby spec/cases/each_with_ar_sqlite.rb 2>&1`.gsub(
+          /.* deprecated; use BigDecimal.*\n/,
+          ''
+        ).should == "Parent: X\nParallel (in_#{type}): XXX\nParent: X\n"
       end
 
       it "stops all workers when one fails in #{type}" do
@@ -568,7 +580,8 @@ describe Parallel do
       end
 
       it "stops all workers when one raises Break in #{type}" do
-        `METHOD=each WORKER_TYPE=#{type} ruby spec/cases/with_break.rb 2>&1`.should =~ /^\d{4} Parallel::Break raised - result nil$/
+        out = `METHOD=each WORKER_TYPE=#{type} ruby spec/cases/with_break.rb 2>&1`
+        out.should =~ /^\d{4} Parallel::Break raised - result nil$/
       end
 
       it "stops all workers when a start hook fails with #{type}" do
@@ -584,17 +597,19 @@ describe Parallel do
       end
 
       it "does not call the finish hook when a worker raises Break in #{type}" do
-        `METHOD=each WORKER_TYPE=#{type} ruby spec/cases/with_break_before_finish.rb 2>&1`.should =~ /^\d{3}(finish hook called){3} Parallel::Break raised$/
+        out = `METHOD=each WORKER_TYPE=#{type} ruby spec/cases/with_break_before_finish.rb 2>&1`
+        out.should =~ /^\d{3}(finish hook called){3} Parallel::Break raised$/
       end
 
       it "does not call the finish hook when a start hook fails with #{type}" do
-        `METHOD=each WORKER_TYPE=#{type} ruby spec/cases/with_exception_in_start_before_finish.rb 2>&1`.should == '3 called'
+        out = `METHOD=each WORKER_TYPE=#{type} ruby spec/cases/with_exception_in_start_before_finish.rb 2>&1`
+        out.should == '3 called'
       end
 
       it "sets Parallel.worker_number with #{type}" do
         out = `METHOD=each WORKER_TYPE=#{type} ruby spec/cases/with_worker_number.rb 2>&1`
         out.should =~ /\A[0123]+\z/
-        %w(0 1 2 3).each { |number| out.should include number }
+        ['0', '1', '2', '3'].each { |number| out.should include number }
       end
     end
 
@@ -625,7 +640,10 @@ describe Parallel do
     end
 
     it "works with :finish" do
-      `ruby spec/cases/progress_with_finish.rb 2>&1`.strip.sub(/=+/, '==').gsub(/\n+/,"\n").should == "Doing stuff: |==|\n100"
+      `ruby spec/cases/progress_with_finish.rb 2>&1`.strip.sub(/=+/, '==').gsub(
+        /\n+/,
+        "\n"
+      ).should == "Doing stuff: |==|\n100"
     end
 
     it "takes the title from :progress[:title] and passes options along" do
@@ -647,7 +665,7 @@ describe Parallel do
 
       it "refuses to use progress" do
         lambda {
-          Parallel.map(lambda{}, :progress => "xxx"){ raise "Ooops" }
+          Parallel.map(-> {}, progress: "xxx") { raise "Ooops" } # rubocop:disable Lint/UnreachableLoop
         }.should raise_error("Progressbar can only be used with array like items")
       end
     end
@@ -669,7 +687,8 @@ describe Parallel do
     worker_types.each do |type|
       it "does not leak memory in #{type}" do
         pending if RUBY_ENGINE == 'jruby' # lots of objects ... GC does not seem to work ...
-        result = `ruby #{"-X+O" if RUBY_ENGINE == 'jruby'} spec/cases/profile_memory.rb #{type} 2>&1`.strip.split("\n").last
+        options = (RUBY_ENGINE == 'jruby' ? "-X+O" : "")
+        result = `ruby #{options} spec/cases/profile_memory.rb #{type} 2>&1`.strip.split("\n").last
         normalize(result).should == []
       end
     end

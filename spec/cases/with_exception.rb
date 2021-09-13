@@ -1,5 +1,6 @@
+# frozen_string_literal: true
 require './spec/cases/helper'
-STDOUT.sync = true # otherwise results can go weird...
+$stdout.sync = true # otherwise results can go weird...
 
 method = ENV.fetch('METHOD')
 in_worker_type = "in_#{ENV.fetch('WORKER_TYPE')}".to_sym
@@ -13,6 +14,6 @@ begin
     sleep 0.2 # so now no work gets queued before exception is raised
     x
   end
-rescue
+rescue StandardError
   print ' raised'
 end

@@ -1,10 +1,11 @@
+# frozen_string_literal: true
 require './spec/cases/helper'
 
 type = case ARGV[0]
-when "PROCESSES" then :in_processes
-when "THREADS" then :in_threads
-else
-  raise "Use PROCESSES or THREADS"
+       when "PROCESSES" then :in_processes
+       when "THREADS" then :in_threads
+       else
+         raise "Use PROCESSES or THREADS"
 end
 
 queue = Queue.new
@@ -15,4 +16,4 @@ Thread.new do
   queue.push 3
   queue.push Parallel::Stop
 end
-puts Parallel.map(queue, type => 2) { |(i, id)| "ITEM-#{i}" }
+puts Parallel.map(queue, type => 2) { |(i, _id)| "ITEM-#{i}" }

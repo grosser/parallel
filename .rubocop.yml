@@ -1,4 +1,6 @@
-require: rubocop-rake
+require:
+- rubocop-rake
+- rubocop-rspec
 
 AllCops:
   NewCops: enable
@@ -56,3 +58,39 @@ Style/SpecialGlobalVars:
 
 Style/WordArray:
   EnforcedStyle: brackets
+
+Style/SymbolArray:
+  EnforcedStyle: brackets
+
+Style/GuardClause:
+  Enabled: false
+
+Lint/AssignmentInCondition:
+  Enabled: false
+
+Style/EmptyElse:
+  Enabled: false
+
+RSpec/DescribedClass:
+  EnforcedStyle: explicit
+
+Style/DoubleNegation:
+  Enabled: false
+
+RSpec/VerifiedDoubles:
+  Enabled: false
+
+RSpec/ExampleLength:
+  Enabled: false
+
+Style/CombinableLoops:
+  Enabled: false
+
+Lint/Void:
+  Enabled: false
+
+Security/MarshalLoad:
+  Enabled: false
+
+Lint/EmptyBlock:
+  Exclude: [spec/**/*.rb]

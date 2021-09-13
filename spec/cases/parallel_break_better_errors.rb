@@ -1,8 +1,10 @@
+# frozen_string_literal: true
 require './spec/cases/helper'
 require 'stringio'
 
 class MyException < StandardError
   def initialize(object)
+    super()
     @object = object
   end
 end
@@ -15,7 +17,7 @@ begin
     raise ex
   end
   puts "NOTHING WAS RAISED"
-rescue
+rescue StandardError
   puts $!.message
   puts "BACKTRACE: #{$!.backtrace.first}"
 end

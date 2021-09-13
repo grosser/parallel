@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require './spec/cases/helper'
 
 method = ENV.fetch('METHOD')
@@ -23,4 +24,5 @@ begin
     x
   end
 rescue ParallelTestError
+  nil
 end

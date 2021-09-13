@@ -61,6 +61,9 @@ GEM
       parser (>= 3.0.1.1)
     rubocop-rake (0.6.0)
       rubocop (~> 1.0)
+    rubocop-rspec (2.4.0)
+      rubocop (~> 1.0)
+      rubocop-ast (>= 1.1.0)
     ruby-progressbar (1.8.1)
     sqlite3 (1.4.2)
     thread_safe (0.3.6)
@@ -85,6 +88,7 @@ DEPENDENCIES
   rspec-rerun
   rubocop
   rubocop-rake
+  rubocop-rspec
   ruby-progressbar
   sqlite3
 

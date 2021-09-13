@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require './spec/cases/helper'
 
 method = ENV.fetch('METHOD')
@@ -14,6 +15,6 @@ begin
     sleep 0.2 unless x == 1 # so now no work gets queued before exception is raised
     x
   end
-rescue
+rescue StandardError
   print ' raised'
 end

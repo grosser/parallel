@@ -1,23 +1,24 @@
+# frozen_string_literal: true
 require './spec/cases/helper'
 require "active_record"
 require "sqlite3"
 require "tempfile"
-STDOUT.sync = true
+$stdout.sync = true
 in_worker_type = "in_#{ENV.fetch('WORKER_TYPE')}".to_sym
 
 Tempfile.create("db") do |temp|
   ActiveRecord::Schema.verbose = false
   ActiveRecord::Base.establish_connection(
-    :adapter => "sqlite3",
-    :database => temp.path
+    adapter: "sqlite3",
+    database: temp.path
   )
 
-  class User < ActiveRecord::Base
+  class User < ActiveRecord::Base # rubocop:disable Lint/ConstantDefinitionInBlock
   end
 
   # create tables
   unless User.table_exists?
-    ActiveRecord::Schema.define(:version => 1) do
+    ActiveRecord::Schema.define(version: 1) do
       create_table :users do |t|
         t.string :name
       end
@@ -26,7 +27,7 @@ Tempfile.create("db") do |temp|
 
   User.delete_all
 
-  3.times { User.create!(:name => "X") }
+  3.times { User.create!(name: "X") }
 
   puts "Parent: #{User.first.name}"
 
