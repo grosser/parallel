@@ -8,6 +8,8 @@ gem 'activerecord', "~> 6.0"
 gem 'ruby-progressbar'
 gem 'rspec-rerun'
 gem 'rspec-legacy_formatters'
+gem 'rubocop'
+gem 'rubocop-rake'
 
 gem 'mysql2', group: :mysql
 gem 'sqlite3'

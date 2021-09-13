@@ -13,6 +13,10 @@ jobs:
     strategy:
       matrix:
         ruby: [ '2.5', '2.6', '2.7', '3.0' ]
+        task: [ 'default' ]
+        include:
+        - ruby: 2.5 # keep in sync with lowest version
+          task: rubocop
     name: ${{ matrix.ruby }} rake ${{ matrix.task }}
     steps:
     - uses: actions/checkout@v2
