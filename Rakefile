@@ -5,7 +5,7 @@ require 'bump/tasks'
 require "rspec/core/rake_task"
 require 'rspec-rerun/tasks'
 
-task default: ["spec", "rubocop"]
+task default: :spec
 
 desc "Run tests"
 task spec: "rspec-rerun:spec"
