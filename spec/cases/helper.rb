@@ -3,7 +3,8 @@ require 'bundler/setup'
 require 'parallel'
 
 def process_diff
-  cmd = "ps uxw|grep ruby|wc -l"
+  called_from = caller(1)[0].split(":").first # forks will have the source file in their name
+  cmd = "ps uxw|grep #{called_from}|wc -l"
 
   processes_before = `#{cmd}`.to_i
 
