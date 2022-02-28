@@ -4,7 +4,7 @@ Parallel
 [![Build Status](https://github.com/grosser/parallel/actions/workflows/actions.yml/badge.svg)](https://github.com/grosser/parallel/actions/workflows/actions.yml)
 
 
-Run any code in parallel Processes(> use all CPUs) or Threads(> speedup blocking operations).<br/>
+Run any code in parallel Processes(> use all CPUs), Threads(> speedup blocking operations), or Ractors(> use all CPUs).<br/>
 Best suited for map-reduce or e.g. parallel downloads/uploads.
 
 Install
@@ -20,7 +20,7 @@ Usage
 ```Ruby
 # 2 CPUs -> work in 2 processes (a,b + c)
 results = Parallel.map(['a','b','c']) do |one_letter|
-  expensive_calculation(one_letter)
+  SomeClass.expensive_calculation(one_letter)
 end
 
 # 3 Processes -> finished after 1 run
@@ -28,6 +28,9 @@ results = Parallel.map(['a','b','c'], in_processes: 3) { |one_letter| ... }
 
 # 3 Threads -> finished after 1 run
 results = Parallel.map(['a','b','c'], in_threads: 3) { |one_letter| ... }
+
+# 3 Ractors -> finished after 1 run
+results = Parallel.map(['a','b','c'], in_ractors: 3, ractor: [SomeClass, :expensive_calculation])
 ```
 
 Same can be done with `each`
@@ -66,6 +69,15 @@ Processes/Threads are workers, they grab the next piece of work when they finish
  - Speedup for blocking operations
  - Variables can be shared/modified
  - No extra memory used
+
+### Ractors
+ - Ruby 3.0+ only
+ - Speedup for blocking operations
+ - Variables cannot be shared/modified
+ - No extra memory used
+ - Very fast to spawn
+ - Experimental and unstable
+ - `start` and `finish` hooks are called on main thread
 
 ### ActiveRecord
 
