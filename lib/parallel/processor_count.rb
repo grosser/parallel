@@ -19,7 +19,7 @@ module Parallel
           when /linux/
             cores = {} # unique physical ID / core ID combinations
             phy = 0
-            IO.read("/proc/cpuinfo").scan(/^physical id.*|^core id.*/) do |ln|
+            File.read("/proc/cpuinfo").scan(/^physical id.*|^core id.*/) do |ln|
               if ln.start_with?("physical")
                 phy = ln[/\d+/]
               elsif ln.start_with?("core")
