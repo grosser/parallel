@@ -1,11 +1,12 @@
 # frozen_string_literal: true
 require './spec/cases/helper'
 
-type = case ARGV[0]
-       when "PROCESSES" then :in_processes
-       when "THREADS" then :in_threads
-       else
-         raise "Use PROCESSES or THREADS"
+type = :"in_#{ARGV.fetch(0)}"
+
+class Callback
+  def self.call(x)
+    "ITEM-#{x}"
+  end
 end
 
 queue = Queue.new
@@ -16,4 +17,9 @@ Thread.new do
   queue.push 3
   queue.push Parallel::Stop
 end
-puts Parallel.map(queue, type => 2) { |(i, _id)| "ITEM-#{i}" }
+
+if type == :in_ractors
+  puts(Parallel.map(queue, type => 2, ractor: [Callback, :call]))
+else
+  puts(Parallel.map(queue, type => 2) { |(i, _id)| Callback.call i })
+end

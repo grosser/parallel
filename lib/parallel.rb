@@ -264,6 +264,9 @@ module Parallel
       elsif options[:in_threads]
         method = :in_threads
         size = options[method]
+      elsif options[:in_ractors]
+        method = :in_ractors
+        size = options[method]
       else
         method = :in_processes
         if Process.respond_to?(:fork)
@@ -285,6 +288,8 @@ module Parallel
           work_direct(job_factory, options, &block)
         elsif method == :in_threads
           work_in_threads(job_factory, options.merge(count: size), &block)
+        elsif method == :in_ractors
+          work_in_ractors(job_factory, options.merge(count: size), &block)
         else
           work_in_processes(job_factory, options.merge(count: size), &block)
         end
@@ -382,6 +387,72 @@ module Parallel
       exception || results
     end
 
+    def work_in_ractors(job_factory, options)
+      exception = nil
+      results = []
+      results_mutex = Mutex.new # arrays are not thread-safe on jRuby
+
+      callback = options[:ractor]
+      if block_given? || !callback
+        raise ArgumentError, "pass the code you want to execute as `ractor: [ClassName, :method_name]`"
+      end
+
+      # build
+      ractors = Array.new(options.fetch(:count)) do
+        Ractor.new do
+          loop do
+            got = receive
+            (klass, method_name), item, index = got
+            break if index == :break
+            begin
+              Ractor.yield [nil, klass.send(method_name, item), item, index]
+            rescue StandardError => e
+              Ractor.yield [e, nil, item, index]
+            end
+          end
+        end
+      end
+
+      # start
+      ractors.dup.each do |ractor|
+        if set = job_factory.next
+          item, index = set
+          instrument_start item, index, options
+          ractor.send [callback, item, index]
+        else
+          ractor.send([[nil, nil], nil, :break]) # stop the ractor
+          ractors.delete ractor
+        end
+      end
+
+      # replace with new items
+      while set = job_factory.next
+        item_next, index_next = set
+        done, (exception, result, item, index) = Ractor.select(*ractors)
+        if exception
+          ractors.delete done
+          break
+        end
+        instrument_finish item, index, result, options
+        results_mutex.synchronize { results[index] = (options[:preserve_results] == false ? nil : result) }
+
+        instrument_start item_next, index_next, options
+        done.send([callback, item_next, index_next])
+      end
+
+      # finish
+      ractors.each do |ractor|
+        (new_exception, result, item, index) = ractor.take
+        exception ||= new_exception
+        next if new_exception
+        instrument_finish item, index, result, options
+        results_mutex.synchronize { results[index] = (options[:preserve_results] == false ? nil : result) }
+        ractor.send([[nil, nil], nil, :break]) # stop the ractor
+      end
+
+      exception || results
+    end
+
     def work_in_processes(job_factory, options, &blk)
       workers = create_workers(job_factory, options, &blk)
       results = []
@@ -426,6 +497,7 @@ module Parallel
           end
         end
       end
+
       exception || results
     end
 
@@ -521,12 +593,20 @@ module Parallel
     end
 
     def with_instrumentation(item, index, options)
-      on_start = options[:start]
-      on_finish = options[:finish]
-      options[:mutex].synchronize { on_start.call(item, index) } if on_start
+      instrument_start(item, index, options)
       result = yield
-      options[:mutex].synchronize { on_finish.call(item, index, result) } if on_finish
+      instrument_finish(item, index, result, options)
       result unless options[:preserve_results] == false
+    end
+
+    def instrument_finish(item, index, result, options)
+      return unless on_finish = options[:finish]
+      options[:mutex].synchronize { on_finish.call(item, index, result) }
+    end
+
+    def instrument_start(item, index, options)
+      return unless on_start = options[:start]
+      options[:mutex].synchronize { on_start.call(item, index) }
     end
   end
 end

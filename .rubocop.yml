@@ -94,3 +94,6 @@ Security/MarshalLoad:
 
 Lint/EmptyBlock:
   Exclude: [spec/**/*.rb]
+
+Naming/MethodParameterName:
+  Exclude: [spec/**/*.rb]

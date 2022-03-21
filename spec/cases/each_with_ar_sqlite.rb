@@ -16,6 +16,13 @@ Tempfile.create("db") do |temp|
   class User < ActiveRecord::Base # rubocop:disable Lint/ConstantDefinitionInBlock
   end
 
+  class Callback # rubocop:disable Lint/ConstantDefinitionInBlock
+    def self.call(_)
+      $stdout.sync = true
+      puts "Parallel: #{User.all.map(&:name).join}"
+    end
+  end
+
   # create tables
   unless User.table_exists?
     ActiveRecord::Schema.define(version: 1) do
@@ -31,8 +38,10 @@ Tempfile.create("db") do |temp|
 
   puts "Parent: #{User.first.name}"
 
-  Parallel.each([1], in_worker_type => 1) do
-    puts "Parallel (#{in_worker_type}): #{User.all.map(&:name).join}"
+  if in_worker_type == :in_ractors
+    Parallel.each([1], in_worker_type => 1, ractor: [Callback, :call])
+  else
+    Parallel.each([1], in_worker_type => 1) { |x| Callback.call x }
   end
 
   puts "Parent: #{User.first.name}"
