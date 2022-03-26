@@ -24,10 +24,10 @@ results = Parallel.map(['a','b','c']) do |one_letter|
 end
 
 # 3 Processes -> finished after 1 run
-results = Parallel.map(['a','b','c'], in_processes: 3) { |one_letter| ... }
+results = Parallel.map(['a','b','c'], in_processes: 3) { |one_letter| SomeClass.expensive_calculation(one_letter) }
 
 # 3 Threads -> finished after 1 run
-results = Parallel.map(['a','b','c'], in_threads: 3) { |one_letter| ... }
+results = Parallel.map(['a','b','c'], in_threads: 3) { |one_letter| SomeClass.expensive_calculation(one_letter) }
 
 # 3 Ractors -> finished after 1 run
 results = Parallel.map(['a','b','c'], in_ractors: 3, ractor: [SomeClass, :expensive_calculation])
@@ -73,11 +73,12 @@ Processes/Threads are workers, they grab the next piece of work when they finish
 ### Ractors
  - Ruby 3.0+ only
  - Speedup for blocking operations
- - Variables cannot be shared/modified
  - No extra memory used
  - Very fast to spawn
  - Experimental and unstable
  - `start` and `finish` hooks are called on main thread
+ - Variables must be passed in `Parallel.map([1,2,3].map { |i| [i, ARGV, local_var] }, ...`
+ - use `Ractor.make_shareable` to pass in global objects
 
 ### ActiveRecord
 
