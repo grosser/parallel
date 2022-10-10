@@ -166,7 +166,7 @@ Use `Parallel.worker_number` to determine the worker slot in which your
 task is running.
 
 ```Ruby
-Parallel.each(1..5, :in_processes => 2) { |i| puts "Item: #{i}, Worker: #{Parallel.worker_number}" }
+Parallel.each(1..5, in_processes: 2) { |i| puts "Item: #{i}, Worker: #{Parallel.worker_number}" }
 Item: 1, Worker: 1
 Item: 2, Worker: 0
 Item: 3, Worker: 1
@@ -177,11 +177,9 @@ Item: 5, Worker: 1
 Tips
 ====
 
-Here are a few notable options.
-
- - [Benchmark/Test] Disable threading/forking with `in_threads: 0` or `in_processes: 0`, great to test performance or to debug parallel issues
+ - [Benchmark/Test] Disable threading/forking with `in_threads: 0` or `in_processes: 0`, to run the same code with different setups
  - [Isolation] Do not reuse previous worker processes: `isolation: true`
- - [Stop all processses with an alternate interrupt signal] `'INT'` (from `ctrl+c`) is caught by default. Catch `'TERM'` (from `kill`) with `interrupt_signal: 'TERM'`
+ - [Stop all processes with an alternate interrupt signal] `'INT'` (from `ctrl+c`) is caught by default. Catch `'TERM'` (from `kill`) with `interrupt_signal: 'TERM'`
  - [Process count via ENV] `PARALLEL_PROCESSOR_COUNT=16` will use `16` instead of the number of processors detected. This is used to reconfigure a tool using `parallel` without inserting custom logic.
 
 TODO
