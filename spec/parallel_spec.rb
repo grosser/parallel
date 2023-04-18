@@ -540,6 +540,12 @@ describe Parallel do
     end
   end
 
+  describe ".filter_map" do
+    it "yields object" do
+      ruby("spec/cases/filter_map.rb 2>&1").should == '["a", "c"]'
+    end
+  end
+
   describe ".any?" do
     it "returns true if any result is truthy" do
       ruby("spec/cases/any_true.rb").split(',').should == ['true'] * 3 * 2

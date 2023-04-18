@@ -304,6 +304,10 @@ module Parallel
       map(*args, &block).flatten(1)
     end
 
+    def filter_map(*args, &block)
+      map(*args, &block).compact
+    end
+
     # Number of physical processor cores on the current system.
     def physical_processor_count
       @physical_processor_count ||= begin
