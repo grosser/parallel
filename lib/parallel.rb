@@ -641,7 +641,31 @@ module Parallel
 
     def instrument_finish(item, index, result, options)
       return unless on_finish = options[:finish]
+      return instrument_finish_in_order(item, index, result, options) if options[:finish_in_order]
       options[:mutex].synchronize { on_finish.call(item, index, result) }
+    end
+
+    def instrument_finish_in_order(item, index, result, options)
+      options[:mutex].synchronize do
+        options[:finish_items] ||= []
+        options[:finish_items_done] ||= []
+        options[:finish_index] ||= 0
+        if index == options[:finish_index]
+          # call finish for current item and any ready items
+          options[:finish].call(item, index, result)
+          options[:finish_index] += 1
+          (index + 1).upto(options[:finish_items].size).each do |old_index|
+            break unless options[:finish_items_done][old_index]
+            old_item = options[:finish_items][old_index]
+            options[:finish].call(old_item, old_index, result)
+            options[:finish_index] += 1
+          end
+        else
+          # store for later
+          options[:finish_items][index] = item
+          options[:finish_items_done][index] = true
+        end
+      end
     end
 
     def instrument_start(item, index, options)
