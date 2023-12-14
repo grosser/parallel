@@ -158,6 +158,12 @@ They are called on the main process and protected with a mutex.
 Parallel.map(1..100, finish: -> (item, i, result) { ... do something ... }) { sleep 1 }
 ```
 
+Set `finish_in_order: true` to ensure the `:finish` hooks get called in the order of the items.
+
+```Ruby
+Parallel.map(1..9, finish: -> (item, i, result) { puts "#{item} ok" }, finish_in_order: true) { sleep rand }
+```
+
 _NOTE: If all you are trying to do is get the index, it is much more performant to use `each_with_index` instead._
 
 ### Worker number

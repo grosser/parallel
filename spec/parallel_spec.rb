@@ -653,6 +653,11 @@ describe Parallel do
         end
       end
 
+      it "calls finish hook with finish_in_order: true" do
+        out = `METHOD=each WORKER_TYPE=#{type} ruby spec/cases/finish_in_order.rb 2>&1`
+        without_ractor_warning(out).should == (1..9).map { |item| "finish #{item}\n" }.join
+      end
+
       it "sets Parallel.worker_number with #{type}" do
         skip "unsupported" if type == "ractors"
         out = `METHOD=each WORKER_TYPE=#{type} ruby spec/cases/with_worker_number.rb 2>&1`
