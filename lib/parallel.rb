@@ -640,30 +640,30 @@ module Parallel
     end
 
     def instrument_finish(item, index, result, options)
-      return unless on_finish = options[:finish]
+      return unless (on_finish = options[:finish])
       return instrument_finish_in_order(item, index, result, options) if options[:finish_in_order]
       options[:mutex].synchronize { on_finish.call(item, index, result) }
     end
 
+    # yield results in the order of the input items
+    # needs to use `options` to store state between executions
+    # needs to use `done` index since a nil result would also be valid
     def instrument_finish_in_order(item, index, result, options)
       options[:mutex].synchronize do
-        options[:finish_items] ||= []
-        options[:finish_items_done] ||= []
-        options[:finish_index] ||= 0
-        if index == options[:finish_index]
-          # call finish for current item and any ready items
-          options[:finish].call(item, index, result)
-          options[:finish_index] += 1
-          (index + 1).upto(options[:finish_items].size).each do |old_index|
-            break unless options[:finish_items_done][old_index]
-            old_item = options[:finish_items][old_index]
-            options[:finish].call(old_item, old_index, result)
-            options[:finish_index] += 1
-          end
-        else
-          # store for later
-          options[:finish_items][index] = item
-          options[:finish_items_done][index] = true
+        # initialize our state
+        options[:finish_done] ||= []
+        options[:finish_expecting] ||= 0 # we wait for item at index 0
+
+        # store current result
+        options[:finish_done][index] = [item, result]
+
+        # yield all results that are now in order
+        break unless index == options[:finish_expecting]
+        index.upto(options[:finish_done].size).each do |i|
+          break unless (done = options[:finish_done][i])
+          options[:finish_done][i] = nil # allow GC to free this item and result
+          options[:finish].call(done[0], i, done[1])
+          options[:finish_expecting] += 1
         end
       end
     end

@@ -150,21 +150,20 @@ Parallel.map(1..50, progress: "Doing stuff") { sleep 1 }
 
 Use `:finish` or `:start` hook to get progress information.
  - `:start` has item and index
- - `:finish` has item, index, result
+ - `:finish` has item, index, and result
 
 They are called on the main process and protected with a mutex.
+(To just get the index, use the more performant `Parallel.each_with_index`)
 
 ```Ruby
 Parallel.map(1..100, finish: -> (item, i, result) { ... do something ... }) { sleep 1 }
 ```
 
-Set `finish_in_order: true` to ensure the `:finish` hooks get called in the order of the items.
+Set `finish_in_order: true` to call the `:finish` hook in the order of the input (will take longer to see initial output).
 
 ```Ruby
 Parallel.map(1..9, finish: -> (item, i, result) { puts "#{item} ok" }, finish_in_order: true) { sleep rand }
 ```
-
-_NOTE: If all you are trying to do is get the index, it is much more performant to use `each_with_index` instead._
 
 ### Worker number
 
