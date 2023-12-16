@@ -341,11 +341,22 @@ describe Parallel do
         Parallel.worker_number.should be_nil
       end
 
-      it "can run with 0" do
+      it "can run with 0 by not using #{type}" do
         Thread.should_not_receive(:exclusive)
         Process.should_not_receive(:fork)
         result = Parallel.map([1, 2, 3, 4, 5, 6, 7, 8, 9], "in_#{type}".to_sym => 0) { |x| x + 2 }
         result.should == [3, 4, 5, 6, 7, 8, 9, 10, 11]
+      end
+
+      it "can call finish hook in order #{type}" do
+        out = `METHOD=map WORKER_TYPE=#{type} ruby spec/cases/finish_in_order.rb 2>&1`
+        without_ractor_warning(out).should == <<~OUT
+          finish nil 0 nil
+          finish false 1 false
+          finish 2 2 "F2"
+          finish 3 3 "F3"
+          finish 4 4 "F4"
+        OUT
       end
     end
 
@@ -651,11 +662,6 @@ describe Parallel do
             start 3
           OUT
         end
-      end
-
-      it "calls finish hook with finish_in_order: true" do
-        out = `METHOD=each WORKER_TYPE=#{type} ruby spec/cases/finish_in_order.rb 2>&1`
-        without_ractor_warning(out).should == (1..9).map { |item| "finish #{item}\n" }.join
       end
 
       it "sets Parallel.worker_number with #{type}" do
