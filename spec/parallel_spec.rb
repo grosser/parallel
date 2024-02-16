@@ -191,7 +191,6 @@ describe Parallel do
     end
 
     it 'does not leave processes behind while running' do
-      skip if ENV['TRAVIS'] # this randomly fails on travis all the time :(
       ruby("spec/cases/closes_processes_at_runtime.rb").gsub(/.* deprecated; use BigDecimal.*\n/, '').should == 'OK'
     end
 
@@ -510,7 +509,6 @@ describe Parallel do
     end
 
     it 'sets Parallel.worker_number when run with isolation' do
-      skip if ENV['TRAVIS'] # this randomly hangs on travis
       out = ruby("spec/cases/map_worker_number_isolation.rb")
       out.should == "0,1\nOK"
     end
@@ -603,7 +601,7 @@ describe Parallel do
     end
 
     it "does not slow down with lots of GC work in threads" do
-      Benchmark.realtime { ruby("spec/cases/no_gc_with_each.rb 2>&1") }.should <= (ENV["TRAVIS"] ? 15 : 10)
+      Benchmark.realtime { ruby("spec/cases/no_gc_with_each.rb 2>&1") }.should <= 10
     end
 
     it "can modify in-place" do
