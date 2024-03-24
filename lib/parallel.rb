@@ -300,12 +300,12 @@ module Parallel
       map(array, options.merge(with_index: true), &block)
     end
 
-    def flat_map(*args, &block)
-      map(*args, &block).flatten(1)
+    def flat_map(...)
+      map(...).flatten(1)
     end
 
-    def filter_map(*args, &block)
-      map(*args, &block).compact
+    def filter_map(...)
+      map(...).compact
     end
 
     # Number of physical processor cores on the current system.

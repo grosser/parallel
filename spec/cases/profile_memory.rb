@@ -8,7 +8,7 @@ def count_objects
   GC.start
   GC.start
   ObjectSpace.each_object { |o| cur[o.class] += 1 }
-  cur.map { |k, v| [k, v - old[k]] }.to_h.reject { |_k, v| v == 0 }
+  cur.to_h { |k, v| [k, v - old[k]] }.reject { |_k, v| v == 0 }
 end
 
 class Callback
