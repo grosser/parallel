@@ -179,6 +179,16 @@ Item: 4, Worker: 0
 Item: 5, Worker: 1
 ```
 
+### Dynamically generating jobs
+
+Example: wait for work to arrive or sleep
+
+```ruby
+queue = []
+Thread.new { loop { queue << rand(100); sleep 2 } } # job producer
+Parallel.map(Proc.new { queue.pop }, in_processes: 3) { |f| f ? puts("#{f} received") : sleep(1) }
+```
+
 Tips
 ====
 
