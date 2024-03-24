@@ -24,7 +24,7 @@ GEM
     i18n (1.10.0)
       concurrent-ruby (~> 1.0)
     minitest (5.15.0)
-    mysql2 (0.5.3)
+    mysql2 (0.5.6)
     parser (3.1.1.0)
       ast (~> 2.4.1)
     rainbow (3.1.1)
