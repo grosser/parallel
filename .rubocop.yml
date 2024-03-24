@@ -4,15 +4,9 @@ require:
 
 AllCops:
   NewCops: enable
-  TargetRubyVersion: 2.5
+  TargetRubyVersion: 2.7
 
 Style/StringLiterals:
-  Enabled: false
-
-Style/StringLiteralsInInterpolation:
-  Enabled: false
-
-Lint/AmbiguousRegexpLiteral:
   Enabled: false
 
 Bundler/OrderedGems:
@@ -63,9 +57,6 @@ Style/SymbolArray:
   EnforcedStyle: brackets
 
 Style/GuardClause:
-  Enabled: false
-
-Lint/AssignmentInCondition:
   Enabled: false
 
 Style/EmptyElse:

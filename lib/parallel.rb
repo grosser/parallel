@@ -24,7 +24,7 @@ module Parallel
     attr_reader :backtrace
 
     def initialize(original)
-      super "#{original.class}: #{original.message}"
+      super("#{original.class}: #{original.message}")
       @backtrace = original.backtrace
     end
   end
@@ -300,12 +300,12 @@ module Parallel
       map(array, options.merge(with_index: true), &block)
     end
 
-    def flat_map(*args, &block)
-      map(*args, &block).flatten(1)
+    def flat_map(...)
+      map(...).flatten(1)
     end
 
-    def filter_map(*args, &block)
-      map(*args, &block).compact
+    def filter_map(...)
+      map(...).compact
     end
 
     # Number of physical processor cores on the current system.
@@ -359,7 +359,7 @@ module Parallel
     private
 
     def add_progress_bar!(job_factory, options)
-      if progress_options = options[:progress]
+      if (progress_options = options[:progress])
         raise "Progressbar can only be used with array like items" if job_factory.size == Float::INFINITY
         require 'ruby-progressbar'
 
@@ -388,7 +388,7 @@ module Parallel
       results = []
       exception = nil
       begin
-        while set = job_factory.next
+        while (set = job_factory.next)
           item, index = set
           results << with_instrumentation(item, index, options) do
             call_with_index(item, index, options, &block)
@@ -411,7 +411,7 @@ module Parallel
       in_threads(options) do |worker_num|
         self.worker_number = worker_num
         # as long as there are more jobs, work on one of them
-        while !exception && set = job_factory.next
+        while !exception && (set = job_factory.next)
           begin
             item, index = set
             result = with_instrumentation item, index, options do
@@ -455,7 +455,7 @@ module Parallel
 
       # start
       ractors.dup.each do |ractor|
-        if set = job_factory.next
+        if (set = job_factory.next)
           item, index = set
           instrument_start item, index, options
           ractor.send [callback, item, index]
@@ -466,7 +466,7 @@ module Parallel
       end
 
       # replace with new items
-      while set = job_factory.next
+      while (set = job_factory.next)
         item_next, index_next = set
         done, (exception, result, item, index) = Ractor.select(*ractors)
         if exception
@@ -669,7 +669,7 @@ module Parallel
     end
 
     def instrument_start(item, index, options)
-      return unless on_start = options[:start]
+      return unless (on_start = options[:start])
       options[:mutex].synchronize { on_start.call(item, index) }
     end
   end

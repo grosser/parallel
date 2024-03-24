@@ -8,7 +8,7 @@ def count_objects
   GC.start
   GC.start
   ObjectSpace.each_object { |o| cur[o.class] += 1 }
-  cur.map { |k, v| [k, v - old[k]] }.to_h.reject { |_k, v| v == 0 }
+  cur.to_h { |k, v| [k, v - old[k]] }.reject { |_k, v| v == 0 }
 end
 
 class Callback
@@ -18,7 +18,7 @@ end
 require './spec/cases/helper'
 
 items = Array.new(1000)
-options = { "in_#{ARGV[0]}".to_sym => 2 }
+options = { "in_#{ARGV[0]}": 2 }
 
 # TODO: not sure why this fails without 2.times in threading mode :(
 

@@ -10,7 +10,7 @@ class Callback
 end
 
 method = ENV.fetch('METHOD')
-in_worker_type = "in_#{ENV.fetch('WORKER_TYPE')}".to_sym
+in_worker_type = :"in_#{ENV.fetch('WORKER_TYPE')}"
 $stdout.sync = true
 
 items = [nil, false, 2, 3, 4]

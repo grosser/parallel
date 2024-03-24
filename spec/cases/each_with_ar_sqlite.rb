@@ -4,7 +4,7 @@ require "active_record"
 require "sqlite3"
 require "tempfile"
 $stdout.sync = true
-in_worker_type = "in_#{ENV.fetch('WORKER_TYPE')}".to_sym
+in_worker_type = :"in_#{ENV.fetch('WORKER_TYPE')}"
 
 Tempfile.create("db") do |temp|
   ActiveRecord::Schema.verbose = false
