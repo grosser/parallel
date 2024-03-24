@@ -9,12 +9,6 @@ AllCops:
 Style/StringLiterals:
   Enabled: false
 
-Style/StringLiteralsInInterpolation:
-  Enabled: false
-
-Lint/AmbiguousRegexpLiteral:
-  Enabled: false
-
 Bundler/OrderedGems:
   Enabled: false
 
@@ -63,9 +57,6 @@ Style/SymbolArray:
   EnforcedStyle: brackets
 
 Style/GuardClause:
-  Enabled: false
-
-Lint/AssignmentInCondition:
   Enabled: false
 
 Style/EmptyElse:
