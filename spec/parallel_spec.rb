@@ -144,7 +144,7 @@ describe Parallel do
         kill_process_with_name("spec/cases/parallel_fast_exit.rb") # simulates Ctrl+c
         sleep 1
         result = t.value
-        result.scan(/I finished/).size.should == 3
+        result.scan("I finished").size.should == 3
         result.should_not include("Parallel execution interrupted")
       end.should <= 4
     end
@@ -334,7 +334,7 @@ describe Parallel do
 
       it "sets Parallel.worker_number with 0 #{type}" do
         skip if type == "ractors" # not supported
-        type_key = "in_#{type}".to_sym
+        type_key = :"in_#{type}"
         result = Parallel.map([1, 2, 3, 4, 5, 6, 7, 8, 9], type_key => 0) { |_x| Parallel.worker_number }
         result.uniq.should == [0]
         Parallel.worker_number.should be_nil
@@ -343,7 +343,7 @@ describe Parallel do
       it "can run with 0 by not using #{type}" do
         Thread.should_not_receive(:exclusive)
         Process.should_not_receive(:fork)
-        result = Parallel.map([1, 2, 3, 4, 5, 6, 7, 8, 9], "in_#{type}".to_sym => 0) { |x| x + 2 }
+        result = Parallel.map([1, 2, 3, 4, 5, 6, 7, 8, 9], "in_#{type}": 0) { |x| x + 2 }
         result.should == [3, 4, 5, 6, 7, 8, 9, 10, 11]
       end
 

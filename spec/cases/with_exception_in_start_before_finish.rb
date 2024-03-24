@@ -2,7 +2,7 @@
 require './spec/cases/helper'
 
 method = ENV.fetch('METHOD')
-in_worker_type = "in_#{ENV.fetch('WORKER_TYPE')}".to_sym
+in_worker_type = :"in_#{ENV.fetch('WORKER_TYPE')}"
 $stdout.sync = true
 
 class ParallelTestError < StandardError

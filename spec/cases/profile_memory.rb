@@ -18,7 +18,7 @@ end
 require './spec/cases/helper'
 
 items = Array.new(1000)
-options = { "in_#{ARGV[0]}".to_sym => 2 }
+options = { "in_#{ARGV[0]}": 2 }
 
 # TODO: not sure why this fails without 2.times in threading mode :(
 

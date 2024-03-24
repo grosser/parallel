@@ -24,7 +24,7 @@ module Parallel
     attr_reader :backtrace
 
     def initialize(original)
-      super "#{original.class}: #{original.message}"
+      super("#{original.class}: #{original.message}")
       @backtrace = original.backtrace
     end
   end
