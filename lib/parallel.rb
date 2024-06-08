@@ -357,7 +357,7 @@ module Parallel
     def physical_processor_count_windows
       # Get-CimInstance introduced in PowerShell 3 or earlier: https://learn.microsoft.com/en-us/previous-versions/powershell/module/cimcmdlets/get-ciminstance?view=powershell-3.0
       result = run(
-        'powershell -command "Get-CimInstance -ClassName Win32_Processor ' \
+        'powershell -command "Get-CimInstance -ClassName Win32_Processor -Property NumberOfCores ' \
         '| Select-Object -Property NumberOfCores"'
       )
       if !result || $?.exitstatus != 0
