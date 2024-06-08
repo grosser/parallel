@@ -14,4 +14,4 @@ gem 'rubocop-rake'
 gem 'rubocop-rspec'
 
 gem 'mysql2', group: :mysql
-gem 'sqlite3'
+gem 'sqlite3', '~> 1.4'
