@@ -736,7 +736,7 @@ describe Parallel do
     def normalize(result)
       result = result.sub(/\{(.*)\}/, "\\1").split(", ")
       result.reject! { |x| x =~ /^(Hash|Array|String)=>(1|-1|-2)$/ }
-      result.reject! { |x| x =~ /^(Mutex)=>(1)$/ } if RUBY_VERSION < "2.0"
+      result.reject! { |x| x =~ /^(Thread::Mutex)=>(1)$/ } if RUBY_VERSION >= "3.3"
       result
     end
 
