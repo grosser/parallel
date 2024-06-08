@@ -237,6 +237,7 @@ Authors
  - [Yuki Inoue](https://github.com/Yuki-Inoue)
  - [Takumasa Ochi](https://github.com/aeroastro)
  - [Shai Coleman](https://github.com/shaicoleman)
+ - [Earlopain](https://github.com/Earlopain)
 
 [Michael Grosser](http://grosser.it)<br/>
 michael@grosser.it<br/>
