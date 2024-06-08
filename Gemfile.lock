@@ -26,6 +26,7 @@ GEM
     json (2.7.1)
     json (2.7.1-java)
     language_server-protocol (3.17.0.3)
+    mini_portile2 (2.8.7)
     minitest (5.15.0)
     mysql2 (0.5.6)
     parser (3.3.0.5)
@@ -72,7 +73,8 @@ GEM
     rubocop-rspec (2.9.0)
       rubocop (~> 1.19)
     ruby-progressbar (1.13.0)
-    sqlite3 (1.4.2)
+    sqlite3 (1.7.3)
+      mini_portile2 (~> 2.8.0)
     tzinfo (2.0.4)
       concurrent-ruby (~> 1.0)
     unicode-display_width (2.5.0)
@@ -95,7 +97,7 @@ DEPENDENCIES
   rubocop-rake
   rubocop-rspec
   ruby-progressbar
-  sqlite3
+  sqlite3 (~> 1.4)
 
 BUNDLED WITH
    2.3.12

@@ -12,14 +12,14 @@ jobs:
         image: mysql
     strategy:
       matrix:
-        ruby: [ '2.7', '3.0', '3.1', '3.2' ]
+        ruby: [ '2.7', '3.0', '3.1', '3.2', '3.3' ]
         task: [ 'spec' ]
         include:
         - ruby: 2.7 # keep in sync with lowest version
           task: rubocop
     name: ${{ matrix.ruby }} rake ${{ matrix.task }}
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - uses: ruby/setup-ruby@v1
       with:
         ruby-version: ${{ matrix.ruby }}
