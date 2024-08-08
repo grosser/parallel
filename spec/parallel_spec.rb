@@ -49,11 +49,6 @@ describe Parallel do
         (1..999).should include(Parallel.processor_count)
       end
     end
-
-    it 'uses Etc.nprocessors in Ruby 2.2+' do
-      defined?(Etc).should == "constant"
-      Etc.respond_to?(:nprocessors).should == true
-    end
   end
 
   describe ".physical_processor_count" do
