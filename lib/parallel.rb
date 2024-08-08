@@ -337,10 +337,10 @@ module Parallel
       end
     end
 
-    # Number of processors seen by the OS, used for process scheduling
+    # Number of processors seen by the OS or value considering CPU quota if the process is inside a cgroup,
+    # used for process scheduling
     def processor_count
-      require 'etc'
-      @processor_count ||= Integer(ENV['PARALLEL_PROCESSOR_COUNT'] || Etc.nprocessors)
+      @processor_count ||= Integer(ENV['PARALLEL_PROCESSOR_COUNT'] || available_processor_count)
     end
 
     def worker_number
@@ -694,6 +694,14 @@ module Parallel
     def instrument_start(item, index, options)
       return unless (on_start = options[:start])
       options[:mutex].synchronize { on_start.call(item, index) }
+    end
+
+    def available_processor_count
+      require 'concurrent-ruby'
+      Concurrent.available_processor_count.floor
+    rescue LoadError, NoMethodError
+      require 'etc'
+      Etc.nprocessors
     end
   end
 end
