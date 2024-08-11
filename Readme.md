@@ -196,6 +196,7 @@ Tips
  - [Isolation] Do not reuse previous worker processes: `isolation: true`
  - [Stop all processes with an alternate interrupt signal] `'INT'` (from `ctrl+c`) is caught by default. Catch `'TERM'` (from `kill`) with `interrupt_signal: 'TERM'`
  - [Process count via ENV] `PARALLEL_PROCESSOR_COUNT=16` will use `16` instead of the number of processors detected. This is used to reconfigure a tool using `parallel` without inserting custom logic.
+ - [Process count] `parallel` uses a number of processors seen by the OS for process count by default. If you want to use a value considering CPU quota, please add `concurrent-ruby` to your `Gemfile`.
 
 TODO
 ====
