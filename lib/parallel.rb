@@ -697,9 +697,10 @@ module Parallel
     end
 
     def available_processor_count
+      gem 'concurrent-ruby', '>= 1.3.4'
       require 'concurrent-ruby'
       Concurrent.available_processor_count.floor
-    rescue LoadError, NoMethodError
+    rescue LoadError
       require 'etc'
       Etc.nprocessors
     end
