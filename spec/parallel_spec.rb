@@ -730,6 +730,10 @@ describe Parallel do
     ruby("spec/cases/lambda_can_stop_by_exception.rb").should == "ITEM-1\nITEM-2\nITEM-3\n" * 3
   end
 
+  it "must call lambda in same thread" do
+    ruby("spec/cases/lambda_call_same_thread.rb").should == "ITEM-1\nITEM-2\nITEM-3\n"
+  end
+
   it "fails when running with a prefilled queue without stop since there are no threads to fill it" do
     error = (RUBY_VERSION >= "2.0.0" ? "No live threads left. Deadlock?" : "deadlock detected (fatal)")
     ruby("spec/cases/fatal_queue.rb 2>&1").should include error
