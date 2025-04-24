@@ -722,6 +722,10 @@ describe Parallel do
     end
   end
 
+  it "can process infinite sequence enumerator" do
+    ruby("spec/cases/infinite_sequence.rb").split(',').should == ['139'] * 2
+  end
+
   it "fails when running with a prefilled queue without stop since there are no threads to fill it" do
     error = (RUBY_VERSION >= "2.0.0" ? "No live threads left. Deadlock?" : "deadlock detected (fatal)")
     ruby("spec/cases/fatal_queue.rb 2>&1").should include error
