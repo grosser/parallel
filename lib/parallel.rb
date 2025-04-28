@@ -488,7 +488,8 @@ module Parallel
       results_mutex = Mutex.new # arrays are not thread-safe on jRuby
       exception = nil
 
-      in_threads(options.merge(runloop: job_factory.method(:runloop), stopper: job_factory.method(:stopper))) do |worker_num|
+      thread_options = options.merge(runloop: job_factory.method(:runloop), stopper: job_factory.method(:stopper))
+      in_threads(thread_options) do |worker_num|
         queue_for_thread = Thread::Queue.new
         self.worker_number = worker_num
         # as long as there are more jobs, work on one of them
@@ -581,7 +582,8 @@ module Parallel
       exception = nil
 
       UserInterruptHandler.kill_on_ctrl_c(workers.map(&:pid), options) do
-        in_threads(options.merge(runloop: job_factory.method(:runloop), stopper: job_factory.method(:stopper))) do |i|
+        thread_options = options.merge(runloop: job_factory.method(:runloop), stopper: job_factory.method(:stopper))
+        in_threads(thread_options) do |i|
           worker = workers[i]
           worker.thread = Thread.current
           queue_for_thread = Thread::Queue.new
