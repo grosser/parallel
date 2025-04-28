@@ -168,7 +168,9 @@ module Parallel
       producer? ? data : [@source[data], data]
     end
 
-    def stopper = @runloop_queue&.push(Stop)
+    def stopper
+      @runloop_queue&.push(Stop)
+    end
 
     private
 
