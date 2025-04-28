@@ -105,7 +105,8 @@ module Parallel
       @stopped = false
     end
 
-    def next(queue_for_thread = nil)
+    def next
+      queue_for_thread = Thread.current.thread_variable_get(:parallel_queue)
       if @runloop_queue && queue_for_thread
         return if @stopped
         item = runloop_enq(queue_for_thread)
@@ -490,10 +491,10 @@ module Parallel
 
       thread_options = options.merge(runloop: job_factory.method(:runloop), stopper: job_factory.method(:stopper))
       in_threads(thread_options) do |worker_num|
-        queue_for_thread = Thread::Queue.new
+        Thread.current.thread_variable_set(:parallel_queue, Thread::Queue.new)
         self.worker_number = worker_num
         # as long as there are more jobs, work on one of them
-        while !exception && (set = job_factory.next(queue_for_thread))
+        while !exception && (set = job_factory.next)
           begin
             item, index = set
             result = with_instrumentation item, index, options do
@@ -586,13 +587,13 @@ module Parallel
         in_threads(thread_options) do |i|
           worker = workers[i]
           worker.thread = Thread.current
-          queue_for_thread = Thread::Queue.new
+          Thread.current.thread_variable_set(:parallel_queue, Thread::Queue.new)
           worked = false
 
           begin
             loop do
               break if exception
-              item, index = job_factory.next(queue_for_thread)
+              item, index = job_factory.next
               break unless index
 
               if options[:isolation]
