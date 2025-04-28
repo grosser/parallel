@@ -140,6 +140,7 @@ module Parallel
         break if item == Stop
       end
       @stopped = true
+      # clear out all work queues by adding a "stop" to them which will stop the thread working on them
       begin
         while queue = @runloop_queue.pop(true)
           queue.push(Stop) if queue != Stop # Unlock waiting threads.
