@@ -2,6 +2,7 @@
 
 # Reproduction case based on GitHub Issue #211
 # Original code provided by @cyclotron3k in the issue
+# using a enum that is infinite, so this will hang forever when trying to convert to an array
 
 require 'prime'
 require './spec/cases/helper'
