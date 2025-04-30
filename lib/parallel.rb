@@ -194,6 +194,7 @@ module Parallel
       array.respond_to?(:num_waiting) && array.respond_to?(:pop) && -> { array.pop(false) }
     end
 
+    # returns the `next` method if the source in an enumerator and cannot be accessed by anything more efficient like []
     def enum_wrapper(source)
       # Convert what is inaccessible by the index
       !source.respond_to?(:[]) && source.respond_to?(:next) && source.method(:next)
