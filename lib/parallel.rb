@@ -260,7 +260,11 @@ module Parallel
     def in_threads(options = { count: 2 })
       threads = []
       count, options = extract_count_from_options(options)
-      finished_monitor = options[:runloop] && Queue.new(1..(count - 1)) # Insert values, one less in count than the number of threads.
+      if options[:runloop]
+        # Insert values, one less in count than the number of threads.
+        finished_monitor = Queue.new # In Ruby 3.0 or earlier, Queue#initialize doesn't receive initial values.
+        (1..(count - 1)).each { |i| finished_monitor.push(i) }
+      end
       runloop_stopper = options[:stopper]
 
       Thread.handle_interrupt(Exception => :never) do
