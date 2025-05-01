@@ -109,6 +109,9 @@ module Parallel
       queue_for_thread = Thread.current.thread_variable_get(:parallel_queue)
       if @worker_queues && queue_for_thread
         return if @stopped
+        # This #next method may be called from some threads at the same time.
+        # The main (Parallel's singleton method caller) thread calls @lambda and checks `item == Stop`,
+        # so it's not necessary to check for Stop here.
         item = runloop_enq(queue_for_thread)
         return if item == Stop
         index = @index += 1
@@ -260,6 +263,15 @@ module Parallel
     def in_threads(options = { count: 2 })
       threads = []
       count, options = extract_count_from_options(options)
+
+      # Explanation:
+      # The queue `finished_monitor` is initialized with `count - 1` values instead of `count`.
+      # This design ensures that all but one thread can retrieve a value from the queue by calling `finished_monitor.pop(true)`.
+      # The last thread will attempt to pop from the empty queue and raise a `ThreadError` exception.
+      # This exception triggers the rescue section where `runloop_stopper` is called, and this stops `JobFactory#consume_worker_queue`.
+      # By raising this exception for the last thread, we ensure that `JobFactory#stop` is called exactly once.
+      # Note: While multiple calls to `JobFactory#stopper` might have no side effects, this approach guarantees
+      # that it is invoked in a controlled and predictable manner.
       if options[:runloop]
         # Insert values, one less in count than the number of threads.
         finished_monitor = Queue.new # In Ruby 3.0 or earlier, Queue#initialize doesn't receive initial values.
