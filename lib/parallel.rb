@@ -264,19 +264,8 @@ module Parallel
       threads = []
       count, options = extract_count_from_options(options)
 
-      # Explanation:
-      # The queue `finished_monitor` is initialized with `count - 1` values instead of `count`.
-      # This design ensures that all but one thread can retrieve a value from the queue by calling `finished_monitor.pop(true)`.
-      # The last thread will attempt to pop from the empty queue and raise a `ThreadError` exception.
-      # This exception triggers the rescue section where `consume_worker_queue_stopper` is called, and this stops `JobFactory#consume_worker_queue`.
-      # By raising this exception for the last thread, we ensure that `JobFactory#stop` is called exactly once.
-      # Note: While multiple calls to `JobFactory#stopper` might have no side effects, this approach guarantees
-      # that it is invoked in a controlled and predictable manner.
-      if options[:consume_worker_queue]
-        # Insert values, one less in count than the number of threads.
-        finished_monitor = Queue.new # In Ruby 3.0 or earlier, Queue#initialize doesn't receive initial values.
-        (1..(count - 1)).each { |i| finished_monitor.push(i) }
-      end
+      counter = count # worker thread remaining counter
+      mutex = options[:consume_worker_queue] ? Mutex.new : nil
       consume_worker_queue_stopper = options[:stopper]
 
       Thread.handle_interrupt(Exception => :never) do
@@ -285,10 +274,12 @@ module Parallel
             threads << Thread.new do
               yield(i)
             ensure
-              begin
-                finished_monitor&.pop(true) # This must be executed even if the worker thread is killed (by #work_in_processes).
-              rescue ThreadError # Queue#pop raises ThreadError when the queue is empty.
-                consume_worker_queue_stopper&.call # Stop JobFactory#consume_worker_queue
+              mutex&.synchronize do
+                if counter <= 1
+                  # Last one thread calls consume_worker_queue_stopper
+                  consume_worker_queue_stopper.call
+                end
+                counter -= 1
               end
             end
           end
