@@ -112,7 +112,7 @@ module Parallel
         # This #next method may be called from some threads at the same time.
         # The main (Parallel's singleton method caller) thread calls @lambda and checks `item == Stop`,
         # so it's not necessary to check for Stop here.
-        item = runloop_enq(queue_for_thread)
+        item = worker_queues_enq(queue_for_thread)
         return if item == Stop
         index = @index += 1
       elsif producer?
@@ -184,7 +184,7 @@ module Parallel
       Stop
     end
 
-    def runloop_enq(queue_for_thread)
+    def worker_queues_enq(queue_for_thread)
       @worker_queues.push(queue_for_thread)
       queue_for_thread.pop # Wait until @lambda returns.
     end
@@ -268,16 +268,16 @@ module Parallel
       # The queue `finished_monitor` is initialized with `count - 1` values instead of `count`.
       # This design ensures that all but one thread can retrieve a value from the queue by calling `finished_monitor.pop(true)`.
       # The last thread will attempt to pop from the empty queue and raise a `ThreadError` exception.
-      # This exception triggers the rescue section where `runloop_stopper` is called, and this stops `JobFactory#consume_worker_queue`.
+      # This exception triggers the rescue section where `consume_worker_queue_stopper` is called, and this stops `JobFactory#consume_worker_queue`.
       # By raising this exception for the last thread, we ensure that `JobFactory#stop` is called exactly once.
       # Note: While multiple calls to `JobFactory#stopper` might have no side effects, this approach guarantees
       # that it is invoked in a controlled and predictable manner.
-      if options[:runloop]
+      if options[:consume_worker_queue]
         # Insert values, one less in count than the number of threads.
         finished_monitor = Queue.new # In Ruby 3.0 or earlier, Queue#initialize doesn't receive initial values.
         (1..(count - 1)).each { |i| finished_monitor.push(i) }
       end
-      runloop_stopper = options[:stopper]
+      consume_worker_queue_stopper = options[:stopper]
 
       Thread.handle_interrupt(Exception => :never) do
         Thread.handle_interrupt(Exception => :immediate) do
@@ -288,11 +288,11 @@ module Parallel
               begin
                 finished_monitor&.pop(true) # This must be executed even if the worker thread is killed (by #work_in_processes).
               rescue ThreadError # Queue#pop raises ThreadError when the queue is empty.
-                runloop_stopper&.call # Stop JobFactory#consume_worker_queue
+                consume_worker_queue_stopper&.call # Stop JobFactory#consume_worker_queue
               end
             end
           end
-          options[:runloop]&.call # Invoke lambda in caller thread, and provide jobs to thread queue.
+          options[:consume_worker_queue]&.call # Invoke lambda in caller thread, and provide jobs to thread queue.
           threads.map(&:value)
         end
       ensure
@@ -506,7 +506,7 @@ module Parallel
       results_mutex = Mutex.new # arrays are not thread-safe on jRuby
       exception = nil
 
-      thread_options = options.merge(runloop: job_factory.method(:consume_worker_queue), stopper: job_factory.method(:stop))
+      thread_options = options.merge(consume_worker_queue: job_factory.method(:consume_worker_queue), stopper: job_factory.method(:stop))
       in_threads(thread_options) do |worker_num|
         Thread.current.thread_variable_set(:parallel_queue, Thread::Queue.new)
         self.worker_number = worker_num
@@ -600,7 +600,7 @@ module Parallel
       exception = nil
 
       UserInterruptHandler.kill_on_ctrl_c(workers.map(&:pid), options) do
-        thread_options = options.merge(runloop: job_factory.method(:consume_worker_queue), stopper: job_factory.method(:stop))
+        thread_options = options.merge(consume_worker_queue: job_factory.method(:consume_worker_queue), stopper: job_factory.method(:stop))
         in_threads(thread_options) do |i|
           worker = workers[i]
           worker.thread = Thread.current
