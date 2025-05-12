@@ -133,7 +133,7 @@ module Parallel
       [item, index]
     end
 
-    def consume_worker_queue
+    def consume_worker_queues
       return unless @worker_queues
 
       loop do
@@ -265,8 +265,8 @@ module Parallel
       count, options = extract_count_from_options(options)
 
       counter = count # worker thread remaining counter
-      mutex = options[:consume_worker_queue] ? Mutex.new : nil
-      consume_worker_queue_stopper = options[:stopper]
+      mutex = options[:consume_worker_queues] ? Mutex.new : nil
+      consume_worker_queues_stopper = options[:stopper]
 
       Thread.handle_interrupt(Exception => :never) do
         Thread.handle_interrupt(Exception => :immediate) do
@@ -277,13 +277,13 @@ module Parallel
               mutex&.synchronize do
                 if counter <= 1
                   # last thread needs to stop the worker queue processing
-                  consume_worker_queue_stopper.call
+                  consume_worker_queues_stopper.call
                 end
                 counter -= 1
               end
             end
           end
-          options[:consume_worker_queue]&.call # Invoke lambda in caller thread, and provide jobs to thread queue.
+          options[:consume_worker_queues]&.call # Invoke lambda in caller thread, and provide jobs to thread queue.
           threads.map(&:value)
         end
       ensure
@@ -497,7 +497,7 @@ module Parallel
       results_mutex = Mutex.new # arrays are not thread-safe on jRuby
       exception = nil
 
-      thread_options = options.merge(consume_worker_queue: job_factory.method(:consume_worker_queue), stopper: job_factory.method(:stop))
+      thread_options = options.merge(consume_worker_queues: job_factory.method(:consume_worker_queues), stopper: job_factory.method(:stop))
       in_threads(thread_options) do |worker_num|
         Thread.current.thread_variable_set(:parallel_queue, Thread::Queue.new)
         self.worker_number = worker_num
@@ -591,7 +591,7 @@ module Parallel
       exception = nil
 
       UserInterruptHandler.kill_on_ctrl_c(workers.map(&:pid), options) do
-        thread_options = options.merge(consume_worker_queue: job_factory.method(:consume_worker_queue), stopper: job_factory.method(:stop))
+        thread_options = options.merge(consume_worker_queues: job_factory.method(:consume_worker_queues), stopper: job_factory.method(:stop))
         in_threads(thread_options) do |i|
           worker = workers[i]
           worker.thread = Thread.current
