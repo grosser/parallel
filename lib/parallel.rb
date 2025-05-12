@@ -276,7 +276,7 @@ module Parallel
             ensure
               mutex&.synchronize do
                 if counter <= 1
-                  # Last one thread calls consume_worker_queue_stopper
+                  # last thread needs to stop the worker queue processing
                   consume_worker_queue_stopper.call
                 end
                 counter -= 1
