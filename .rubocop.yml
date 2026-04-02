@@ -4,7 +4,7 @@ plugins:
 
 AllCops:
   NewCops: enable
-  TargetRubyVersion: 2.7
+  TargetRubyVersion: 3.3
 
 Style/StringLiterals:
   Enabled: false
@@ -92,3 +92,12 @@ Lint/EmptyBlock:
 
 Naming/MethodParameterName:
   Exclude: [spec/**/*.rb]
+
+RSpec/Output:
+  Exclude: [spec/cases/*.rb]
+
+Style/OneClassPerFile:
+  Exclude: [spec/cases/*.rb]
+
+Naming/BlockForwarding:
+  EnforcedStyle: explicit

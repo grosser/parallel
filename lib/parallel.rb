@@ -255,7 +255,7 @@ module Parallel
 
       if options[:in_processes] && options[:in_threads]
         raise ArgumentError, "Please specify only one of `in_processes` or `in_threads`."
-      elsif RUBY_PLATFORM =~ (/java/) && !options[:in_processes]
+      elsif RUBY_PLATFORM =~ /java/ && !options[:in_processes]
         method = :in_threads
         size = options[method] || processor_count
       elsif options[:in_threads]
@@ -621,7 +621,7 @@ module Parallel
           # https://github.com/rspec/rspec-support/blob/673133cdd13b17077b3d88ece8d7380821f8d7dc/lib/rspec/support.rb#L132-L140
           rescue NoMemoryError, SignalException, Interrupt, SystemExit # rubocop:disable Lint/ShadowedException
             raise $!
-          rescue Exception # # rubocop:disable Lint/RescueException
+          rescue Exception # rubocop:disable Lint/RescueException
             ExceptionWrapper.new($!)
           end
 
