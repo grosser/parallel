@@ -5,7 +5,7 @@ gemspec
 gem 'bump'
 gem 'rake'
 gem 'rspec'
-gem 'activerecord', "~> 6.0"
+gem 'activerecord'
 gem 'ruby-progressbar'
 gem 'rspec-rerun'
 gem 'rspec-legacy_formatters'
@@ -19,4 +19,4 @@ gem 'base64'
 gem 'bigdecimal'
 
 gem 'mysql2', group: :mysql
-gem 'sqlite3', '~> 1.4'
+gem 'sqlite3'
