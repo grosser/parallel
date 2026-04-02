@@ -15,6 +15,17 @@ module Parallel
       super()
       @value = value
     end
+
+    # marshal_dump that is used for ruby exceptions
+    # avoid dumping the cause since nobody needs that and it can include undumpable exceptions
+    def _dump(_depth)
+      Marshal.dump(@value)
+    end
+
+    # marshal_load that is used for ruby exceptions
+    def self._load(data)
+      new(Marshal.load(data))
+    end
   end
 
   class Kill < Break
