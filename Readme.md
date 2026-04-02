@@ -113,7 +113,7 @@ end
 A race happens when ActiveRecord models are autoloaded inside parallel threads
 in environments that lazy-load, like development, test, or migrations.
 
-To fix, autoloaded classes before the parallel block with either `require '<modelname>'` or  `ModelName.class`.
+To fix, autoload classes before the parallel block with either `require '<modelname>'` or  `ModelName.class`.
 
 ### Break
 
