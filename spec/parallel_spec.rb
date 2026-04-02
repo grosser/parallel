@@ -180,6 +180,11 @@ describe Parallel do
       out.should == "NOTHING WAS RAISED"
     end
 
+    it "can handle Break with an undumpable cause" do
+      out = ruby("spec/cases/parallel_break_with_undumpable_cause.rb").strip
+      out.should == "Result: hello"
+    end
+
     it 'can handle to high fork rate' do
       next if RbConfig::CONFIG["target_os"].include?("darwin1") # kills macs for some reason
       ruby("spec/cases/parallel_high_fork_rate.rb").should == 'OK'
