@@ -4,7 +4,7 @@ require 'spec_helper'
 describe Parallel do
   worker_types = ["threads"]
   worker_types << "processes" if Process.respond_to?(:fork)
-  worker_types << "ractors" if defined?(Ractor) && RUBY_VERSION < "4.0.0" # TODO: need new code for ruby 4 ractors
+  worker_types << "ractors" if defined?(Ractor)
 
   def time_taken
     t = Time.now.to_f
@@ -31,7 +31,7 @@ describe Parallel do
   end
 
   def without_ractor_warning(out)
-    out.sub(/.*Ractor is experimental.*\n/, "")
+    out.sub(/.*Ractor.*is experimental.*\n/, "")
   end
 
   describe ".processor_count" do
