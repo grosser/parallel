@@ -40,7 +40,6 @@ GEM
     language_server-protocol (3.17.0.5)
     lint_roller (1.1.0)
     logger (1.7.0)
-    mini_portile2 (2.8.9)
     minitest (6.0.3)
       drb (~> 2.0)
       prism (~> 1.5)
@@ -94,8 +93,7 @@ GEM
       rubocop (~> 1.81)
     ruby-progressbar (1.13.0)
     securerandom (0.4.1)
-    sqlite3 (2.9.2)
-      mini_portile2 (~> 2.8.0)
+    sqlite3 (2.9.2-arm64-darwin)
     timeout (0.6.1)
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
@@ -128,4 +126,4 @@ DEPENDENCIES
   sqlite3
 
 BUNDLED WITH
-  4.0.7
+  4.0.9

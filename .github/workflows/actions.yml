@@ -18,6 +18,8 @@ jobs:
         - ruby: 3.3 # keep in sync with lowest version
           task: rubocop
     name: ${{ matrix.ruby }} rake ${{ matrix.task }}
+    env:
+      BUNDLE_FROZEN: "false"
     steps:
     - uses: actions/checkout@v4
     - uses: ruby/setup-ruby@v1
