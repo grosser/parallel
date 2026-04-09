@@ -6,6 +6,12 @@
 
 - Add here when making a PR
 
+## 2.0.1
+
+### Added
+
+- require mfa for gem release
+
 ## 2.0.0
 
 ### Changed
