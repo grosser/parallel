@@ -13,7 +13,8 @@ Gem::Specification.new name, Parallel::VERSION do |s|
     "documentation_uri" => "#{s.homepage}/blob/v#{s.version}/Readme.md",
     "source_code_uri" => "#{s.homepage}/tree/v#{s.version}",
     "wiki_uri" => "#{s.homepage}/wiki",
-    "changelog_uri" => "#{s.homepage}/blob/v#{s.version}/CHANGELOG.md"
+    "changelog_uri" => "#{s.homepage}/blob/v#{s.version}/CHANGELOG.md",
+    "rubygems_mfa_required" => "true"
   }
   s.files = `git ls-files lib MIT-LICENSE.txt`.split("\n")
   s.license = "MIT"
