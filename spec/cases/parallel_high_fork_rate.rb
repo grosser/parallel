@@ -2,6 +2,6 @@
 require './spec/cases/helper'
 
 Parallel.each((0..200).to_a, in_processes: 200) do |_x|
-  sleep 1
+  sleep 0.1
 end
 print 'OK'

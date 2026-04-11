@@ -161,7 +161,7 @@ describe Parallel do
     it "saves time" do
       time_taken do
         ruby("spec/cases/parallel_sleeping_2.rb")
-      end.should < 3.5
+      end.should < 2.5
     end
 
     it "raises when one of the processes raises" do
@@ -203,12 +203,12 @@ describe Parallel do
   describe ".in_threads" do
     it "saves time" do
       time_taken do
-        Parallel.in_threads(3) { sleep 2 }
-      end.should < 3
+        Parallel.in_threads(3) { sleep 1 }
+      end.should < 2
     end
 
     it "does not create new processes" do
-      -> { Thread.new { Parallel.in_threads(2) { sleep 1 } } }.should_not(change { `ps`.split("\n").size })
+      -> { Thread.new { Parallel.in_threads(2) { sleep 0.5 } } }.should_not(change { `ps`.split("\n").size })
     end
 
     it "returns results as array" do
@@ -245,7 +245,7 @@ describe Parallel do
     it "starts new process immediately when old exists" do
       time_taken do
         ruby("spec/cases/parallel_map_uneven.rb")
-      end.should <= 3.5
+      end.should <= 2.5
     end
 
     it "does not flatten results" do
@@ -661,7 +661,7 @@ describe Parallel do
       ruby("spec/cases/progress_with_finish.rb 2>&1").strip.sub(/=+/, '==').gsub(
         /\n+/,
         "\n"
-      ).should == "Doing stuff: |==|\n100"
+      ).should == "Doing stuff: |==|\n20"
     end
 
     it "takes the title from :progress[:title] and passes options along" do
