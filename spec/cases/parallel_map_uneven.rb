@@ -2,5 +2,5 @@
 require './spec/cases/helper'
 
 Parallel.map([1, 2, 1, 2]) do |x|
-  sleep 2 if x == 1
+  sleep 1 if x == 1
 end

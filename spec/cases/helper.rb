@@ -10,7 +10,7 @@ def process_diff
 
   yield
 
-  sleep 1
+  sleep 0.5
 
   processes_after = `#{cmd}`.to_i
 
