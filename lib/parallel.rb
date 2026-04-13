@@ -169,24 +169,44 @@ module Parallel
 
     class << self
       # kill all these pids or threads if user presses Ctrl+c
-      def kill_on_ctrl_c(pids, options)
+      def kill_on_ctrl_c(workers, options)
         @to_be_killed ||= []
         old_interrupt = nil
         signal = options.fetch(:interrupt_signal, INTERRUPT_SIGNAL)
 
         if @to_be_killed.empty?
-          old_interrupt = trap_interrupt(signal) do
+          # Wrap the existing interrupt handler to kill the workers first. Workers may have been replaced,
+          # so get the latest pids.
+          # 1. The worker arrays in @to_be_killed are protected by options[:mutex].
+          # 2. Mutexes cannot be obtained in a trap context.
+          # 3. To preserve semantics, the workers must be killed before the old handler runs.
+          # 4. To preserve semantics, the old handler must run in a trap context on the main thread.
+          kill_thread = nil
+          old_interrupt = Signal.trap(signal) do
+            next if kill_thread
             warn 'Parallel execution interrupted, exiting ...'
-            @to_be_killed.flatten.each { |pid| kill(pid) }
-          end
+            kill_thread = Thread.new do
+              pids = options[:mutex].synchronize do
+                @to_be_killed.flatten(1).map(&:pid)
+                # FUTURE: stop JobFactory from spawning new workers
+              end
+              pids.each { |pid| kill(pid) }
+              if old_interrupt == "DEFAULT"
+                Signal.trap(signal) { raise Interrupt }
+              else
+                Signal.trap(signal, old_interrupt)
+              end
+              Process.kill(signal, Process.pid) # run the old interrupt handler
+            end
+          end || "DEFAULT"
         end
 
-        @to_be_killed << pids
+        @to_be_killed << workers
 
         yield
       ensure
         @to_be_killed.pop # do not kill pids that could be used for new processes
-        restore_interrupt(old_interrupt, signal) if @to_be_killed.empty?
+        Signal.trap(signal, old_interrupt) if @to_be_killed.empty? # restore the old handler on our way out
       end
 
       def kill(thing)
@@ -194,27 +214,6 @@ module Parallel
       rescue Errno::ESRCH
         # some linux systems already automatically killed the children at this point
         # so we just ignore them not being there
-      end
-
-      private
-
-      def trap_interrupt(signal)
-        old = Signal.trap signal, 'IGNORE'
-
-        Signal.trap signal do
-          yield
-          if !old || old == "DEFAULT"
-            raise Interrupt
-          else
-            old.call
-          end
-        end
-
-        old
-      end
-
-      def restore_interrupt(old, signal)
-        Signal.trap signal, old
       end
     end
   end
@@ -557,7 +556,7 @@ module Parallel
       results_mutex = Mutex.new # arrays are not thread-safe
       exception = nil
 
-      UserInterruptHandler.kill_on_ctrl_c(workers.map(&:pid), options) do
+      UserInterruptHandler.kill_on_ctrl_c(workers, options) do
         in_threads(options) do |i|
           worker = workers[i]
           worker.thread = Thread.current
