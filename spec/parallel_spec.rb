@@ -146,7 +146,8 @@ describe Parallel do
 
     it "kills replaced workers when handling the interrupt signal" do
       time_taken do
-        ruby("spec/cases/isolated_interrupt.rb 2>&1")
+        result = ruby("spec/cases/isolated_interrupt.rb 2>&1 && echo FIN")
+        result.should_not include("FIN")
       end.should <= 2
     end
 
