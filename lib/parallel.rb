@@ -174,7 +174,7 @@ module Parallel
         old_handler = nil
         signal = options.fetch(:interrupt_signal, INTERRUPT_SIGNAL)
 
-        old_handler = wrap_interrupt(signal, options[:mutex]) || "DEFAULT" if @to_be_killed.empty?
+        old_handler = wrap_interrupt(signal, options[:mutex]) if @to_be_killed.empty?
 
         @to_be_killed << workers
 
@@ -217,7 +217,7 @@ module Parallel
             end
             Process.kill(signal, Process.pid) # run the old interrupt handler
           end
-        end
+        end || "DEFAULT"
       end
     end
   end
