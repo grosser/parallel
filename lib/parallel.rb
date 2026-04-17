@@ -266,7 +266,7 @@ module Parallel
 
       if options[:in_processes] && options[:in_threads]
         raise ArgumentError, "Please specify only one of `in_processes` or `in_threads`."
-      elsif RUBY_PLATFORM =~ /java/ && !options[:in_processes]
+      elsif RUBY_PLATFORM.include?('java') && !options[:in_processes]
         method = :in_threads
         size = options[method] || processor_count
       elsif options[:in_threads]
