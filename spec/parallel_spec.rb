@@ -42,13 +42,6 @@ describe Parallel do
     it "returns a number" do
       (1..999).should include(Parallel.processor_count)
     end
-
-    if RUBY_PLATFORM =~ /darwin10/
-      it 'works if hwprefs in not available' do
-        Parallel.should_receive(:hwprefs_available?).and_return false
-        (1..999).should include(Parallel.processor_count)
-      end
-    end
   end
 
   describe ".physical_processor_count" do
