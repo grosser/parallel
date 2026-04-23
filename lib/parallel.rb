@@ -108,20 +108,30 @@ module Parallel
 
   class JobFactory
     def initialize(source, mutex)
-      @lambda = (source.respond_to?(:call) && source) || queue_wrapper(source)
-      @source = source.to_a unless @lambda # turn Range and other Enumerable-s into an Array
+      @lambda = enum_wrapper(source) || (source.respond_to?(:call) && source) || queue_wrapper(source)
+      @source = source.to_a unless @lambda # turn non-Enumerable-s into an Array
+      @worker_queues = Thread::Queue.new if @lambda
       @mutex = mutex
       @index = -1
       @stopped = false
     end
 
     def next
-      if producer?
+      queue_for_thread = Thread.current.thread_variable_get(:parallel_queue)
+      if @worker_queues && queue_for_thread
+        return if @stopped
+        # This #next method may be called from some threads at the same time.
+        # The main (Parallel's singleton method caller) thread calls @lambda and checks `item == Stop`,
+        # so it's not necessary to check for Stop here.
+        item = worker_queues_enq(queue_for_thread)
+        return if item == Stop
+        index = @index += 1
+      elsif producer?
         # - index and item stay in sync
         # - do not call lambda after it has returned Stop
         item, index = @mutex.synchronize do
           return if @stopped
-          item = @lambda.call
+          item = call_lambda
           @stopped = (item == Stop)
           return if @stopped
           [item, @index += 1]
@@ -132,6 +142,26 @@ module Parallel
         item = @source[index]
       end
       [item, index]
+    end
+
+    def consume_worker_queues
+      return unless @worker_queues
+
+      loop do
+        queue = @worker_queues.pop
+        return if queue == Stop
+        item = call_lambda
+        queue.push(item)
+        break if item == Stop
+      end
+      @stopped = true
+      # clear out all work queues by adding a "stop" to them which will stop the thread working on them
+      begin
+        while queue = @worker_queues.pop(true)
+          queue.push(Stop) if queue != Stop # Unlock waiting threads.
+        end
+      rescue ThreadError # All threads are unlocked.
+      end
     end
 
     def size
@@ -153,7 +183,22 @@ module Parallel
       producer? ? data : [@source[data], data]
     end
 
+    def stop
+      @worker_queues&.push(Stop)
+    end
+
     private
+
+    def call_lambda
+      @lambda.call
+    rescue StopIteration
+      Stop
+    end
+
+    def worker_queues_enq(queue_for_thread)
+      @worker_queues.push(queue_for_thread)
+      queue_for_thread.pop # Wait until @lambda returns.
+    end
 
     def producer?
       @lambda
@@ -161,6 +206,12 @@ module Parallel
 
     def queue_wrapper(array)
       array.respond_to?(:num_waiting) && array.respond_to?(:pop) && -> { array.pop(false) }
+    end
+
+    # returns the `next` method if the source in an enumerator and cannot be accessed by anything more efficient like []
+    def enum_wrapper(source)
+      # Convert what is inaccessible by the index
+      !source.respond_to?(:[]) && source.respond_to?(:next) && source.method(:next)
     end
   end
 
@@ -222,13 +273,28 @@ module Parallel
   class << self
     def in_threads(options = { count: 2 })
       threads = []
-      count, = extract_count_from_options(options)
+      count, options = extract_count_from_options(options)
+
+      counter = count # worker thread remaining counter
+      mutex = options[:consume_worker_queues] ? Mutex.new : nil
+      consume_worker_queues_stopper = options[:stopper]
 
       Thread.handle_interrupt(Exception => :never) do
         Thread.handle_interrupt(Exception => :immediate) do
           count.times do |i|
-            threads << Thread.new { yield(i) }
+            threads << Thread.new do
+              yield(i)
+            ensure
+              mutex&.synchronize do
+                if counter <= 1
+                  # last thread needs to stop the worker queue processing
+                  consume_worker_queues_stopper.call
+                end
+                counter -= 1
+              end
+            end
           end
+          options[:consume_worker_queues]&.call # Invoke lambda in caller thread, and provide jobs to thread queue.
           threads.map(&:value)
         end
       ensure
@@ -442,7 +508,9 @@ module Parallel
       results_mutex = Mutex.new # arrays are not thread-safe on jRuby
       exception = nil
 
-      in_threads(options) do |worker_num|
+      thread_options = options.merge(consume_worker_queues: job_factory.method(:consume_worker_queues), stopper: job_factory.method(:stop))
+      in_threads(thread_options) do |worker_num|
+        Thread.current.thread_variable_set(:parallel_queue, Thread::Queue.new)
         self.worker_number = worker_num
         # as long as there are more jobs, work on one of them
         while !exception && (set = job_factory.next)
@@ -558,9 +626,11 @@ module Parallel
       exception = nil
 
       UserInterruptHandler.kill_on_ctrl_c(workers.map(&:pid), options) do
-        in_threads(options) do |i|
+        thread_options = options.merge(consume_worker_queues: job_factory.method(:consume_worker_queues), stopper: job_factory.method(:stop))
+        in_threads(thread_options) do |i|
           worker = workers[i]
           worker.thread = Thread.current
+          Thread.current.thread_variable_set(:parallel_queue, Thread::Queue.new)
           worked = false
 
           begin
