@@ -6,6 +6,13 @@
 
 - Add here when making a PR
 
+## 2.1.0
+
+### Added
+
+- support different serializers
+- support for HMac verified serializer to secure hardened environments
+
 ## 2.0.1
 
 ### Added
