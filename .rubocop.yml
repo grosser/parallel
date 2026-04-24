@@ -63,7 +63,7 @@ Style/EmptyElse:
   Enabled: false
 
 RSpec/DescribedClass:
-  EnforcedStyle: explicit
+  Enabled: false # does not work for nested classes
 
 Style/DoubleNegation:
   Enabled: false

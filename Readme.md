@@ -189,6 +189,22 @@ Thread.new { loop { queue << rand(100); sleep 2 } } # job producer
 Parallel.map(Proc.new { queue.pop }, in_processes: 3) { |f| f ? puts("#{f} received") : sleep(1) }
 ```
 
+### Processes vs Wire serializer: security risk for hardened environments
+
+Worker processes talk to the parent over an anonymous pipe using `Marshal` by default.
+
+If you've hardened your host against `ptrace`/`/proc/<pid>/mem` access (e.g. `ptrace_scope >= 2`) and
+want to also close the `/proc/<pid>/fd/<n>` pipe-reopen vector, use the HMAC serializer.
+
+It length-prefixes and HMAC-SHA256 signs each message with a per-worker secret generated before `fork`,
+so a same-UID attacker that reopens the pipe can't inject a forged `Marshal` payload into the parent (which would be RCE).
+
+Raises `SecurityError` on mismatch (not a `StandardError`).
+
+```ruby
+Parallel.map(items, in_processes: 2, serializer: Parallel::Serializer::Hmac.new) { ... }
+```
+
 Tips
 ====
 

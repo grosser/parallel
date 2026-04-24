@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 require 'rbconfig'
 require 'parallel/version'
+require 'parallel/serializer'
 
 module Parallel
   Stop = Object.new.freeze
@@ -63,10 +64,11 @@ module Parallel
     attr_reader :pid, :read, :write
     attr_accessor :thread
 
-    def initialize(read, write, pid)
+    def initialize(read, write, pid, serializer)
       @read = read
       @write = write
       @pid = pid
+      @serializer = serializer
     end
 
     def stop
@@ -83,13 +85,13 @@ module Parallel
 
     def work(data)
       begin
-        Marshal.dump(data, write)
+        @serializer.dump(data, write)
       rescue Errno::EPIPE
         raise DeadWorker
       end
 
       result = begin
-        Marshal.load(read)
+        @serializer.load(read)
       rescue EOFError
         raise DeadWorker
       end
@@ -622,6 +624,7 @@ module Parallel
     def worker(job_factory, options, &block)
       child_read, parent_write = IO.pipe
       parent_read, child_write = IO.pipe
+      options[:serializer] ||= Serializer::Marshal
 
       pid = Process.fork do
         self.worker_number = options[:worker_number]
@@ -642,12 +645,13 @@ module Parallel
       child_read.close
       child_write.close
 
-      Worker.new(parent_read, parent_write, pid)
+      Worker.new(parent_read, parent_write, pid, options[:serializer])
     end
 
     def process_incoming_jobs(read, write, job_factory, options, &block)
+      serializer = options.fetch(:serializer)
       until read.eof?
-        data = Marshal.load(read)
+        data = serializer.load(read)
         item, index = job_factory.unpack(data)
 
         result =
@@ -661,7 +665,7 @@ module Parallel
           end
 
         begin
-          Marshal.dump(result, write)
+          serializer.dump(result, write)
         rescue Errno::EPIPE
           return # parent thread already dead
         end
