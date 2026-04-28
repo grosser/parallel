@@ -137,7 +137,14 @@ describe Parallel do
       end.should <= 4
     end
 
-    it "preserves original intrrupts" do
+    it "kills replaced workers when handling the interrupt signal" do
+      time_taken do
+        result = ruby("spec/cases/isolated_interrupt.rb 2>&1 && echo FIN")
+        result.should_not include("FIN")
+      end.should <= 2
+    end
+
+    it "preserves original interrupts" do
       t = Thread.new { ruby("spec/cases/double_interrupt.rb 2>&1 && echo FIN") }
       sleep 2
       kill_process_with_name("spec/cases/double_interrupt.rb") # simulates Ctrl+c
@@ -147,7 +154,7 @@ describe Parallel do
       result.should include("FIN")
     end
 
-    it "restores original intrrupts" do
+    it "restores original interrupts" do
       ruby("spec/cases/after_interrupt.rb 2>&1").should == "DEFAULT\n"
     end
 
