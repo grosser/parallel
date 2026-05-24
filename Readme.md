@@ -46,6 +46,22 @@ items = [1,2,3]
 Parallel.each( -> { items.pop || Parallel::Stop }) { |number| ... }
 ```
 
+Iterations can be stopped by raising StopIteration.
+
+```Ruby
+items = [1,2,3]
+Parallel.each( -> { items.pop || raise(StopIteration) }) { |number| ... }
+```
+
+Also supports Enumerator instances as a source.
+
+```Ruby
+enumerator = Enumerator.new do |y|
+  y << 1; y << 2; y << 3
+end
+Parallel.each( enumerator ) { |number| ... }
+```
+
 Also supports `any?` or `all?`
 
 ```Ruby
