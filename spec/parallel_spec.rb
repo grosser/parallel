@@ -704,4 +704,13 @@ describe Parallel do
       end
     end
   end
+  it "returns the original source from each and discards ractor results" do
+    source = [1, 2]
+    Parallel.each(source, in_threads: 0, finish: ->(*) {}) { |item| item * 2 }.should equal(source)
+
+    if defined?(Ractor)
+      ruby("spec/cases/each_with_ractor_discarded_result.rb 2>&1").should == "OK"
+    end
+  end
+
 end
