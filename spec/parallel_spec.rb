@@ -704,6 +704,7 @@ describe Parallel do
       end
     end
   end
+<<<<<<< HEAD
 
   it "compares producer stop values by identity" do
     item = Object.new
