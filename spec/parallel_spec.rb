@@ -704,4 +704,15 @@ describe Parallel do
       end
     end
   end
+  it "restores the outer worker number after nested direct work" do
+    result = Parallel.map([:outer], in_threads: 0) do
+      before = Parallel.worker_number
+      nested = Parallel.map([:inner], in_threads: 0) { Parallel.worker_number }
+      [before, nested, Parallel.worker_number]
+    end
+
+    result.should == [[0, [0], 0]]
+    Parallel.worker_number.should be_nil
+  end
+
 end
