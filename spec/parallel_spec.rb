@@ -474,8 +474,11 @@ describe Parallel do
   end
 
   describe ".map_with_index" do
-    it "yields object and index" do
-      ruby("spec/cases/map_with_index.rb 2>&1").should == 'a0b1'
+    worker_types.each do |type|
+      it "yields object and index in #{type}" do
+        out = `WORKER_TYPE=#{type} #{RbConfig.ruby} spec/cases/map_with_index.rb 2>&1`
+        without_ractor_warning(out).should == 'a0b1'
+      end
     end
 
     it "does not crash with empty set" do
@@ -704,7 +707,6 @@ describe Parallel do
       end
     end
   end
-<<<<<<< HEAD
 
   it "compares producer stop values by identity" do
     item = Object.new
