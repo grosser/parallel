@@ -704,6 +704,7 @@ describe Parallel do
       end
     end
   end
+
   it "restores the outer worker number after nested direct work" do
     result = Parallel.map([:outer], in_threads: 0) do
       before = Parallel.worker_number
@@ -715,4 +716,8 @@ describe Parallel do
     Parallel.worker_number.should be_nil
   end
 
+  it "removes false results from filter_map" do
+    result = Parallel.filter_map([nil, false, true, 0, ""], in_threads: 0) { |value| value }
+    result.should == [true, 0, ""]
+  end
 end
