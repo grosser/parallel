@@ -124,7 +124,7 @@ module Parallel
         item, index = @mutex.synchronize do
           return if @stopped
           item = @lambda.call
-          @stopped = (item == Stop)
+          @stopped = Stop.equal?(item)
           return if @stopped
           [item, @index += 1]
         end
