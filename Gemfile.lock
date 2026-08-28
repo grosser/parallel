@@ -63,13 +63,9 @@ GEM
     rspec-expectations (3.13.5)
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.13.0)
-    rspec-legacy_formatters (1.0.2)
-      rspec (~> 3.0)
     rspec-mocks (3.13.8)
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.13.0)
-    rspec-rerun (1.1.0)
-      rspec (~> 3.0)
     rspec-support (3.13.7)
     rubocop (1.86.1)
       json (~> 2.3)
@@ -117,8 +113,6 @@ DEPENDENCIES
   parallel!
   rake
   rspec
-  rspec-legacy_formatters
-  rspec-rerun
   rubocop
   rubocop-rake
   rubocop-rspec
@@ -126,4 +120,4 @@ DEPENDENCIES
   sqlite3
 
 BUNDLED WITH
-  4.0.7
+  4.0.10
