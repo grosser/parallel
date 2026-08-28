@@ -704,9 +704,9 @@ describe Parallel do
       end
     end
   end
+
   it "removes false results from filter_map" do
     result = Parallel.filter_map([nil, false, true, 0, ""], in_threads: 0) { |value| value }
     result.should == [true, 0, ""]
   end
-
 end
