@@ -124,7 +124,7 @@ module Parallel
         item, index = @mutex.synchronize do
           return if @stopped
           item = @lambda.call
-          @stopped = (item == Stop)
+          @stopped = Stop.equal?(item)
           return if @stopped
           [item, @index += 1]
         end
@@ -318,7 +318,7 @@ module Parallel
     end
 
     def filter_map(...)
-      map(...).compact
+      map(...).select { |value| value }
     end
 
     # Number of physical processor cores on the current system.
@@ -420,6 +420,7 @@ module Parallel
     end
 
     def work_direct(job_factory, options, &block)
+      previous_worker_number = worker_number
       self.worker_number = 0
       results = []
       exception = nil
@@ -435,7 +436,7 @@ module Parallel
       end
       exception || results
     ensure
-      self.worker_number = nil
+      self.worker_number = previous_worker_number
     end
 
     def work_in_threads(job_factory, options, &block)

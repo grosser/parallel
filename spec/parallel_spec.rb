@@ -704,9 +704,35 @@ describe Parallel do
       end
     end
   end
+
   it "passes indexes to ractor callbacks" do
     skip unless defined?(Ractor)
     ruby("spec/cases/map_with_ractor_index.rb 2>&1").should == '[["a", 0], ["b", 1]]'
   end
 
+  it "compares producer stop values by identity" do
+    item = Object.new
+    def item.==(_other)
+      true
+    end
+    values = [item, Parallel::Stop]
+
+    Parallel.map(-> { values.shift }, in_threads: 0) { |value| value }.should == [item]
+  end
+
+  it "restores the outer worker number after nested direct work" do
+    result = Parallel.map([:outer], in_threads: 0) do
+      before = Parallel.worker_number
+      nested = Parallel.map([:inner], in_threads: 0) { Parallel.worker_number }
+      [before, nested, Parallel.worker_number]
+    end
+
+    result.should == [[0, [0], 0]]
+    Parallel.worker_number.should be_nil
+  end
+
+  it "removes false results from filter_map" do
+    result = Parallel.filter_map([nil, false, true, 0, ""], in_threads: 0) { |value| value }
+    result.should == [true, 0, ""]
+  end
 end
