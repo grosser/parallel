@@ -704,4 +704,9 @@ describe Parallel do
       end
     end
   end
+  it "passes indexes to ractor callbacks" do
+    skip unless defined?(Ractor)
+    ruby("spec/cases/map_with_ractor_index.rb 2>&1").should == '[["a", 0], ["b", 1]]'
+  end
+
 end
