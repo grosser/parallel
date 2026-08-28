@@ -306,7 +306,7 @@ module Parallel
 
       return result.value if result.is_a?(Break)
       raise result if result.is_a?(Exception)
-      options[:return_results] ? result : source
+      options[:preserve_results] == false ? source : result
     end
 
     def map_with_index(array, options = {}, &block)
@@ -426,9 +426,10 @@ module Parallel
       begin
         while (set = job_factory.next)
           item, index = set
-          results << with_instrumentation(item, index, options) do
+          result = with_instrumentation(item, index, options) do
             call_with_index(item, index, options, &block)
           end
+          results << result unless options[:preserve_results] == false
         end
       rescue StandardError
         exception = $!
@@ -453,7 +454,7 @@ module Parallel
             result = with_instrumentation item, index, options do
               call_with_index(item, index, options, &block)
             end
-            results_mutex.synchronize { results[index] = result }
+            results_mutex.synchronize { results[index] = result } unless options[:preserve_results] == false
           rescue StandardError
             exception = $!
           end
@@ -487,7 +488,7 @@ module Parallel
         if (job = job_factory.next)
           item, index = job
           instrument_start item, index, options
-          ractor.send [callback, item, index]
+          ractor.send [callback, item, index, options[:return_results]]
         else # not enough work, `receive` would hang
           ractor_stop ractor
           ports.delete port
@@ -508,7 +509,7 @@ module Parallel
         # send new
         item_next, index_next = job
         instrument_start item_next, index_next, options
-        done_ractor.send([callback, item_next, index_next])
+        done_ractor.send([callback, item_next, index_next, options[:return_results]])
       end
 
       # finish
@@ -527,10 +528,12 @@ module Parallel
       args = use_port ? [Ractor::Port.new] : []
       ractor = Ractor.new(*args) do |port|
         loop do
-          (klass, method_name), item, index = receive
+          (klass, method_name), item, index, return_results = receive
           break if index == :break
           begin
-            result = [nil, klass.send(method_name, item), item, index]
+            value = klass.send(method_name, item)
+            value = nil unless return_results
+            result = [nil, value, item, index]
           rescue StandardError => e
             result = [e, nil, item, index]
           end
@@ -546,7 +549,7 @@ module Parallel
 
     def ractor_result(item, index, result, results, results_mutex, options)
       instrument_finish item, index, result, options
-      results_mutex.synchronize { results[index] = (options[:preserve_results] == false ? nil : result) }
+      results_mutex.synchronize { results[index] = result } unless options[:preserve_results] == false
     end
 
     def ractor_stop(ractor)
@@ -581,7 +584,7 @@ module Parallel
                 result = with_instrumentation item, index, options do
                   worker.work(job_factory.pack(item, index))
                 end
-                results_mutex.synchronize { results[index] = result } # arrays are not threads safe on jRuby
+                results_mutex.synchronize { results[index] = result } unless options[:preserve_results] == false
               rescue StandardError => e
                 exception = e
                 if exception.is_a?(Kill)
