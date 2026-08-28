@@ -704,4 +704,9 @@ describe Parallel do
       end
     end
   end
+  it "stops ractor workers after callback errors" do
+    skip unless defined?(Ractor)
+    ruby("spec/cases/ractor_exception_cleanup.rb 2>&1").should == "OK"
+  end
+
 end
