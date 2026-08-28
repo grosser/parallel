@@ -318,7 +318,7 @@ module Parallel
     end
 
     def filter_map(...)
-      map(...).compact
+      map(...).select { |value| value }
     end
 
     # Number of physical processor cores on the current system.
