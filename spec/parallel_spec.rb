@@ -704,4 +704,14 @@ describe Parallel do
       end
     end
   end
+  it "compares producer stop values by identity" do
+    item = Object.new
+    def item.==(_other)
+      true
+    end
+    values = [item, Parallel::Stop]
+
+    Parallel.map(-> { values.shift }, in_threads: 0) { |value| value }.should == [item]
+  end
+
 end
