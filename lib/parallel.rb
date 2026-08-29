@@ -178,7 +178,7 @@ module Parallel
 
         if @to_be_killed.empty?
           old_interrupt = trap_interrupt(signal) do
-            warn 'Parallel execution interrupted, exiting ...'
+            warn 'parallel: execution interrupted, exiting ...'
             @to_be_killed.flatten.each { |pid| kill(pid) }
           end
         end
@@ -266,8 +266,8 @@ module Parallel
       options = options.dup
       options[:mutex] = Mutex.new
 
-      if options[:in_processes] && options[:in_threads]
-        raise ArgumentError, "Please specify only one of `in_processes` or `in_threads`."
+      if options.slice(:in_processes, :in_threads, :in_ractors).size > 1
+        raise ArgumentError, "Use only one of `in_processes`, `in_threads`, or `in_ractors`."
       elsif RUBY_PLATFORM.include?('java') && !options[:in_processes]
         method = :in_threads
         size = options[method] || processor_count
@@ -275,6 +275,7 @@ module Parallel
         method = :in_threads
         size = options[method]
       elsif options[:in_ractors]
+        raise ArgumentError, "in_ractors does not support blocks" if block
         method = :in_ractors
         size = options[method]
       else
@@ -282,7 +283,7 @@ module Parallel
         if Process.respond_to?(:fork)
           size = options[method] || processor_count
         else
-          warn "Process.fork is not supported by this Ruby"
+          warn "parallel: Process.fork is not supported by this Ruby"
           size = 0
         end
       end
@@ -299,7 +300,7 @@ module Parallel
         elsif method == :in_threads
           work_in_threads(job_factory, options.merge(count: size), &block)
         elsif method == :in_ractors
-          work_in_ractors(job_factory, options.merge(count: size), &block)
+          work_in_ractors(job_factory, options.merge(count: size))
         else
           work_in_processes(job_factory, options.merge(count: size), &block)
         end
@@ -379,7 +380,7 @@ module Parallel
       end
       if !result || $?.exitstatus != 0
         # Bail out if both commands returned something unexpected
-        warn "guessing pyhsical processor count"
+        warn "parallel: guessing physical processor count"
         processor_count
       else
         # powershell: "\nNumberOfCores\n-------------\n            4\n\n\n"
