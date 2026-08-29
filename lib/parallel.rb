@@ -124,7 +124,7 @@ module Parallel
         item, index = @mutex.synchronize do
           return if @stopped
           item = @lambda.call
-          @stopped = (item == Stop)
+          @stopped = Stop.equal?(item)
           return if @stopped
           [item, @index += 1]
         end
@@ -318,7 +318,7 @@ module Parallel
     end
 
     def filter_map(...)
-      map(...).compact
+      map(...).select { |value| value }
     end
 
     # Number of physical processor cores on the current system.
@@ -420,6 +420,7 @@ module Parallel
     end
 
     def work_direct(job_factory, options, &block)
+      previous_worker_number = worker_number
       self.worker_number = 0
       results = []
       exception = nil
@@ -435,7 +436,7 @@ module Parallel
       end
       exception || results
     ensure
-      self.worker_number = nil
+      self.worker_number = previous_worker_number
     end
 
     def work_in_threads(job_factory, options, &block)
@@ -487,7 +488,7 @@ module Parallel
         if (job = job_factory.next)
           item, index = job
           instrument_start item, index, options
-          ractor.send [callback, item, index]
+          ractor.send [callback, item, index, options[:with_index]]
         else # not enough work, `receive` would hang
           ractor_stop ractor
           ports.delete port
@@ -509,7 +510,7 @@ module Parallel
         # send new
         item_next, index_next = job
         instrument_start item_next, index_next, options
-        done_ractor.send([callback, item_next, index_next])
+        done_ractor.send([callback, item_next, index_next, options[:with_index]])
       end
 
       # finish
@@ -531,10 +532,11 @@ module Parallel
       args = use_port ? [Ractor::Port.new] : []
       ractor = Ractor.new(*args) do |port|
         loop do
-          (klass, method_name), item, index = receive
+          (klass, method_name), item, index, with_index = receive
           break if index == :break
           begin
-            result = [nil, klass.send(method_name, item), item, index]
+            value = with_index ? klass.send(method_name, item, index) : klass.send(method_name, item)
+            result = [nil, value, item, index]
           rescue StandardError => e
             result = [e, nil, item, index]
           end

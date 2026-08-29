@@ -474,8 +474,11 @@ describe Parallel do
   end
 
   describe ".map_with_index" do
-    it "yields object and index" do
-      ruby("spec/cases/map_with_index.rb 2>&1").should == 'a0b1'
+    worker_types.each do |type|
+      it "yields object and index in #{type}" do
+        out = `WORKER_TYPE=#{type} #{RbConfig.ruby} spec/cases/map_with_index.rb 2>&1`
+        without_ractor_warning(out).should == 'a0b1'
+      end
     end
 
     it "does not crash with empty set" do
@@ -704,9 +707,35 @@ describe Parallel do
       end
     end
   end
+
   it "stops ractor workers after callback errors" do
     skip unless defined?(Ractor)
     ruby("spec/cases/ractor_exception_cleanup.rb 2>&1").should == "OK"
   end
 
+  it "compares producer stop values by identity" do
+    item = Object.new
+    def item.==(_other)
+      true
+    end
+    values = [item, Parallel::Stop]
+
+    Parallel.map(-> { values.shift }, in_threads: 0) { |value| value }.should == [item]
+  end
+
+  it "restores the outer worker number after nested direct work" do
+    result = Parallel.map([:outer], in_threads: 0) do
+      before = Parallel.worker_number
+      nested = Parallel.map([:inner], in_threads: 0) { Parallel.worker_number }
+      [before, nested, Parallel.worker_number]
+    end
+
+    result.should == [[0, [0], 0]]
+    Parallel.worker_number.should be_nil
+  end
+
+  it "removes false results from filter_map" do
+    result = Parallel.filter_map([nil, false, true, 0, ""], in_threads: 0) { |value| value }
+    result.should == [true, 0, ""]
+  end
 end
