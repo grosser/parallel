@@ -710,7 +710,7 @@ describe Parallel do
 
   it "stops ractor workers after callback errors" do
     skip unless defined?(Ractor)
-    ruby("spec/cases/ractor_exception_cleanup.rb 2>&1").should == "OK"
+    without_ractor_warning(ruby("spec/cases/ractor_exception_cleanup.rb 2>&1")).should == "OK"
   end
 
   it "compares producer stop values by identity" do
