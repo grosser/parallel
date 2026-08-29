@@ -20,13 +20,15 @@ describe Parallel do
   end
 
   def execute_start_and_kill(command, amount, signal = 'INT')
+    file = 'spec/cases/parallel_start_and_kill.rb'
     t = nil
     lambda {
-      t = Thread.new { ruby("spec/cases/parallel_start_and_kill.rb #{command} 2>&1 && echo 'FINISHED'") }
+      t = Thread.new { ruby("#{file} #{command} 2>&1 && echo 'FINISHED'") }
       sleep 1.5
-      kill_process_with_name('spec/cases/parallel_start_and_kill.rb', signal)
+      kill_process_with_name(file, signal)
       sleep 1
-    }.should change { `ps`.split("\n").size }.by amount
+      # count only our own processes: sh wrapper, ruby, and forked workers all carry the file name
+    }.should change { `ps -f`.split("\n").count { |line| line.include?(file) } }.by amount
     t.value
   end
 
