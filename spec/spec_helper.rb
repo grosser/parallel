@@ -9,8 +9,8 @@ RSpec.configure do |config|
   config.around { |example| Timeout.timeout(30, &example) }
   config.include(
     Module.new do
-      def ruby(cmd)
-        `#{RbConfig.ruby} #{cmd}`
+      def ruby(cmd, env = "")
+        `#{env} #{RbConfig.ruby} #{cmd}`.sub(/.*Ractor.*is experimental.*\n/, "")
       end
     end
   )

@@ -10,8 +10,8 @@ end
 before = ObjectSpace.each_object(Ractor).to_a
 begin
   Parallel.map([1], in_ractors: 1, ractor: [RaisingCallback, :call])
-rescue RuntimeError => error
-  raise unless error.message == "boom"
+rescue RuntimeError => e
+  raise unless e.message == "boom"
 end
 
 deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 2

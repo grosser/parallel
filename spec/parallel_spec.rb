@@ -30,10 +30,6 @@ describe Parallel do
     t.value
   end
 
-  def without_ractor_warning(out)
-    out.sub(/.*Ractor.*is experimental.*\n/, "")
-  end
-
   describe ".processor_count" do
     before do
       Parallel.instance_variable_set(:@processor_count, nil)
@@ -72,7 +68,7 @@ describe Parallel do
     end
 
     it "executes with cpus from ENV" do
-      `PARALLEL_PROCESSOR_COUNT=10 ruby spec/cases/parallel_with_detected_cpus.rb`.should == "HELLO\n" * 10
+      ruby("spec/cases/parallel_with_detected_cpus.rb", "PARALLEL_PROCESSOR_COUNT=10").should == "HELLO\n" * 10
     end
 
     it "set amount of parallel processes" do
@@ -260,18 +256,17 @@ describe Parallel do
 
     worker_types.each do |type|
       it "does not queue new work when one fails in #{type}" do
-        out = `METHOD=map WORKER_TYPE=#{type} ruby spec/cases/with_exception.rb 2>&1`
-        without_ractor_warning(out).should match(/\A\d{4} raised\z/)
+        out = ruby("spec/cases/with_exception.rb 2>&1", "METHOD=map WORKER_TYPE=#{type}")
+        out.should match(/\A\d{4} raised\z/)
       end
 
       it "does not queue new work when one raises Break in #{type}" do
-        out = `METHOD=map WORKER_TYPE=#{type} ruby spec/cases/with_break.rb 2>&1`
-        without_ractor_warning(out).should match(/\A\d{4} Parallel::Break raised - result nil\z/)
+        out = ruby("spec/cases/with_break.rb 2>&1", "METHOD=map WORKER_TYPE=#{type}")
+        out.should match(/\A\d{4} Parallel::Break raised - result nil\z/)
       end
 
       it "stops all workers when a start hook fails with #{type}" do
-        out = `METHOD=map WORKER_TYPE=#{type} ruby spec/cases/with_exception_in_start.rb 2>&1`
-        out = without_ractor_warning(out)
+        out = ruby("spec/cases/with_exception_in_start.rb 2>&1", "METHOD=map WORKER_TYPE=#{type}")
         if type == "ractors"
           # TODO: running ractors should be interrupted
           out.should match(/\A.*raised.*\z/)
@@ -282,25 +277,25 @@ describe Parallel do
       end
 
       it "does not add new work when a finish hook fails with #{type}" do
-        out = `METHOD=map WORKER_TYPE=#{type} ruby spec/cases/with_exception_in_finish.rb 2>&1`
-        without_ractor_warning(out).should match(/\A\d{4} raised\z/)
+        out = ruby("spec/cases/with_exception_in_finish.rb 2>&1", "METHOD=map WORKER_TYPE=#{type}")
+        out.should match(/\A\d{4} raised\z/)
       end
 
       it "does not call the finish hook when a worker fails with #{type}" do
-        out = `METHOD=map WORKER_TYPE=#{type} ruby spec/cases/with_exception_before_finish.rb 2>&1`
-        without_ractor_warning(out).should == '3 called'
+        out = ruby("spec/cases/with_exception_before_finish.rb 2>&1", "METHOD=map WORKER_TYPE=#{type}")
+        out.should == '3 called'
       end
 
       it "does not call the finish hook when a worker raises Break in #{type}" do
-        out = `METHOD=map WORKER_TYPE=#{type} ruby spec/cases/with_break_before_finish.rb 2>&1`
-        without_ractor_warning(out).should match(/\A\d{3}(finish hook called){3} Parallel::Break raised\z/)
+        out = ruby("spec/cases/with_break_before_finish.rb 2>&1", "METHOD=map WORKER_TYPE=#{type}")
+        out.should match(/\A\d{3}(finish hook called){3} Parallel::Break raised\z/)
       end
 
       it "does not call the finish hook when a start hook fails with #{type}" do
-        out = `METHOD=map WORKER_TYPE=#{type} ruby spec/cases/with_exception_in_start_before_finish.rb 2>&1`
+        out = ruby("spec/cases/with_exception_in_start_before_finish.rb 2>&1", "METHOD=map WORKER_TYPE=#{type}")
         if type == "ractors"
           # we are calling on the main thread, so everything sleeps
-          without_ractor_warning(out).should == "start 0\n"
+          out.should == "start 0\n"
         else
           out.split("\n").sort.join("\n").should == <<~OUT.rstrip
             call 3
@@ -314,13 +309,13 @@ describe Parallel do
       end
 
       it "can return from break with #{type}" do
-        out = `METHOD=map WORKER_TYPE=#{type} ruby spec/cases/with_break.rb hi 2>&1`
+        out = ruby("spec/cases/with_break.rb hi 2>&1", "METHOD=map WORKER_TYPE=#{type}")
         out.should match(/^\d{4} Parallel::Break raised - result "hi"$/)
       end
 
       it "sets Parallel.worker_number with 4 #{type}" do
         skip if type == "ractors" # not supported
-        out = `METHOD=map WORKER_TYPE=#{type} ruby spec/cases/with_worker_number.rb 2>&1`
+        out = ruby("spec/cases/with_worker_number.rb 2>&1", "METHOD=map WORKER_TYPE=#{type}")
         out.should match(/\A[0123]+\z/)
         ['0', '1', '2', '3'].each { |number| out.should include number }
       end
@@ -347,8 +342,8 @@ describe Parallel do
       end
 
       it "can call finish hook in order #{type}" do
-        out = `METHOD=map WORKER_TYPE=#{type} ruby spec/cases/finish_in_order.rb 2>&1`
-        without_ractor_warning(out).should == <<~OUT
+        out = ruby("spec/cases/finish_in_order.rb 2>&1", "METHOD=map WORKER_TYPE=#{type}")
+        out.should == <<~OUT
           finish nil 0 nil
           finish false 1 false
           finish 2 2 "F2"
@@ -476,8 +471,8 @@ describe Parallel do
   describe ".map_with_index" do
     worker_types.each do |type|
       it "yields object and index in #{type}" do
-        out = `WORKER_TYPE=#{type} #{RbConfig.ruby} spec/cases/map_with_index.rb 2>&1`
-        without_ractor_warning(out).should == 'a0b1'
+        out = ruby("spec/cases/map_with_index.rb 2>&1", "WORKER_TYPE=#{type}")
+        out.should == 'a0b1'
       end
     end
 
@@ -567,46 +562,46 @@ describe Parallel do
 
     worker_types.each do |type|
       it "works with SQLite in #{type}" do
-        out = `WORKER_TYPE=#{type} ruby spec/cases/each_with_ar_sqlite.rb 2>&1`
+        out = ruby("spec/cases/each_with_ar_sqlite.rb 2>&1", "WORKER_TYPE=#{type}")
         out.gsub!(/.* deprecated; use BigDecimal.*\n/, '')
         skip "unsupported" if type == "ractors"
-        without_ractor_warning(out).should == "Parent: X\nParallel: XXX\nParent: X\n"
+        out.should == "Parent: X\nParallel: XXX\nParent: X\n"
       end
 
       it "stops all workers when one fails in #{type}" do
-        `METHOD=each WORKER_TYPE=#{type} ruby spec/cases/with_exception.rb 2>&1`.should match(/^\d{4} raised$/)
+        ruby("spec/cases/with_exception.rb 2>&1", "METHOD=each WORKER_TYPE=#{type}").should match(/^\d{4} raised$/)
       end
 
       it "stops all workers when one raises Break in #{type}" do
-        out = `METHOD=each WORKER_TYPE=#{type} ruby spec/cases/with_break.rb 2>&1`
-        without_ractor_warning(out).should match(/^\d{4} Parallel::Break raised - result nil$/)
+        out = ruby("spec/cases/with_break.rb 2>&1", "METHOD=each WORKER_TYPE=#{type}")
+        out.should match(/^\d{4} Parallel::Break raised - result nil$/)
       end
 
       it "stops all workers when a start hook fails with #{type}" do
-        out = `METHOD=each WORKER_TYPE=#{type} ruby spec/cases/with_exception_in_start.rb 2>&1`
-        without_ractor_warning(out).should match(/^\d{3} raised$/)
+        out = ruby("spec/cases/with_exception_in_start.rb 2>&1", "METHOD=each WORKER_TYPE=#{type}")
+        out.should match(/^\d{3} raised$/)
       end
 
       it "does not add new work when a finish hook fails with #{type}" do
-        out = `METHOD=each WORKER_TYPE=#{type} ruby spec/cases/with_exception_in_finish.rb 2>&1`
-        without_ractor_warning(out).should match(/^\d{4} raised$/)
+        out = ruby("spec/cases/with_exception_in_finish.rb 2>&1", "METHOD=each WORKER_TYPE=#{type}")
+        out.should match(/^\d{4} raised$/)
       end
 
       it "does not call the finish hook when a worker fails with #{type}" do
-        out = `METHOD=each WORKER_TYPE=#{type} ruby spec/cases/with_exception_before_finish.rb 2>&1`
-        without_ractor_warning(out).should == '3 called'
+        out = ruby("spec/cases/with_exception_before_finish.rb 2>&1", "METHOD=each WORKER_TYPE=#{type}")
+        out.should == '3 called'
       end
 
       it "does not call the finish hook when a worker raises Break in #{type}" do
-        out = `METHOD=each WORKER_TYPE=#{type} ruby spec/cases/with_break_before_finish.rb 2>&1`
+        out = ruby("spec/cases/with_break_before_finish.rb 2>&1", "METHOD=each WORKER_TYPE=#{type}")
         out.should match(/^\d{3}(finish hook called){3} Parallel::Break raised$/)
       end
 
       it "does not call the finish hook when a start hook fails with #{type}" do
-        out = `METHOD=each WORKER_TYPE=#{type} ruby spec/cases/with_exception_in_start_before_finish.rb 2>&1`
+        out = ruby("spec/cases/with_exception_in_start_before_finish.rb 2>&1", "METHOD=each WORKER_TYPE=#{type}")
         if type == "ractors"
           # we are calling on the main thread, so everything sleeps
-          without_ractor_warning(out).should == "start 0\n"
+          out.should == "start 0\n"
         else
           out.split("\n").sort.join("\n").should == <<~OUT.rstrip
             call 3
@@ -621,19 +616,19 @@ describe Parallel do
 
       it "sets Parallel.worker_number with #{type}" do
         skip "unsupported" if type == "ractors"
-        out = `METHOD=each WORKER_TYPE=#{type} ruby spec/cases/with_worker_number.rb 2>&1`
+        out = ruby("spec/cases/with_worker_number.rb 2>&1", "METHOD=each WORKER_TYPE=#{type}")
         out.should match(/\A[0123]+\z/)
         ['0', '1', '2', '3'].each { |number| out.should include number }
       end
     end
 
     it "re-raises exceptions in work_direct" do
-      `METHOD=each WORKER_TYPE=threads WORKER_SIZE=0 ruby spec/cases/with_exception.rb 2>&1`
+      ruby("spec/cases/with_exception.rb 2>&1", "METHOD=each WORKER_TYPE=threads WORKER_SIZE=0")
         .should match(/^1 raised$/)
     end
 
     it "handles Break in work_direct" do
-      `METHOD=each WORKER_TYPE=threads WORKER_SIZE=0 ruby spec/cases/with_break.rb 2>&1`
+      ruby("spec/cases/with_break.rb 2>&1", "METHOD=each WORKER_TYPE=threads WORKER_SIZE=0")
         .should match(/^1 Parallel::Break raised - result nil$/)
     end
   end
@@ -650,7 +645,7 @@ describe Parallel do
     end
 
     it "takes true from :progress" do
-      `TITLE=true ruby spec/cases/progress.rb 2>&1`.sub(/=+/, '==').strip.should == "Progress: |==|"
+      ruby("spec/cases/progress.rb 2>&1", "TITLE=true").sub(/=+/, '==').strip.should == "Progress: |==|"
     end
 
     it "works with :finish" do
@@ -672,7 +667,7 @@ describe Parallel do
       worker_types.each do |type|
         it "runs in #{type}" do
           out = ruby("spec/cases/with_#{thing}.rb #{type} 2>&1")
-          without_ractor_warning(out).should == result
+          out.should == result
         end
       end
 
