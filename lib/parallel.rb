@@ -501,6 +501,7 @@ module Parallel
         done_port, (exception, result, item_prev, index_prev) = Ractor.select(*ports.keys)
         done_ractor = ports[done_port]
         if exception
+          ractor_stop done_ractor
           ports.delete done_port
           break
         end
@@ -516,7 +517,10 @@ module Parallel
       ports.each do |port, ractor|
         (new_exception, result, item, index) = use_port ? port.receive : ractor.take
         exception ||= new_exception
-        next if new_exception
+        if new_exception
+          ractor_stop ractor
+          next
+        end
         ractor_result item, index, result, results, results_mutex, options
         ractor_stop ractor
       end

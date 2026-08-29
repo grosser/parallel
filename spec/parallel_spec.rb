@@ -708,6 +708,11 @@ describe Parallel do
     end
   end
 
+  it "stops ractor workers after callback errors" do
+    skip unless defined?(Ractor)
+    ruby("spec/cases/ractor_exception_cleanup.rb 2>&1").should == "OK"
+  end
+
   it "compares producer stop values by identity" do
     item = Object.new
     def item.==(_other)
