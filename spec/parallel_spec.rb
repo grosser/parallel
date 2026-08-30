@@ -727,6 +727,21 @@ describe Parallel do
     ruby("spec/cases/ractor_exception_cleanup.rb 2>&1").should == "OK"
   end
 
+  it "stops ractor workers after producer errors" do
+    skip unless defined?(Ractor)
+    ruby("spec/cases/ractor_producer_error_cleanup.rb 2>&1").should == "OK"
+  end
+
+  it "stops busy ractor workers when a sibling fails" do
+    skip unless defined?(Ractor)
+    ruby("spec/cases/ractor_sibling_error_cleanup.rb 2>&1").should == "OK"
+  end
+
+  it "stops ractor workers when a job fails in the finish phase" do
+    skip unless defined?(Ractor)
+    ruby("spec/cases/ractor_finish_error_cleanup.rb 2>&1").should == "OK"
+  end
+
   it "compares producer stop values by identity" do
     item = Object.new
     def item.==(_other)

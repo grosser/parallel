@@ -495,46 +495,48 @@ module Parallel
         ports[port] = ractor
       end
 
-      # start
-      ports.dup.each do |port, ractor|
-        if (job = job_factory.next)
-          item, index = job
-          instrument_start item, index, options
-          ractor.send [callback, item, index, options[:with_index], options[:discard_results]]
-        else # not enough work, `receive` would hang
+      begin
+        # start by sending 1 item each
+        ports.dup.each do |port, ractor|
+          if (job = job_factory.next)
+            ractor_send ractor, callback, job, options
+          else # not enough work, `receive` would hang
+            ractor_stop ractor
+            ports.delete port
+          end
+        end
+
+        # receive result and send new items
+        while (job = job_factory.next)
+          # receive result
+          done_port, (exception, result, item_prev, index_prev) = Ractor.select(*ports.keys)
+          done_ractor = ports[done_port]
+          if exception
+            ractor_stop done_ractor
+            ports.delete done_port
+            break
+          end
+          ractor_result item_prev, index_prev, result, results, results_mutex, options
+
+          # send new
+          ractor_send done_ractor, callback, job, options
+        end
+
+        # finish by receiving the last results
+        ports.dup.each do |port, ractor|
+          (new_exception, result, item, index) = use_port ? port.receive : ractor.take
+          exception ||= new_exception
+          ractor_result item, index, result, results, results_mutex, options unless new_exception
           ractor_stop ractor
           ports.delete port
         end
-      end
-
-      # receive result and send new items to done ractors
-      while (job = job_factory.next)
-        # receive result
-        done_port, (exception, result, item_prev, index_prev) = Ractor.select(*ports.keys)
-        done_ractor = ports[done_port]
-        if exception
-          ractor_stop done_ractor
-          ports.delete done_port
-          break
+      ensure # close any ports that remained open in case something blew up
+        ports.each_value do |ractor|
+          ractor_stop(ractor)
+          ractor.take unless use_port
+        rescue Ractor::ClosedError, Ractor::RemoteError
+          nil
         end
-        ractor_result item_prev, index_prev, result, results, results_mutex, options
-
-        # send new
-        item_next, index_next = job
-        instrument_start item_next, index_next, options
-        done_ractor.send([callback, item_next, index_next, options[:with_index], options[:discard_results]])
-      end
-
-      # finish
-      ports.each do |port, ractor|
-        (new_exception, result, item, index) = use_port ? port.receive : ractor.take
-        exception ||= new_exception
-        if new_exception
-          ractor_stop ractor
-          next
-        end
-        ractor_result item, index, result, results, results_mutex, options
-        ractor_stop ractor
       end
 
       exception || results
@@ -575,8 +577,16 @@ module Parallel
       results_mutex.synchronize { results[index] = result } unless options[:discard_results]
     end
 
+    def ractor_send(ractor, callback, job, options)
+      item, index = job
+      instrument_start item, index, options
+      ractor.send [callback, item, index, options[:with_index], options[:discard_results]]
+    end
+
     def ractor_stop(ractor)
       ractor.send([[nil, nil], nil, :break])
+    rescue Ractor::ClosedError
+      nil
     end
 
     def work_in_processes(job_factory, options, &blk)
