@@ -290,6 +290,12 @@ module Parallel
       job_factory = JobFactory.new(source, options[:mutex])
       size = [job_factory.size, size].min
 
+      invalid_ractor_call = block && options[:ractor]
+      invalid_ractor_call ||= size > 0 && !options[:ractor]
+      if method == :in_ractors && invalid_ractor_call
+        raise ArgumentError, "pass either a block for direct execution or `ractor: [ClassName, :method_name]`"
+      end
+
       options[:return_results] = (options[:preserve_results] != false || !!options[:finish])
       add_progress_bar!(job_factory, options)
 
@@ -428,7 +434,11 @@ module Parallel
         while (set = job_factory.next)
           item, index = set
           results << with_instrumentation(item, index, options) do
-            call_with_index(item, index, options, &block)
+            if (callback = options[:ractor])
+              call_ractor_callback(callback, item, index, options)
+            else
+              call_with_index(item, index, options, &block)
+            end
           end
         end
       rescue StandardError
@@ -470,9 +480,6 @@ module Parallel
       results_mutex = Mutex.new # arrays are not thread-safe on jRuby
 
       callback = options[:ractor]
-      if block_given? || !callback
-        raise ArgumentError, "pass the code you want to execute as `ractor: [ClassName, :method_name]`"
-      end
 
       use_port = defined?(Ractor::Port)
 
@@ -698,6 +705,13 @@ module Parallel
       else
         nil # avoid GC overhead of passing large results around
       end
+    end
+
+    def call_ractor_callback(callback, item, index, options)
+      klass, method_name = callback
+      args = [item]
+      args << index if options[:with_index]
+      klass.send(method_name, *args)
     end
 
     def with_instrumentation(item, index, options)
