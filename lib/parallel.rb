@@ -293,6 +293,8 @@ module Parallel
         end
       end
 
+      raise ArgumentError, "worker count must be a non-negative Integer" unless size.is_a?(Integer) && size >= 0
+
       job_factory = JobFactory.new(source, options[:mutex])
       size = [job_factory.size, size].min
 
