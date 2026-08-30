@@ -752,4 +752,56 @@ describe Parallel do
     result = Parallel.filter_map([nil, false, true, 0, ""], in_threads: 0) { |value| value }
     result.should == [true, 0, ""]
   end
+
+  describe ".create_workers" do
+    def create_workers(count: 2)
+      Parallel.send(:create_workers, double(:job_factory), { count: count })
+    end
+
+    # workers that only got partially started must not linger
+    def fail_on_worker(number, first_worker)
+      Parallel.stub(:worker) do |_, options|
+        raise "boom" if options[:worker_number] == number
+
+        first_worker
+      end
+    end
+
+    it "stops already created workers when worker creation fails" do
+      worker = double(:worker)
+      worker.should_receive(:stop)
+      fail_on_worker(1, worker)
+      -> { create_workers }.should raise_error("boom")
+    end
+
+    it "re-raises the original error when stopping a worker also fails" do
+      worker = double(:worker)
+      worker.stub(:stop) { raise "stop failed" }
+      fail_on_worker(1, worker)
+      -> { create_workers }.should raise_error("boom")
+    end
+  end
+
+  describe ".worker" do
+    def create_worker
+      Parallel.send(:worker, double(:job_factory), {})
+    end
+
+    it "closes the pipes when fork fails" do
+      open_ios = -> { ObjectSpace.each_object(IO).count { |io| !io.closed? } }
+      Process.should_receive(:fork).and_raise("boom")
+      before = open_ios.call
+      -> { create_worker }.should raise_error("boom")
+      open_ios.call.should == before
+    end
+
+    it "kills and reaps the child when worker setup fails after fork" do
+      skip "fork not supported" unless Process.respond_to?(:fork)
+      pid = nil
+      Process.should_receive(:fork).and_wrap_original { |m, &blk| pid = m.call(&blk) }
+      Parallel::Worker.should_receive(:new).and_raise("boom")
+      -> { create_worker }.should raise_error("boom")
+      -> { Process.kill(0, pid) }.should raise_error(Errno::ESRCH)
+    end
+  end
 end
