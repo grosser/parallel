@@ -245,7 +245,7 @@ module Parallel
     end
 
     def each(array, options = {}, &block)
-      map(array, options.merge(preserve_results: false), &block)
+      map(array, options.merge(discard_results: true), &block)
     end
 
     def any?(*args, &block)
@@ -268,14 +268,19 @@ module Parallel
 
       if options.slice(:in_processes, :in_threads, :in_ractors).size > 1
         raise ArgumentError, "Use only one of `in_processes`, `in_threads`, or `in_ractors`."
-      elsif RUBY_PLATFORM.include?('java') && !options[:in_processes]
+      end
+
+      if options[:in_ractors] ? block : options[:ractor]
+        raise ArgumentError, "use either in_ractors with :ractor or a not in_ractors and block"
+      end
+
+      if RUBY_PLATFORM.include?('java') && !options[:in_processes]
         method = :in_threads
         size = options[method] || processor_count
       elsif options[:in_threads]
         method = :in_threads
         size = options[method]
       elsif options[:in_ractors]
-        raise ArgumentError, "in_ractors does not support blocks" if block
         method = :in_ractors
         size = options[method]
       else
@@ -291,7 +296,11 @@ module Parallel
       job_factory = JobFactory.new(source, options[:mutex])
       size = [job_factory.size, size].min
 
-      options[:return_results] = (options[:preserve_results] != false || !!options[:finish])
+      discard_results = options[:discard_results]
+
+      # finish callback needs the results, careful to do that before add_progress_bar which adds finish
+      options[:discard_results] = discard_results && !options[:finish]
+
       add_progress_bar!(job_factory, options)
 
       result =
@@ -308,7 +317,7 @@ module Parallel
 
       return result.value if result.is_a?(Break)
       raise result if result.is_a?(Exception)
-      options[:return_results] ? result : source
+      discard_results ? source : result
     end
 
     def map_with_index(array, options = {}, &block)
@@ -429,9 +438,10 @@ module Parallel
       begin
         while (set = job_factory.next)
           item, index = set
-          results << with_instrumentation(item, index, options) do
+          result = with_instrumentation(item, index, options) do
             call_with_index(item, index, options, &block)
           end
+          results << result unless options[:discard_results]
         end
       rescue StandardError
         exception = $!
@@ -456,7 +466,7 @@ module Parallel
             result = with_instrumentation item, index, options do
               call_with_index(item, index, options, &block)
             end
-            results_mutex.synchronize { results[index] = result }
+            results_mutex.synchronize { results[index] = result } unless options[:discard_results]
           rescue StandardError
             exception = $!
           end
@@ -490,7 +500,7 @@ module Parallel
         if (job = job_factory.next)
           item, index = job
           instrument_start item, index, options
-          ractor.send [callback, item, index, options[:with_index]]
+          ractor.send [callback, item, index, options[:with_index], options[:discard_results]]
         else # not enough work, `receive` would hang
           ractor_stop ractor
           ports.delete port
@@ -512,7 +522,7 @@ module Parallel
         # send new
         item_next, index_next = job
         instrument_start item_next, index_next, options
-        done_ractor.send([callback, item_next, index_next, options[:with_index]])
+        done_ractor.send([callback, item_next, index_next, options[:with_index], options[:discard_results]])
       end
 
       # finish
@@ -541,10 +551,11 @@ module Parallel
       args = use_port ? [Ractor::Port.new] : []
       ractor = Ractor.new(*args) do |port|
         loop do
-          (klass, method_name), item, index, with_index = receive
+          (klass, method_name), item, index, with_index, discard_results = receive
           break if index == :break
           begin
             value = with_index ? klass.send(method_name, item, index) : klass.send(method_name, item)
+            value = nil if discard_results
             result = [nil, value, item, index]
           rescue StandardError => e
             result = [e, nil, item, index]
@@ -561,7 +572,7 @@ module Parallel
 
     def ractor_result(item, index, result, results, results_mutex, options)
       instrument_finish item, index, result, options
-      results_mutex.synchronize { results[index] = (options[:preserve_results] == false ? nil : result) }
+      results_mutex.synchronize { results[index] = result } unless options[:discard_results]
     end
 
     def ractor_stop(ractor)
@@ -596,7 +607,8 @@ module Parallel
                 result = with_instrumentation item, index, options do
                   worker.work(job_factory.pack(item, index))
                 end
-                results_mutex.synchronize { results[index] = result } # arrays are not threads safe on jRuby
+                # arrays are not threads safe on jRuby
+                results_mutex.synchronize { results[index] = result } unless options[:discard_results]
               rescue StandardError => e
                 exception = e
                 if exception.is_a?(Kill)
@@ -702,10 +714,10 @@ module Parallel
       args = [item]
       args << index if options[:with_index]
       results = block.call(*args)
-      if options[:return_results]
-        results
-      else
+      if options[:discard_results]
         nil # avoid GC overhead of passing large results around
+      else
+        results
       end
     end
 
@@ -713,7 +725,7 @@ module Parallel
       instrument_start(item, index, options)
       result = yield
       instrument_finish(item, index, result, options)
-      result unless options[:preserve_results] == false
+      result unless options[:discard_results]
     end
 
     def instrument_finish(item, index, result, options)

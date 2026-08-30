@@ -569,7 +569,17 @@ describe Parallel do
       ruby("spec/cases/each_in_place.rb").should == 'ab'
     end
 
+    it "returns the original source when running directly" do
+      source = [1, 2]
+      Parallel.each(source, in_threads: 0, finish: ->(*) {}) { |item| item * 2 }.should equal(source)
+    end
+
     worker_types.each do |type|
+      it "returns the original source in #{type}" do
+        out = ruby("spec/cases/each_returns_source.rb 2>&1", "WORKER_TYPE=#{type}")
+        out.should == "OK"
+      end
+
       it "works with SQLite in #{type}" do
         out = ruby("spec/cases/each_with_ar_sqlite.rb 2>&1", "WORKER_TYPE=#{type}")
         out.gsub!(/.* deprecated; use BigDecimal.*\n/, '')
