@@ -296,6 +296,7 @@ module Parallel
 
       result =
         if size == 0
+          block = ractor_block(options) if method == :in_ractors
           work_direct(job_factory, options, &block)
         elsif method == :in_threads
           work_in_threads(job_factory, options.merge(count: size), &block)
@@ -527,6 +528,13 @@ module Parallel
       end
 
       exception || results
+    end
+
+    # ractors cannot execute blocks, so run the callback directly when not using ractors
+    def ractor_block(options)
+      klass, method_name = options[:ractor] ||
+        raise(ArgumentError, "pass the code you want to execute as `ractor: [ClassName, :method_name]`")
+      ->(*args) { klass.send(method_name, *args) }
     end
 
     def ractor_build(use_port)

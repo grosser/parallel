@@ -333,11 +333,18 @@ describe Parallel do
       it "can run with 0 by not using #{type}" do
         Thread.should_not_receive(:exclusive)
         Process.should_not_receive(:fork)
-        result = Parallel.map([1, 2, 3, 4, 5, 6, 7, 8, 9], "in_#{type}": 0) { |x| x + 2 }
+        result =
+          if type == "ractors"
+            callback = Class.new { def self.call(x) = x + 2 }
+            Parallel.map([1, 2, 3, 4, 5, 6, 7, 8, 9], in_ractors: 0, ractor: [callback, :call])
+          else
+            Parallel.map([1, 2, 3, 4, 5, 6, 7, 8, 9], "in_#{type}": 0) { |x| x + 2 }
+          end
         result.should == [3, 4, 5, 6, 7, 8, 9, 10, 11]
       end
 
       it "does not dump/load when running with 0 using #{type}" do
+        skip if type == "ractors" # blocks are not supported
         p = -> { 1 }
         result = Parallel.map([1, 2], "in_#{type}": 0) { p }
         result.first.call.should == 1
