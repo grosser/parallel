@@ -268,14 +268,19 @@ module Parallel
 
       if options.slice(:in_processes, :in_threads, :in_ractors).size > 1
         raise ArgumentError, "Use only one of `in_processes`, `in_threads`, or `in_ractors`."
-      elsif RUBY_PLATFORM.include?('java') && !options[:in_processes]
+      end
+
+      if options[:in_ractors] ? block : options[:ractor]
+        raise ArgumentError, "use either in_ractors with :ractor or a not in_ractors and block"
+      end
+
+      if RUBY_PLATFORM.include?('java') && !options[:in_processes]
         method = :in_threads
         size = options[method] || processor_count
       elsif options[:in_threads]
         method = :in_threads
         size = options[method]
       elsif options[:in_ractors]
-        raise ArgumentError, "in_ractors does not support blocks" if block
         method = :in_ractors
         size = options[method]
       else
