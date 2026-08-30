@@ -646,6 +646,13 @@ module Parallel
         workers << worker(job_factory, options.merge(started_workers: workers, worker_number: i), &block)
       end
       workers
+    rescue Exception # rubocop:disable Lint/RescueException
+      workers.each do |worker|
+        worker.stop
+      rescue StandardError
+        nil
+      end
+      raise
     end
 
     def worker(job_factory, options, &block)
@@ -673,6 +680,19 @@ module Parallel
       child_write.close
 
       Worker.new(parent_read, parent_write, pid, options[:serializer])
+    rescue Exception # rubocop:disable Lint/RescueException
+      [child_read, parent_write, parent_read, child_write].compact.each do |io|
+        io.close unless io.closed?
+      end
+      if pid
+        UserInterruptHandler.kill(pid)
+        begin
+          Process.wait(pid)
+        rescue Errno::ECHILD
+          nil
+        end
+      end
+      raise
     end
 
     def process_incoming_jobs(read, write, job_factory, options, &block)
