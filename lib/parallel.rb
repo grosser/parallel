@@ -496,19 +496,17 @@ module Parallel
       end
 
       begin
-        # start
+        # start by sending 1 item each
         ports.dup.each do |port, ractor|
           if (job = job_factory.next)
-            item, index = job
-            instrument_start item, index, options
-            ractor.send [callback, item, index, options[:with_index], options[:discard_results]]
+            ractor_send ractor, callback, job, options
           else # not enough work, `receive` would hang
             ractor_stop ractor
             ports.delete port
           end
         end
 
-        # receive result and send new items to done ractors
+        # receive result and send new items
         while (job = job_factory.next)
           # receive result
           done_port, (exception, result, item_prev, index_prev) = Ractor.select(*ports.keys)
@@ -521,12 +519,10 @@ module Parallel
           ractor_result item_prev, index_prev, result, results, results_mutex, options
 
           # send new
-          item_next, index_next = job
-          instrument_start item_next, index_next, options
-          done_ractor.send([callback, item_next, index_next, options[:with_index], options[:discard_results]])
+          ractor_send done_ractor, callback, job, options
         end
 
-        # finish
+        # finish by receiving the last results
         ports.dup.each do |port, ractor|
           (new_exception, result, item, index) = use_port ? port.receive : ractor.take
           exception ||= new_exception
@@ -534,7 +530,7 @@ module Parallel
           ractor_stop ractor
           ports.delete port
         end
-      ensure
+      ensure # close any ports that remained open in case something blew up
         ports.each_value do |ractor|
           ractor_stop(ractor)
           ractor.take unless use_port
@@ -579,6 +575,12 @@ module Parallel
     def ractor_result(item, index, result, results, results_mutex, options)
       instrument_finish item, index, result, options
       results_mutex.synchronize { results[index] = result } unless options[:discard_results]
+    end
+
+    def ractor_send(ractor, callback, job, options)
+      item, index = job
+      instrument_start item, index, options
+      ractor.send [callback, item, index, options[:with_index], options[:discard_results]]
     end
 
     def ractor_stop(ractor)
