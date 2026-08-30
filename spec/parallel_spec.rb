@@ -20,13 +20,15 @@ describe Parallel do
   end
 
   def execute_start_and_kill(command, amount, signal = 'INT')
+    file = 'spec/cases/parallel_start_and_kill.rb'
     t = nil
     lambda {
-      t = Thread.new { ruby("spec/cases/parallel_start_and_kill.rb #{command} 2>&1 && echo 'FINISHED'") }
+      t = Thread.new { ruby("#{file} #{command} 2>&1 && echo 'FINISHED'") }
       sleep 1.5
-      kill_process_with_name('spec/cases/parallel_start_and_kill.rb', signal)
+      kill_process_with_name(file, signal)
       sleep 1
-    }.should change { `ps`.split("\n").size }.by amount
+      # count only our own processes: sh wrapper, ruby, and forked workers all carry the file name
+    }.should change { `ps -f`.split("\n").count { |line| line.include?(file) } }.by amount
     t.value
   end
 
@@ -331,11 +333,18 @@ describe Parallel do
       it "can run with 0 by not using #{type}" do
         Thread.should_not_receive(:exclusive)
         Process.should_not_receive(:fork)
-        result = Parallel.map([1, 2, 3, 4, 5, 6, 7, 8, 9], "in_#{type}": 0) { |x| x + 2 }
+        result =
+          if type == "ractors"
+            callback = Class.new { def self.call(x) = x + 2 }
+            Parallel.map([1, 2, 3, 4, 5, 6, 7, 8, 9], in_ractors: 0, ractor: [callback, :call])
+          else
+            Parallel.map([1, 2, 3, 4, 5, 6, 7, 8, 9], "in_#{type}": 0) { |x| x + 2 }
+          end
         result.should == [3, 4, 5, 6, 7, 8, 9, 10, 11]
       end
 
       it "does not dump/load when running with 0 using #{type}" do
+        skip if type == "ractors" # blocks are not supported
         p = -> { 1 }
         result = Parallel.map([1, 2], "in_#{type}": 0) { p }
         result.first.call.should == 1
