@@ -24,6 +24,10 @@ module Parallel
         @secret = secret
       end
 
+      def inspect
+        "#<#{self.class} @inner=#{@inner.inspect}, @secret=[REDACTED]>"
+      end
+
       def dump(data, io)
         payload = @inner.dump(data)
         mac = OpenSSL::HMAC.digest('SHA256', @secret, payload)
