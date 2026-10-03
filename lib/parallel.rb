@@ -684,8 +684,11 @@ module Parallel
           process_incoming_jobs(child_read, child_write, job_factory, options, &block)
         ensure
           child_read.close
-          child_write.close
+          child_write.close # also flushes results buffered in child_write
         end
+
+        # skip at_exit hooks and VM teardown, which are slow in large processes
+        exit!(0) if options[:exit!]
       end
 
       child_read.close
