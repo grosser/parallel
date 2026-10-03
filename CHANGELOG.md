@@ -4,6 +4,10 @@
 
 ### Added / Fixed / Changed
 
+## 2.3.0
+
+### Added
+
 - `exit!: true` option to skip at_exit hooks and VM teardown in worker processes
 
 ## 2.2.0

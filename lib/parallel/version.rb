@@ -1,4 +1,4 @@
 # frozen_string_literal: true
 module Parallel
-  VERSION = Version = '2.2.0' # rubocop:disable Naming/ConstantName
+  VERSION = Version = '2.3.0' # rubocop:disable Naming/ConstantName
 end

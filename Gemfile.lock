@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    parallel (2.2.0)
+    parallel (2.3.0)
 
 GEM
   remote: https://rubygems.org/
@@ -120,4 +120,4 @@ DEPENDENCIES
   sqlite3
 
 BUNDLED WITH
-  4.0.10
+  4.0.7
