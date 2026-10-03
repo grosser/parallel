@@ -4,7 +4,7 @@
 
 ### Added / Fixed / Changed
 
-- Add here when making a PR
+- `exit!: true` option to skip at_exit hooks and VM teardown in worker processes
 
 ## 2.2.0
 

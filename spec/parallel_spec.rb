@@ -471,6 +471,11 @@ describe Parallel do
       out.should == "0,1\nOK"
     end
 
+    it 'skips at_exit hooks in workers with exit!: true' do
+      out = ruby("spec/cases/map_exit_bang.rb")
+      out.should match(/\AOK\nAT_EXIT \d+\n\z/) # only the parent runs at_exit
+    end
+
     it 'can use Timeout' do
       out = ruby("spec/cases/timeout_in_threads.rb")
       out.should == "OK\n"
