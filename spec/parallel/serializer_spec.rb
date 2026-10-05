@@ -74,7 +74,8 @@ describe Parallel::Serializer do
       end
 
       with_pipe do |read, write|
-        write.write(frame.byteslice(0, frame.bytesize - 5)) # drop last 5 bytes of payload ([] counts chars, frame is UTF-8 tagged)
+        # drop last 5 bytes of payload ([] counts chars, frame is UTF-8 tagged)
+        write.write(frame.byteslice(0, frame.bytesize - 5))
         write.close
         -> { serializer.load(read) }.should raise_error(SecurityError, /truncated frame/)
       end
